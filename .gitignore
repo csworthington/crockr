@@ -1,5 +1,9 @@
 .DS_STORE
 
+# Hiding vscode and webstorm config files
+.idea/
+.vscode/
+
 # Logs
 logs
 *.log
