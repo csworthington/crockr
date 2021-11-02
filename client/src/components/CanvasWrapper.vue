@@ -30,15 +30,15 @@ export default defineComponent({
     // Init fabric for canvas
     this.canvasData = new fabric.Canvas('canvas-id');
 
-    // const rect = new fabric.Rect({
-    //   left: 100,
-    //   top: 100,
-    //   fill: 'red',
-    //   width: 20,
-    //   height: 20,
-    // });
+    const rect = new fabric.Rect({
+      left: 100,
+      top: 100,
+      fill: 'red',
+      width: 20,
+      height: 20,
+    });
 
-    // this.canvasData.add(rect);
+    this.canvasData.add(rect);
   },
 });
 </script>

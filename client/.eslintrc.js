@@ -12,7 +12,7 @@ module.exports = {
     parser: require.resolve('@typescript-eslint/parser'),
     extraFileExtensions: ['.vue'],
     ecmaFeatures: {
-      jsx: true,
+      jsx: false,
     },
     ecmaVersion: 2020,
   },
