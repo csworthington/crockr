@@ -1,5 +1,4 @@
 <template>
-  <p>Canvas Wrapper</p>
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="canvas-id" height="480" width="100%"></canvas>
   </div>
