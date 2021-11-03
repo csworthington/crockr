@@ -1,6 +1,6 @@
 <template>
   <div id="canvas-wrapper-div" class="canvas-border">
-    <canvas id="main-canvas" height="480" width="100%"></canvas>
+    <canvas id="main-canvas"></canvas>
   </div>
   <div>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
@@ -9,7 +9,7 @@
 
 <script lang="ts">
 import {
-  defineComponent, onMounted, reactive, Ref, ref,
+  defineComponent, onBeforeMount, onMounted, reactive, Ref, ref,
 } from 'vue';
 import { fabric } from 'fabric';
 
@@ -31,31 +31,27 @@ export default defineComponent({
      * Initialize the Fabric.js canvas
      */
     const initFabricCanvas = async () => {
-      canvasData = new fabric.Canvas('main-canvas');
-      canvasData.isDrawingMode = false;
-    };
-
-    /**
-     * Set the width of the canvas element to be the width of its wrapping div element
-     */
-    const setCanvasWidth = async () => {
+      // Get width for new canvas from wrapper div and set it when creating new canvas
+      // Note: this is not responsive and will not resize canvas element when page is resized
       const canvasDiv: HTMLDivElement = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
-      const canvasElem: HTMLCanvasElement = (<HTMLCanvasElement> document.getElementById('main-canvas'));
 
-      canvasElem.width = canvasDiv.clientWidth;
-      canvasElem.height = canvasDiv.clientHeight;
+      canvasData = new fabric.Canvas('main-canvas', {
+        width: canvasDiv.clientWidth,
+        height: canvasDiv.clientHeight,
+      });
+
+      // Set Drawing mode
+      canvasData.isDrawingMode = false;
     };
 
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
-    onMounted(setCanvasWidth);
 
     return {
       penStatus,
       canvasData,
       togglePenTool,
       initFabricCanvas,
-      setCanvasWidth,
     };
   },
 });
