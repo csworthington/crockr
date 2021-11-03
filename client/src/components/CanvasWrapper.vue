@@ -1,43 +1,54 @@
 <template>
   <div id="canvas-wrapper-div" class="canvas-border">
-    <canvas id="canvas-id" height="480" width="100%"></canvas>
+    <canvas id="main-canvas" height="480" width="100%"></canvas>
+  </div>
+  <div>
+    <span><button>Pen tool toggle</button></span><span>{{ penStatus }}</span>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import {
+  defineComponent, onMounted, reactive, Ref, ref,
+} from 'vue';
 import { fabric } from 'fabric';
 
 export default defineComponent({
   name: 'CanvasWrapper',
-  props: {
-    msg: String,
-  },
-  data() {
-    return {
-      canvasData: {} as fabric.Canvas,
+
+  setup(props) {
+    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
+
+    const penStatus: Ref<boolean> = ref(false);
+
+    /**
+     * Initialize the Fabric.js canvas
+     */
+    const initFabricCanvas = async () => {
+      canvasData = new fabric.Canvas('main-canvas');
     };
-  },
-  mounted() {
-    // Set Canvas Width
-    const canvasDiv: HTMLDivElement = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
-    const canvasElem: HTMLCanvasElement = (<HTMLCanvasElement> document.getElementById('canvas-id'));
 
-    canvasElem.width = canvasDiv.clientWidth;
-    canvasElem.height = canvasDiv.clientHeight;
+    /**
+     * Set the width of the canvas element to be the width of its wrapping div element
+     */
+    const setCanvasWidth = async () => {
+      const canvasDiv: HTMLDivElement = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
+      const canvasElem: HTMLCanvasElement = (<HTMLCanvasElement> document.getElementById('main-canvas'));
 
-    // Init fabric for canvas
-    this.canvasData = new fabric.Canvas('canvas-id');
+      canvasElem.width = canvasDiv.clientWidth;
+      canvasElem.height = canvasDiv.clientHeight;
+    };
 
-    const rect = new fabric.Rect({
-      left: 100,
-      top: 100,
-      fill: 'red',
-      width: 20,
-      height: 20,
-    });
+    // When component is mounted, run initFabricCanvas
+    onMounted(initFabricCanvas);
+    onMounted(setCanvasWidth);
 
-    this.canvasData.add(rect);
+    return {
+      penStatus,
+      canvasData,
+      initFabricCanvas,
+      setCanvasWidth,
+    };
   },
 });
 </script>
