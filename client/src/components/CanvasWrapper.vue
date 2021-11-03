@@ -3,7 +3,7 @@
     <canvas id="main-canvas" height="480" width="100%"></canvas>
   </div>
   <div>
-    <span><button>Pen tool toggle</button></span><span>{{ penStatus }}</span>
+    <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
   </div>
 </template>
 
@@ -21,11 +21,18 @@ export default defineComponent({
 
     const penStatus: Ref<boolean> = ref(false);
 
+    const togglePenTool = async () => {
+      penStatus.value = !penStatus.value;
+      canvasData.isDrawingMode = penStatus.value;
+      console.log(`pen tool is now ${penStatus.value}`);
+    };
+
     /**
      * Initialize the Fabric.js canvas
      */
     const initFabricCanvas = async () => {
       canvasData = new fabric.Canvas('main-canvas');
+      canvasData.isDrawingMode = false;
     };
 
     /**
@@ -46,6 +53,7 @@ export default defineComponent({
     return {
       penStatus,
       canvasData,
+      togglePenTool,
       initFabricCanvas,
       setCanvasWidth,
     };
