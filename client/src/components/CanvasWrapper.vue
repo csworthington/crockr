@@ -4,6 +4,8 @@
   </div>
   <div>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
+    <span><button @click="rectangle"> Rectangle </button></span>
+    <span><button @click="select"> select </button></span>
     <span><button @click="erase"> Erase </button></span>
   </div>
 </template>
@@ -27,6 +29,11 @@ export default defineComponent({
       canvasData.isDrawingMode = penStatus.value;
       console.log(`pen tool is now ${penStatus.value}`);
     };
+
+    const rectangle = async () => {
+      canvasData.clear();
+    };
+
     const erase = async () => {
       canvasData.clear();
     };
@@ -55,6 +62,7 @@ export default defineComponent({
       penStatus,
       canvasData,
       togglePenTool,
+      rectangle,
       erase,
       initFabricCanvas,
     };
