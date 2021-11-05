@@ -8,7 +8,7 @@
         type="color"
         name="colour-selection"
         id="colour-selection"
-        v-model="selectedColour"
+        v-model="primaryColour"
       />
     </span>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
@@ -17,14 +17,16 @@
     <span><button @click="erase"> Erase </button></span>
   </div>
   <span>
-    colour = {{ selectedColour }}
+    state colour = {{ primaryColour }}
   </span>
 </template>
 
 <script lang="ts">
 import {
-  defineComponent, onMounted, reactive, Ref, ref, watch,
+  computed,
+  defineComponent, onMounted, reactive, Ref, ref, watch, WritableComputedRef,
 } from 'vue';
+import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
 export default defineComponent({
@@ -35,6 +37,8 @@ export default defineComponent({
   //   };
   // },
   setup(props) {
+    const store = useStore();
+
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     let rect: fabric.Object;
     let circ: fabric.Object;
@@ -45,8 +49,15 @@ export default defineComponent({
     let radius: any;
     let strokeWidth: any;
 
-    // Reactive variable for selected colour
-    const selectedColour: Ref<string> = ref('#ff0000');
+    // Primary tool colour. Stored in Vuex Store
+    const primaryColour: WritableComputedRef<string> = computed({
+      get(): string {
+        return store.state.primaryToolColour;
+      },
+      set(newValue: string): void {
+        store.commit('updatePrimaryToolColour', newValue);
+      },
+    });
 
     function onMouseDown(o: { e: Event; }) {
       isDown = true;
@@ -62,7 +73,7 @@ export default defineComponent({
           width: pointer.x - origX,
           height: pointer.y - origY,
           angle: 0,
-          fill: selectedColour.value,
+          fill: store.state.primaryToolColour,
           transparentCorners: false,
         });
         canvasData.add(rect);
@@ -110,8 +121,8 @@ export default defineComponent({
       isDown = false;
     }
 
-    // Watch selectedColour and change brush colour when selectedColour changes
-    watch(selectedColour, (currentValue: string) => {
+    // Watch for changes to primaryColour, and change brush colour when primaryColour changes
+    watch(primaryColour, (currentValue: string) => {
       canvasData.freeDrawingBrush.color = currentValue;
     });
 
@@ -120,7 +131,7 @@ export default defineComponent({
     const togglePenTool = async () => {
       penStatus.value = !penStatus.value;
       canvasData.isDrawingMode = penStatus.value;
-      canvasData.freeDrawingBrush.color = selectedColour.value;
+      canvasData.freeDrawingBrush.color = primaryColour.value;
       console.log(`pen tool is now ${penStatus.value}`);
     };
 
@@ -169,9 +180,9 @@ export default defineComponent({
     onMounted(initFabricCanvas);
 
     return {
+      primaryColour,
       penStatus,
       canvasData,
-      selectedColour,
       togglePenTool,
       rectangle,
       circle,
