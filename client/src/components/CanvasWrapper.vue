@@ -21,6 +21,76 @@ export default defineComponent({
 
   setup(props) {
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
+    let rect: fabric.Object;
+    let circ: fabric.Object;
+    let isDown: boolean;
+    let origX: number;
+    let origY: number;
+    let tool: string;
+    let radius: any;
+    let strokeWidth: any;
+
+    function onMouseDown(o: { e: Event; }) {
+      isDown = true;
+      const pointer = canvasData.getPointer(o.e);
+      origX = pointer.x;
+      origY = pointer.y;
+      if (tool === 'rectangle') {
+        rect = new fabric.Rect({
+          left: origX,
+          top: origY,
+          originX: 'left',
+          originY: 'top',
+          width: pointer.x - origX,
+          height: pointer.y - origY,
+          angle: 0,
+          fill: 'rgba(255,0,0,0.5)',
+          transparentCorners: false,
+        });
+        canvasData.add(rect);
+      }
+      if (tool === 'circle') {
+        circ = new fabric.Circle({
+          left: origX,
+          top: origY,
+          originX: 'left',
+          originY: 'top',
+          radius: pointer.x - origX,
+          angle: 0,
+          fill: 'blue',
+          stroke: 'red',
+          strokeWidth: 3,
+        });
+        canvasData.add(circ);
+      }
+    }
+
+    function onMouseMove(o: { e: Event; }) {
+      if (!isDown) return;
+      const pointer = canvasData.getPointer(o.e);
+      radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
+
+      if (tool === 'rectangle') {
+        if (origX > pointer.x) {
+          rect.set({ left: Math.abs(pointer.x) });
+        }
+        if (origY > pointer.y) {
+          rect.set({ top: Math.abs(pointer.y) });
+        }
+
+        rect.set({ width: Math.abs(origX - pointer.x) });
+        rect.set({ height: Math.abs(origY - pointer.y) });
+      }
+      /*
+      if (tool === 'circle') {
+
+      } */
+      canvasData.renderAll();
+    }
+
+    function onMouseUp(o: { e: Event; }) {
+      isDown = false;
+    }
 
     const penStatus: Ref<boolean> = ref(false);
 
@@ -31,9 +101,25 @@ export default defineComponent({
     };
 
     const rectangle = async () => {
-      canvasData.clear();
+      tool = 'rectangle';
+      canvasData.on('mouse:down', onMouseDown);
+      canvasData.on('mouse:move', onMouseMove);
+      canvasData.on('mouse:up', onMouseUp);
+    };
+    const circle = async () => {
+      tool = 'circle';
+      canvasData.on('mouse:down', onMouseDown);
+      canvasData.on('mouse:move', onMouseMove);
+      canvasData.on('mouse:up', onMouseUp);
     };
 
+    const select = async () => {
+      tool = 'select';
+      canvasData.off('mouse:down', onMouseDown);
+      canvasData.off('mouse:move', onMouseMove);
+      canvasData.off('mouse:up', onMouseUp);
+      canvasData.isDrawingMode = false;
+    };
     const erase = async () => {
       canvasData.clear();
     };
@@ -63,6 +149,8 @@ export default defineComponent({
       canvasData,
       togglePenTool,
       rectangle,
+      circle,
+      select,
       erase,
       initFabricCanvas,
     };
