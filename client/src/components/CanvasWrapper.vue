@@ -3,22 +3,37 @@
     <canvas id="main-canvas"></canvas>
   </div>
   <div>
+    <span>
+      <input
+        type="color"
+        name="colour-selection"
+        id="colour-selection"
+        v-model="selectedColour"
+      />
+    </span>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
     <span><button @click="rectangle"> Rectangle </button></span>
     <span><button @click="select"> select </button></span>
     <span><button @click="erase"> Erase </button></span>
   </div>
+  <span>
+    colour = {{ selectedColour }}
+  </span>
 </template>
 
 <script lang="ts">
 import {
-  defineComponent, onBeforeMount, onMounted, reactive, Ref, ref,
+  defineComponent, onMounted, reactive, Ref, ref, watch,
 } from 'vue';
 import { fabric } from 'fabric';
 
 export default defineComponent({
   name: 'CanvasWrapper',
-
+  // data() {
+  //   return {
+  //     selectedColour: '#ffffff',
+  //   };
+  // },
   setup(props) {
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     let rect: fabric.Object;
@@ -29,6 +44,9 @@ export default defineComponent({
     let tool: string;
     let radius: any;
     let strokeWidth: any;
+
+    // Reactive variable for selected colour
+    const selectedColour: Ref<string> = ref('#ff0000');
 
     function onMouseDown(o: { e: Event; }) {
       isDown = true;
@@ -44,7 +62,7 @@ export default defineComponent({
           width: pointer.x - origX,
           height: pointer.y - origY,
           angle: 0,
-          fill: 'rgba(255,0,0,0.5)',
+          fill: selectedColour.value,
           transparentCorners: false,
         });
         canvasData.add(rect);
@@ -92,11 +110,17 @@ export default defineComponent({
       isDown = false;
     }
 
+    // Watch selectedColour and change brush colour when selectedColour changes
+    watch(selectedColour, (currentValue: string) => {
+      canvasData.freeDrawingBrush.color = currentValue;
+    });
+
     const penStatus: Ref<boolean> = ref(false);
 
     const togglePenTool = async () => {
       penStatus.value = !penStatus.value;
       canvasData.isDrawingMode = penStatus.value;
+      canvasData.freeDrawingBrush.color = selectedColour.value;
       console.log(`pen tool is now ${penStatus.value}`);
     };
 
@@ -147,6 +171,7 @@ export default defineComponent({
     return {
       penStatus,
       canvasData,
+      selectedColour,
       togglePenTool,
       rectangle,
       circle,
