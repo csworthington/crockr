@@ -5,6 +5,7 @@
   <div>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
     <span><button @click="rectangle"> Rectangle </button></span>
+    <span><button @click="circle"> Circle </button></span>
     <span><button @click="select"> select </button></span>
     <span><button @click="erase"> Erase </button></span>
   </div>
@@ -35,6 +36,7 @@ export default defineComponent({
       const pointer = canvasData.getPointer(o.e);
       origX = pointer.x;
       origY = pointer.y;
+
       if (tool === 'rectangle') {
         rect = new fabric.Rect({
           left: origX,
@@ -44,32 +46,34 @@ export default defineComponent({
           width: pointer.x - origX,
           height: pointer.y - origY,
           angle: 0,
+          strokeWidth: 2,
+          stroke: 'blue',
           fill: 'rgba(255,0,0,0.5)',
           transparentCorners: false,
         });
         canvasData.add(rect);
-      }
-      if (tool === 'circle') {
+      } else if (tool === 'circle') {
         circ = new fabric.Circle({
-          left: origX,
-          top: origY,
-          originX: 'left',
-          originY: 'top',
-          radius: pointer.x - origX,
-          angle: 0,
-          fill: 'blue',
+          left: pointer.x,
+          top: pointer.y,
+          radius: 1,
+          strokeWidth: 2,
           stroke: 'red',
-          strokeWidth: 3,
+          fill: 'White',
+          originX: 'center',
+          originY: 'center',
         });
+        strokeWidth = circ.strokeWidth;
         canvasData.add(circ);
       }
     }
 
     function onMouseMove(o: { e: Event; }) {
-      if (!isDown) return;
+      if (!isDown) {
+        return;
+      }
       const pointer = canvasData.getPointer(o.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
-
       if (tool === 'rectangle') {
         if (origX > pointer.x) {
           rect.set({ left: Math.abs(pointer.x) });
@@ -80,16 +84,31 @@ export default defineComponent({
 
         rect.set({ width: Math.abs(origX - pointer.x) });
         rect.set({ height: Math.abs(origY - pointer.y) });
+        canvasData.renderAll();
+      } else if (tool === 'circle') {
+        if (radius > strokeWidth) {
+          radius -= strokeWidth / 2;
+        }
+        circ.set({ strokeWidth: radius });
+        if (origX > pointer.x) {
+          circ.set({ originX: 'right' });
+        } else {
+          circ.set({ originX: 'left' });
+        }
+        if (origY > pointer.y) {
+          circ.set({ originY: 'bottom' });
+        } else {
+          circ.set({ originY: 'top' });
+        }
+        canvasData.renderAll();
       }
-      /*
-      if (tool === 'circle') {
-
-      } */
-      canvasData.renderAll();
     }
 
     function onMouseUp(o: { e: Event; }) {
       isDown = false;
+      canvasData.off('mouse:down', onMouseDown);
+      canvasData.off('mouse:move', onMouseMove);
+      canvasData.off('mouse:up', onMouseUp);
     }
 
     const penStatus: Ref<boolean> = ref(false);
@@ -98,6 +117,9 @@ export default defineComponent({
       penStatus.value = !penStatus.value;
       canvasData.isDrawingMode = penStatus.value;
       console.log(`pen tool is now ${penStatus.value}`);
+      canvasData.off('mouse:down', onMouseDown);
+      canvasData.off('mouse:move', onMouseMove);
+      canvasData.off('mouse:up', onMouseUp);
     };
 
     const rectangle = async () => {
@@ -105,12 +127,16 @@ export default defineComponent({
       canvasData.on('mouse:down', onMouseDown);
       canvasData.on('mouse:move', onMouseMove);
       canvasData.on('mouse:up', onMouseUp);
+      penStatus.value = false;
+      canvasData.isDrawingMode = false;
     };
     const circle = async () => {
       tool = 'circle';
       canvasData.on('mouse:down', onMouseDown);
       canvasData.on('mouse:move', onMouseMove);
       canvasData.on('mouse:up', onMouseUp);
+      penStatus.value = false;
+      canvasData.isDrawingMode = false;
     };
 
     const select = async () => {
@@ -118,6 +144,7 @@ export default defineComponent({
       canvasData.off('mouse:down', onMouseDown);
       canvasData.off('mouse:move', onMouseMove);
       canvasData.off('mouse:up', onMouseUp);
+      penStatus.value = false;
       canvasData.isDrawingMode = false;
     };
     const erase = async () => {
