@@ -8,6 +8,7 @@
     </span>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
     <span><button @click="rectangle"> Rectangle </button></span>
+    <span><button @click="circle"> Circle </button></span>
     <span><button @click="select"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="lineTool"> Line Tool </button></span>
@@ -36,7 +37,7 @@ export default defineComponent({
     const store = useStore();
 
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
-    let lineStatus = false;
+    const lineStatus = false;
     let firstCoord = false;
     let line : fabric.Line;
     const color = 'black';
@@ -65,6 +66,7 @@ export default defineComponent({
       const pointer = canvasData.getPointer(o.e);
       origX = pointer.x;
       origY = pointer.y;
+
       if (tool === 'rectangle') {
         rect = new fabric.Rect({
           left: origX,
@@ -75,31 +77,51 @@ export default defineComponent({
           height: pointer.y - origY,
           angle: 0,
           fill: store.state.primaryToolColour,
+          strokeWidth: 2,
+          stroke: 'blue',
           transparentCorners: false,
         });
         canvasData.add(rect);
-      }
-      if (tool === 'circle') {
+      } else if (tool === 'circle') {
         circ = new fabric.Circle({
-          left: origX,
-          top: origY,
-          originX: 'left',
-          originY: 'top',
-          radius: pointer.x - origX,
-          angle: 0,
-          fill: 'blue',
-          stroke: 'red',
-          strokeWidth: 3,
+          left: pointer.x,
+          top: pointer.y,
+          radius: 1,
+          strokeWidth: 2,
+          stroke: store.state.primaryToolColour,
+          fill: 'White',
+          originX: 'center',
+          originY: 'center',
+
         });
+        strokeWidth = circ.strokeWidth;
         canvasData.add(circ);
+      } else if (tool === 'line') {
+        console.log('entered other if');
+        if (firstCoord === false) {
+          lineFirstCoord = [origX, origY];
+          firstCoord = true;
+          line = new fabric.Line([lineFirstCoord[0], lineFirstCoord[1], origX, origY], {
+            stroke: store.state.primaryToolColour,
+            strokeWidth: 10,
+            opacity: 0.5,
+          });
+          canvasData.add(line);
+        } else {
+          line.set({ x2: origX, y2: origY, opacity: 1 });
+          line.setCoords();
+          canvasData.renderAll();
+          firstCoord = false;
+        }
       }
     }
 
     function onMouseMove(o: { e: Event; }) {
-      if (!isDown) return;
+      if (!isDown) {
+        return;
+      }
       const pointer = canvasData.getPointer(o.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
-
       if (tool === 'rectangle') {
         if (origX > pointer.x) {
           rect.set({ left: Math.abs(pointer.x) });
@@ -110,58 +132,81 @@ export default defineComponent({
 
         rect.set({ width: Math.abs(origX - pointer.x) });
         rect.set({ height: Math.abs(origY - pointer.y) });
+        canvasData.renderAll();
+      } else if (tool === 'circle') {
+        if (radius > strokeWidth) {
+          radius -= strokeWidth / 2;
+        }
+        circ.set({ strokeWidth: radius });
+        if (origX > pointer.x) {
+          circ.set({ originX: 'right' });
+        } else {
+          circ.set({ originX: 'left' });
+        }
+        if (origY > pointer.y) {
+          circ.set({ originY: 'bottom' });
+        } else {
+          circ.set({ originY: 'top' });
+        }
+        canvasData.renderAll();
       }
-      /*
-      if (tool === 'circle') {
-
-      } */
-      canvasData.renderAll();
     }
 
     function onMouseUp(o: { e: Event; }) {
       isDown = false;
+      canvasData.off('mouse:down', onMouseDown);
+      canvasData.off('mouse:move', onMouseMove);
+      canvasData.off('mouse:up', onMouseUp);
     }
 
     // Watch for changes to primaryColour, and change brush colour when primaryColour changes
     watch(primaryColour, (currentValue: string) => {
       canvasData.freeDrawingBrush.color = currentValue;
     });
+    function mouseEventsOff() {
+      canvasData.off('mouse:down', onMouseDown);
+      canvasData.off('mouse:move', onMouseMove);
+      canvasData.off('mouse:up', onMouseUp);
+    }
+    function mouseEventsOn() {
+      canvasData.on('mouse:down', onMouseDown);
+      canvasData.on('mouse:move', onMouseMove);
+      canvasData.on('mouse:up', onMouseUp);
+    }
 
     const penStatus: Ref<boolean> = ref(false);
     const lineTool = async () => {
-      if (lineStatus === false) {
-        lineStatus = true;
-      } else {
-        lineStatus = false;
-      }
+      tool = 'line';
     };
     const togglePenTool = async () => {
       penStatus.value = !penStatus.value;
       canvasData.isDrawingMode = penStatus.value;
       canvasData.freeDrawingBrush.color = primaryColour.value;
       console.log(`pen tool is now ${penStatus.value}`);
+      mouseEventsOff();
     };
 
     const rectangle = async () => {
       tool = 'rectangle';
-      canvasData.on('mouse:down', onMouseDown);
-      canvasData.on('mouse:move', onMouseMove);
-      canvasData.on('mouse:up', onMouseUp);
+      mouseEventsOff();
+      mouseEventsOn();
+      penStatus.value = false;
+      canvasData.isDrawingMode = false;
     };
     const circle = async () => {
       tool = 'circle';
-      canvasData.on('mouse:down', onMouseDown);
-      canvasData.on('mouse:move', onMouseMove);
-      canvasData.on('mouse:up', onMouseUp);
+      mouseEventsOff();
+      mouseEventsOn();
+      penStatus.value = false;
+      canvasData.isDrawingMode = false;
     };
     const deleteSelected = async () => {
       canvasData.remove(canvasData.getActiveObject());
     };
     const select = async () => {
       tool = 'select';
-      canvasData.off('mouse:down', onMouseDown);
-      canvasData.off('mouse:move', onMouseMove);
-      canvasData.off('mouse:up', onMouseUp);
+      mouseEventsOff();
+      penStatus.value = false;
       canvasData.isDrawingMode = false;
     };
     const erase = async () => {
@@ -188,16 +233,16 @@ export default defineComponent({
       // Set Drawing mode
       canvasData.isDrawingMode = false;
       // Canvas events
-      canvasData.on('mouse:down', async (event) => {
+      /* canvasData.on('mouse:down', async (event) => {
         const mouseX = canvasData.getPointer(event.e).x;
         const mouseY = canvasData.getPointer(event.e).y;
-        if (lineStatus === true) {
+        if (tool === 'line') {
           console.log('test');
           if (firstCoord === false) {
             lineFirstCoord = [mouseX, mouseY];
             firstCoord = true;
             line = new fabric.Line([lineFirstCoord[0], lineFirstCoord[1], mouseX, mouseY], {
-              stroke: color,
+              stroke: store.state.primaryToolColour,
               strokeWidth: 10,
               opacity: 0.5,
             });
@@ -207,9 +252,10 @@ export default defineComponent({
             line.setCoords();
             canvasData.renderAll();
             firstCoord = false;
+            tool = 'select';
           }
         }
-      });
+      }); */
       canvasData.on('selection:created', async () => {
         console.log('selection created');
         const deleteBtn = document.createElement('button');
