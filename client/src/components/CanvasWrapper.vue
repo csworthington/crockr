@@ -1,15 +1,10 @@
 <template>
   <div id="canvas-wrapper-div" class="canvas-border">
-    <canvas id="main-canvas"></canvas>
+    <canvas id="main-canvas" height="480"></canvas>
   </div>
   <div>
     <span>
-      <input
-        type="color"
-        name="colour-selection"
-        id="colour-selection"
-        v-model="primaryColour"
-      />
+      <ColourPicker />
     </span>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
     <span><button @click="rectangle"> Rectangle </button></span>
@@ -29,13 +24,13 @@ import {
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
+import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
+
 export default defineComponent({
   name: 'CanvasWrapper',
-  // data() {
-  //   return {
-  //     selectedColour: '#ffffff',
-  //   };
-  // },
+  components: {
+    ColourPicker,
+  },
   setup(props) {
     const store = useStore();
 
