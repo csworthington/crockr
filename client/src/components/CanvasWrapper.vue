@@ -12,9 +12,6 @@
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="lineTool"> Line Tool </button></span>
   </div>
-  <span>
-    state colour = {{ primaryColour }}
-  </span>
 </template>
 
 <script lang="ts">
@@ -238,7 +235,6 @@ export default defineComponent({
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
     return {
-      primaryColour,
       penStatus,
       canvasData,
       togglePenTool,
