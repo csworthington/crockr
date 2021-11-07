@@ -149,9 +149,11 @@ export default defineComponent({
 
     function onMouseUp(o: fabric.IEvent) {
       isDown = false;
-      canvasData.off('mouse:down', onMouseDown);
-      canvasData.off('mouse:move', onMouseMove);
-      canvasData.off('mouse:up', onMouseUp);
+      if (tool !== 'line') {
+        canvasData.off('mouse:down', onMouseDown);
+        canvasData.off('mouse:move', onMouseMove);
+        canvasData.off('mouse:up', onMouseUp);
+      }
     }
 
     // Watch for changes to primaryColour, and change brush colour when primaryColour changes
@@ -170,8 +172,11 @@ export default defineComponent({
     }
 
     const penStatus: Ref<boolean> = ref(false);
+
     const lineTool = async () => {
+      console.log('test');
       tool = 'line';
+      mouseEventsOn();
     };
     const togglePenTool = async () => {
       penStatus.value = !penStatus.value;
