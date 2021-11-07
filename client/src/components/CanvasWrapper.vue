@@ -106,44 +106,49 @@ export default defineComponent({
 
     function onMouseUp(o: { e: Event; }) {
       isDown = false;
+      /* canvasData.off('mouse:down', onMouseDown);
+      canvasData.off('mouse:move', onMouseMove);
+      canvasData.off('mouse:up', onMouseUp);
+      */
+    }
+
+    function mouseEventsOff() {
       canvasData.off('mouse:down', onMouseDown);
       canvasData.off('mouse:move', onMouseMove);
       canvasData.off('mouse:up', onMouseUp);
     }
-
+    function mouseEventsOn() {
+      canvasData.on('mouse:down', onMouseDown);
+      canvasData.on('mouse:move', onMouseMove);
+      canvasData.on('mouse:up', onMouseUp);
+    }
     const penStatus: Ref<boolean> = ref(false);
 
     const togglePenTool = async () => {
       penStatus.value = !penStatus.value;
       canvasData.isDrawingMode = penStatus.value;
       console.log(`pen tool is now ${penStatus.value}`);
-      canvasData.off('mouse:down', onMouseDown);
-      canvasData.off('mouse:move', onMouseMove);
-      canvasData.off('mouse:up', onMouseUp);
+      mouseEventsOff();
     };
 
     const rectangle = async () => {
       tool = 'rectangle';
-      canvasData.on('mouse:down', onMouseDown);
-      canvasData.on('mouse:move', onMouseMove);
-      canvasData.on('mouse:up', onMouseUp);
+      mouseEventsOff();
+      mouseEventsOn();
       penStatus.value = false;
       canvasData.isDrawingMode = false;
     };
     const circle = async () => {
       tool = 'circle';
-      canvasData.on('mouse:down', onMouseDown);
-      canvasData.on('mouse:move', onMouseMove);
-      canvasData.on('mouse:up', onMouseUp);
+      mouseEventsOff();
+      mouseEventsOn();
       penStatus.value = false;
       canvasData.isDrawingMode = false;
     };
 
     const select = async () => {
       tool = 'select';
-      canvasData.off('mouse:down', onMouseDown);
-      canvasData.off('mouse:move', onMouseMove);
-      canvasData.off('mouse:up', onMouseUp);
+      mouseEventsOff();
       penStatus.value = false;
       canvasData.isDrawingMode = false;
     };
