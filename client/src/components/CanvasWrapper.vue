@@ -60,7 +60,7 @@ export default defineComponent({
       },
     });
 
-    function onMouseDown(o: { e: Event; }) {
+    function onMouseDown(o: fabric.IEvent) {
       isDown = true;
       const pointer = canvasData.getPointer(o.e);
       origX = pointer.x;
@@ -95,7 +95,7 @@ export default defineComponent({
       }
     }
 
-    function onMouseMove(o: { e: Event; }) {
+    function onMouseMove(o: fabric.IEvent) {
       if (!isDown) return;
       const pointer = canvasData.getPointer(o.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
@@ -118,7 +118,7 @@ export default defineComponent({
       canvasData.renderAll();
     }
 
-    function onMouseUp(o: { e: Event; }) {
+    function onMouseUp(o: fabric.IEvent) {
       isDown = false;
     }
 
