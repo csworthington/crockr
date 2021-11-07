@@ -24,6 +24,7 @@ export default defineComponent({
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     let lineStatus = false;
     let firstCoord = false;
+    let line : fabric.Line;
     const color = 'black';
     let lineFirstCoord = [1, 2];
     const penStatus: Ref<boolean> = ref(false);
@@ -75,11 +76,14 @@ export default defineComponent({
           if (firstCoord === false) {
             lineFirstCoord = [mouseX, mouseY];
             firstCoord = true;
-          } else {
-            canvasData.add(new fabric.Line([lineFirstCoord[0], lineFirstCoord[1], mouseX, mouseY], {
+            line = new fabric.Line([lineFirstCoord[0], lineFirstCoord[1], mouseX, mouseY], {
               stroke: color,
               strokeWidth: 10,
-            }));
+            });
+            canvasData.add(line);
+          } else {
+            line.set({ x2: mouseX, y2: mouseY });
+            canvasData.renderAll();
             firstCoord = false;
           }
         }
@@ -97,6 +101,15 @@ export default defineComponent({
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
+        }
+      });
+      canvasData.on('mouse:move', async (event) => {
+        console.log('mouse moved');
+        if (firstCoord === true) {
+          const mouseX = canvasData.getPointer(event.e).x;
+          const mouseY = canvasData.getPointer(event.e).y;
+          line.set({ x2: mouseX, y2: mouseY });
+          canvasData.renderAll();
         }
       });
     };
