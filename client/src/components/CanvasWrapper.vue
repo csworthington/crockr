@@ -109,12 +109,13 @@ export default defineComponent({
           line.setCoords();
           canvasData.renderAll();
           firstCoord = false;
+          tool = 'select';
         }
       }
     }
 
     function onMouseMove(o: fabric.IEvent) {
-      if (!isDown) return;
+      if (!isDown && tool !== 'line') return;
       const pointer = canvasData.getPointer(o.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
       if (tool === 'rectangle') {
@@ -144,6 +145,14 @@ export default defineComponent({
           circ.set({ originY: 'top' });
         }
         canvasData.renderAll();
+        // line tool
+      } else if (tool === 'line') {
+        console.log('mouse moved');
+        if (firstCoord === true) {
+          console.log('true');
+          line.set({ x2: pointer.x, y2: pointer.y });
+          canvasData.renderAll();
+        }
       }
     }
 
@@ -271,7 +280,8 @@ export default defineComponent({
           elem.remove();
         }
       });
-      canvasData.on('mouse:move', async (event) => {
+
+      /* canvasData.on('mouse:move', async (event) => {
         console.log('mouse moved');
         if (firstCoord === true) {
           const mouseX = canvasData.getPointer(event.e).x;
@@ -279,7 +289,7 @@ export default defineComponent({
           line.set({ x2: mouseX, y2: mouseY });
           canvasData.renderAll();
         }
-      });
+      }); */
     };
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
