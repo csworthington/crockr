@@ -13,9 +13,6 @@
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="lineTool"> Line Tool </button></span>
   </div>
-  <span>
-    state colour = {{ primaryColour }}
-  </span>
 </template>
 
 <script lang="ts">
@@ -61,7 +58,7 @@ export default defineComponent({
       },
     });
 
-    function onMouseDown(o: { e: Event; }) {
+    function onMouseDown(o: fabric.IEvent) {
       isDown = true;
       const pointer = canvasData.getPointer(o.e);
       origX = pointer.x;
@@ -116,10 +113,8 @@ export default defineComponent({
       }
     }
 
-    function onMouseMove(o: { e: Event; }) {
-      if (!isDown) {
-        return;
-      }
+    function onMouseMove(o: fabric.IEvent) {
+      if (!isDown) return;
       const pointer = canvasData.getPointer(o.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
       if (tool === 'rectangle') {
@@ -152,7 +147,7 @@ export default defineComponent({
       }
     }
 
-    function onMouseUp(o: { e: Event; }) {
+    function onMouseUp(o: fabric.IEvent) {
       isDown = false;
       canvasData.off('mouse:down', onMouseDown);
       canvasData.off('mouse:move', onMouseMove);
@@ -284,7 +279,6 @@ export default defineComponent({
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
     return {
-      primaryColour,
       penStatus,
       canvasData,
       togglePenTool,
