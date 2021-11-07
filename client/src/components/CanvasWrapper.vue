@@ -26,7 +26,7 @@ export default defineComponent({
     let firstCoord = false;
     let line : fabric.Line;
     const color = 'black';
-    let lineFirstCoord = [1, 2];
+    let lineFirstCoord:number[];
     const penStatus: Ref<boolean> = ref(false);
     const lineTool = async () => {
       if (lineStatus === false) {
@@ -79,10 +79,12 @@ export default defineComponent({
             line = new fabric.Line([lineFirstCoord[0], lineFirstCoord[1], mouseX, mouseY], {
               stroke: color,
               strokeWidth: 10,
+              opacity: 0.5,
             });
             canvasData.add(line);
           } else {
-            line.set({ x2: mouseX, y2: mouseY });
+            line.set({ x2: mouseX, y2: mouseY, opacity: 1 });
+            line.setCoords();
             canvasData.renderAll();
             firstCoord = false;
           }
