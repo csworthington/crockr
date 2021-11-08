@@ -38,7 +38,10 @@ export default defineComponent({
   setup(props) {
     const store = useStore();
 
-    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
+    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {
+    }));
+    canvasData.perPixelTargetFind = true;
+    canvasData.targetFindTolerance = 8;
     // When line tool is active it determines if first click has occured
     let lTfirstCoordPlaced = false;
     // line object that is modified after first coord is placed.
@@ -114,6 +117,7 @@ export default defineComponent({
             strokeWidth: width,
             opacity: 0.5,
             strokeUniform: true,
+            padding: 5,
           });
           canvasData.add(line);
           // first coord already place so finalize line
@@ -260,6 +264,8 @@ export default defineComponent({
       canvasData = new fabric.Canvas('main-canvas', {
         width: canvasDiv.clientWidth,
         height: canvasDiv.clientHeight,
+        perPixelTargetFind: true,
+        targetFindTolerance: 5,
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
