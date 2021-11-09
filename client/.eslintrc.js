@@ -9,6 +9,11 @@ module.exports = {
     '@vue/typescript/recommended',
   ],
   parserOptions: {
+    parser: require.resolve('@typescript-eslint/parser'),
+    extraFileExtensions: ['.vue'],
+    ecmaFeatures: {
+      jsx: false,
+    },
     ecmaVersion: 2020,
   },
   rules: {
