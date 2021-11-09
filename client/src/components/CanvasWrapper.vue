@@ -237,6 +237,10 @@ export default defineComponent({
     const deleteSelected = async () => {
       const objectList = canvasData.getActiveObjects();
       objectList.forEach((object) => { canvasData.remove(object); });
+      const elem = document.getElementById('deleteBtn');
+      if (elem != null) {
+        elem.remove();
+      }
     };
     const select = async () => {
       tool.value = 'select';
