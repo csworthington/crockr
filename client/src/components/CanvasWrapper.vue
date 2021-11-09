@@ -192,8 +192,10 @@ export default defineComponent({
     watch(() => tool.value, (currentValue: string) => {
       if (currentValue === 'select') {
         canvasData.selection = true;
+        canvasData.skipTargetFind = false;
       } else {
         canvasData.selection = false;
+        canvasData.skipTargetFind = true;
       }
     });
     // watch(lineThickness, (currentValue: any) => {
