@@ -232,7 +232,8 @@ export default defineComponent({
     };
     // deletes selected object
     const deleteSelected = async () => {
-      canvasData.remove(canvasData.getActiveObject());
+      const objectList = canvasData.getActiveObjects();
+      objectList.forEach((object) => { canvasData.remove(object); });
     };
     const select = async () => {
       tool = 'select';
