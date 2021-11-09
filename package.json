@@ -1,0 +1,23 @@
+{
+  "name": "crockr-monorepo",
+  "version": "1.0.0",
+  "description": "",
+  "main": "none",
+  "scripts": {
+    "build-all": "node build.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/csworthington/crockr.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/csworthington/crockr/issues"
+  },
+  "homepage": "https://github.com/csworthington/crockr#readme",
+  "devDependencies": {
+    "shelljs": "^0.8.4"
+  },
+  "dependencies": {}
+}
