@@ -44,7 +44,6 @@ export default defineComponent({
     });
 
     const swapToolColours = () => {
-      console.log('swapping tool colours');
       const oldPrimaryColour = primaryToolColour.value;
       primaryToolColour.value = secondaryToolColour.value;
       secondaryToolColour.value = oldPrimaryColour;

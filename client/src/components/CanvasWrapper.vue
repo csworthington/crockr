@@ -169,9 +169,7 @@ export default defineComponent({
         canvasData.renderAll();
         // line tool handler, makes line follow mouse
       } else if (tool.value === 'line') {
-        console.log('mouse moved');
         if (lTfirstCoordPlaced === true) {
-          console.log('true');
           line.set({ x2: pointer.x, y2: pointer.y });
           canvasData.renderAll();
         }
@@ -215,7 +213,6 @@ export default defineComponent({
     const penStatus: Ref<boolean> = ref(false);
     // handles the swapping to line tool
     const lineTool = async () => {
-      console.log('test');
       tool.value = 'line';
       mouseEventsOn();
     };
@@ -266,7 +263,6 @@ export default defineComponent({
     // handles when line thickness is changed
     const getDropDown = async (event: any) => {
       if (event.target.value === undefined) { return; }
-      console.log(event.target.value);
       lineThickness = parseInt(event.target.value, 10);
       canvasData.freeDrawingBrush.width = lineThickness;
     };
@@ -287,7 +283,6 @@ export default defineComponent({
       // Set Drawing mode
       canvasData.isDrawingMode = false;
       canvasData.on('selection:created', async () => {
-        console.log('selection created');
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
         deleteBtn.id = 'deleteBtn';
@@ -295,7 +290,6 @@ export default defineComponent({
         document.body.appendChild(deleteBtn);
       });
       canvasData.on('selection:cleared', async () => {
-        console.log('selection cleared');
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
