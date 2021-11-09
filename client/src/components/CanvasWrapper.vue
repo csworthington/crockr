@@ -70,7 +70,7 @@ export default defineComponent({
     let radius: any;
     let strokeWidth: any;
     // determines how thick line tool and pen tool are
-    let lineThickness = 5;
+    let lineThickness = 2;
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -200,6 +200,9 @@ export default defineComponent({
       canvasData.freeDrawingBrush.color = currentValue;
     });
     watch(() => tool.value, (currentValue: ToolType) => {
+      if (currentValue !== ToolType.Pen) {
+        canvasData.isDrawingMode = false;
+      }
       if (currentValue === ToolType.Select) {
         canvasData.selection = true;
         canvasData.skipTargetFind = false;
