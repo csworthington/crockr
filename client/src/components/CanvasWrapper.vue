@@ -129,7 +129,7 @@ export default defineComponent({
           line.setCoords();
           canvasData.renderAll();
           lTfirstCoordPlaced = false;
-          tool.value = 'select';
+          // tool.value = 'select';
         }
       }
     }
@@ -148,6 +148,7 @@ export default defineComponent({
 
         rect.set({ width: Math.abs(origX - pointer.x) });
         rect.set({ height: Math.abs(origY - pointer.y) });
+        rect.setCoords();
         canvasData.renderAll();
       } else if (tool.value === 'circle') {
         if (radius > strokeWidth) {
@@ -164,6 +165,7 @@ export default defineComponent({
         } else {
           circ.set({ originY: 'top' });
         }
+        circ.setCoords();
         canvasData.renderAll();
         // line tool handler, makes line follow mouse
       } else if (tool.value === 'line') {
@@ -188,6 +190,13 @@ export default defineComponent({
     // Watch for changes to primaryColour, and change brush colour when primaryColour changes
     watch(primaryColour, (currentValue: string) => {
       canvasData.freeDrawingBrush.color = currentValue;
+    });
+    watch(() => tool.value, (currentValue: string) => {
+      if (currentValue === 'select') {
+        canvasData.selection = true;
+      } else {
+        canvasData.selection = false;
+      }
     });
     // watch(lineThickness, (currentValue: any) => {
     // canvasData.freeDrawingBrush.width = currentValue;
