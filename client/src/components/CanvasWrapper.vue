@@ -1,6 +1,6 @@
 <template>
   <div id="canvas-wrapper-div" class="canvas-border">
-    <canvas id="main-canvas" height="480"></canvas>
+    <canvas id="main-canvas"></canvas>
   </div>
   <div>
     <span>
@@ -29,7 +29,15 @@
 import { fabric } from 'fabric';
 import {
   computed,
-  defineComponent, onMounted, reactive, Ref, ref, watch, WritableComputedRef,
+  defineComponent,
+  onMounted,
+  reactive,
+  Ref,
+  ref,
+  watch,
+  WritableComputedRef,
+  onBeforeMount,
+  onBeforeUnmount,
 } from 'vue';
 import { useStore } from 'vuex';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
@@ -51,8 +59,7 @@ export default defineComponent({
   setup(props) {
     const store = useStore();
 
-    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {
-    }));
+    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
     // When line tool is active it determines if first click has occured
@@ -71,6 +78,8 @@ export default defineComponent({
     let strokeWidth: any;
     // determines how thick line tool and pen tool are
     let lineThickness = 5;
+
+    const canvasRatio = (16 / 9);
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -288,9 +297,10 @@ export default defineComponent({
 
       canvasData = new fabric.Canvas('main-canvas', {
         width: canvasDiv.clientWidth,
-        height: canvasDiv.clientHeight,
+        height: canvasDiv.clientWidth / canvasRatio,
         perPixelTargetFind: true,
         targetFindTolerance: 5,
+        backgroundColor: '#ff0000',
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
@@ -308,9 +318,33 @@ export default defineComponent({
         }
       });
     };
+
+    // Make canvas responsive when window is resized
+    const resizeCanvas = () => {
+      debugger;
+      console.log('here');
+      const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
+
+      const containerWidth = outerCanvasContainer.clientWidth;
+      const scale = containerWidth / canvasData.getWidth();
+      const zoom = canvasData.getZoom() * scale;
+
+      canvasData.setDimensions({
+        width: containerWidth,
+        height: containerWidth / canvasRatio,
+      });
+
+      canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+    };
+
+    // Hook callback into creation and destruction of this element
+    onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
+    onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
+
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
     return {
+      resizeCanvas,
       tool,
       penStatus,
       canvasData,
