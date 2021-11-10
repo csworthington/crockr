@@ -43,7 +43,7 @@
         "fbgraph": "1.4.4",
         "lodash": "^4.17.21",
         "lusca": "1.6.1",
-        "mongoose": "5.11.15",
+        "mongoose": "^6.0.12",
         "nodemailer": "6.4.17",
         "passport": "0.4.1",
         "passport-facebook": "3.0.0",
