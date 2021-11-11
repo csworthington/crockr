@@ -10,9 +10,9 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
-    "core-js": "^3.6.5",
+    "core-js": "^3.19.1",
     "fabric": "^4.6.0",
-    "vue": "^3.0.0",
+    "vue": "^3.2.21",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.0-0"
   },
@@ -29,12 +29,12 @@
     "@vue/cli-plugin-unit-jest": "^4.5.15",
     "@vue/cli-plugin-vuex": "^4.5.15",
     "@vue/cli-service": "^4.5.15",
-    "@vue/compiler-sfc": "^3.0.0",
+    "@vue/compiler-sfc": "^3.2.21",
     "@vue/eslint-config-airbnb": "^5.0.2",
     "@vue/eslint-config-typescript": "^7.0.0",
     "@vue/test-utils": "^2.0.0-0",
     "eslint": "^6.7.2",
-    "eslint-plugin-import": "^2.20.2",
+    "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-vue": "^7.0.0",
     "sass": "^1.43.4",
     "sass-loader": "^8.0.2",
