@@ -79,7 +79,7 @@ export default defineComponent({
     // determines how thick line tool and pen tool are
     let lineThickness = 2;
 
-    const canvasRatio = (16 / 9); // Aspect ratio of the canvas. Currently 16:9
+    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:9
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
