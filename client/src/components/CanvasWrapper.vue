@@ -1,6 +1,6 @@
 <template>
   <div id="canvas-wrapper-div" class="canvas-border">
-    <canvas id="main-canvas" height="480"></canvas>
+    <canvas id="main-canvas"></canvas>
   </div>
   <div>
     <span>
@@ -29,7 +29,15 @@
 import { fabric } from 'fabric';
 import {
   computed,
-  defineComponent, onMounted, reactive, Ref, ref, watch, WritableComputedRef,
+  defineComponent,
+  onMounted,
+  reactive,
+  Ref,
+  ref,
+  watch,
+  WritableComputedRef,
+  onBeforeMount,
+  onBeforeUnmount,
 } from 'vue';
 import { useStore } from 'vuex';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
@@ -51,8 +59,7 @@ export default defineComponent({
   setup(props) {
     const store = useStore();
 
-    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {
-    }));
+    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
     // When line tool is active it determines if first click has occured
@@ -72,6 +79,8 @@ export default defineComponent({
     // determines how thick line tool and pen tool are
     let lineThickness = 2;
 
+    const canvasRatio = (16 / 9); // Aspect ratio of the canvas. Currently 16:9
+
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
       get(): string {
@@ -81,6 +90,7 @@ export default defineComponent({
         store.commit('updatePrimaryToolColour', newValue);
       },
     });
+
     // event handler when mouse is pressed
     function onMouseDown(o: fabric.IEvent) {
       isDown = true;
@@ -124,14 +134,22 @@ export default defineComponent({
           lineToollTFirstCoordPlaced = [origX, origY];
           lTfirstCoordPlaced = true;
           const width = lineThickness;
-          // eslint-disable-next-line max-len
-          line = new fabric.Line([lineToollTFirstCoordPlaced[0], lineToollTFirstCoordPlaced[1], origX, origY], {
-            stroke: store.state.primaryToolColour,
-            strokeWidth: width,
-            opacity: 0.5,
-            strokeUniform: true,
-            padding: 5,
-          });
+
+          line = new fabric.Line(
+            [
+              lineToollTFirstCoordPlaced[0],
+              lineToollTFirstCoordPlaced[1],
+              origX,
+              origY,
+            ],
+            {
+              stroke: store.state.primaryToolColour,
+              strokeWidth: width,
+              opacity: 0.5,
+              strokeUniform: true,
+              padding: 5,
+            },
+          );
           canvasData.add(line);
           // first coord already place so finalize line
         } else {
@@ -188,11 +206,6 @@ export default defineComponent({
 
     function onMouseUp(o: fabric.IEvent) {
       isDown = false;
-      if (tool.value !== ToolType.Line) {
-        canvasData.off('mouse:down', onMouseDown);
-        canvasData.off('mouse:move', onMouseMove);
-        canvasData.off('mouse:up', onMouseUp);
-      }
     }
 
     // Watch for changes to primaryColour, and change brush colour when primaryColour changes
@@ -314,7 +327,7 @@ export default defineComponent({
 
       canvasData = new fabric.Canvas('main-canvas', {
         width: canvasDiv.clientWidth,
-        height: canvasDiv.clientHeight,
+        height: canvasDiv.clientWidth / canvasRatio,
         perPixelTargetFind: true,
         targetFindTolerance: 5,
       });
@@ -334,9 +347,31 @@ export default defineComponent({
         }
       });
     };
+
+    // Make canvas responsive when window is resized
+    const resizeCanvas = () => {
+      const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
+
+      const containerWidth = outerCanvasContainer.clientWidth;
+      const scale = containerWidth / canvasData.getWidth();
+      const zoom = canvasData.getZoom() * scale;
+
+      canvasData.setDimensions({
+        width: containerWidth,
+        height: containerWidth / canvasRatio,
+      });
+
+      canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+    };
+
+    // Hook resize callback into creation and destruction of this element
+    onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
+    onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
+
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
     return {
+      resizeCanvas,
       tool,
       penStatus,
       canvasData,
