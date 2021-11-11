@@ -79,7 +79,7 @@ export default defineComponent({
     // determines how thick line tool and pen tool are
     let lineThickness = 2;
 
-    const canvasRatio = (16 / 9);
+    const canvasRatio = (16 / 9); // Aspect ratio of the canvas. Currently 16:9
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -90,6 +90,7 @@ export default defineComponent({
         store.commit('updatePrimaryToolColour', newValue);
       },
     });
+
     // event handler when mouse is pressed
     function onMouseDown(o: fabric.IEvent) {
       isDown = true;
@@ -133,14 +134,22 @@ export default defineComponent({
           lineToollTFirstCoordPlaced = [origX, origY];
           lTfirstCoordPlaced = true;
           const width = lineThickness;
-          // eslint-disable-next-line max-len
-          line = new fabric.Line([lineToollTFirstCoordPlaced[0], lineToollTFirstCoordPlaced[1], origX, origY], {
-            stroke: store.state.primaryToolColour,
-            strokeWidth: width,
-            opacity: 0.5,
-            strokeUniform: true,
-            padding: 5,
-          });
+
+          line = new fabric.Line(
+            [
+              lineToollTFirstCoordPlaced[0],
+              lineToollTFirstCoordPlaced[1],
+              origX,
+              origY,
+            ],
+            {
+              stroke: store.state.primaryToolColour,
+              strokeWidth: width,
+              opacity: 0.5,
+              strokeUniform: true,
+              padding: 5,
+            },
+          );
           canvasData.add(line);
           // first coord already place so finalize line
         } else {
@@ -303,7 +312,6 @@ export default defineComponent({
         height: canvasDiv.clientWidth / canvasRatio,
         perPixelTargetFind: true,
         targetFindTolerance: 5,
-        backgroundColor: '#ff0000',
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
@@ -324,8 +332,6 @@ export default defineComponent({
 
     // Make canvas responsive when window is resized
     const resizeCanvas = () => {
-      debugger;
-      console.log('here');
       const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
 
       const containerWidth = outerCanvasContainer.clientWidth;
@@ -340,7 +346,7 @@ export default defineComponent({
       canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     };
 
-    // Hook callback into creation and destruction of this element
+    // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
 
