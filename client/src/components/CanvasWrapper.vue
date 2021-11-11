@@ -206,6 +206,12 @@ export default defineComponent({
 
     function onMouseUp(o: fabric.IEvent) {
       isDown = false;
+      if (tool.value !== ToolType.Line && tool.value !== ToolType.Rectangle) {
+        canvasData.off('mouse:down', onMouseDown);
+        canvasData.off('mouse:move', onMouseMove);
+        canvasData.off('mouse:up', onMouseUp);
+        tool.value = ToolType.None;
+      }
     }
 
     // Watch for changes to primaryColour, and change brush colour when primaryColour changes
