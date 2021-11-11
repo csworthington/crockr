@@ -9,6 +9,8 @@ export type UserDocument = mongoose.Document & {
     passwordResetExpires: Date;
 
     facebook: string;
+    twitter: string;
+    google: string;
     tokens: AuthToken[];
 
     profile: {
