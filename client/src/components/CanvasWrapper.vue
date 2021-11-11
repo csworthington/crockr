@@ -228,7 +228,11 @@ export default defineComponent({
     const penStatus: Ref<boolean> = ref(false);
     // handles the swapping to line tool
     const lineTool = async () => {
-      tool.value = ToolType.Line;
+      if (tool.value === ToolType.Line) {
+        tool.value = ToolType.None;
+      } else {
+        tool.value = ToolType.Line;
+      }
       mouseEventsOn();
     };
     const togglePenTool = async () => {
@@ -236,19 +240,33 @@ export default defineComponent({
       canvasData.isDrawingMode = penStatus.value;
       canvasData.freeDrawingBrush.color = primaryColour.value;
       canvasData.freeDrawingBrush.width = lineThickness;
-      tool.value = ToolType.Pen;
+      if (tool.value === ToolType.Pen) {
+        tool.value = ToolType.None;
+      } else {
+        tool.value = ToolType.Pen;
+      }
       mouseEventsOff();
     };
 
     const rectangle = async () => {
-      tool.value = ToolType.Rectangle;
+      if (tool.value === ToolType.Rectangle) {
+        console.log('test');
+        tool.value = ToolType.None;
+      } else {
+        tool.value = ToolType.Rectangle;
+      }
       mouseEventsOff();
       mouseEventsOn();
       penStatus.value = false;
       canvasData.isDrawingMode = false;
     };
     const circle = async () => {
-      tool.value = ToolType.Circle;
+      if (tool.value === ToolType.Circle) {
+        console.log('test');
+        tool.value = ToolType.None;
+      } else {
+        tool.value = ToolType.Circle;
+      }
       mouseEventsOff();
       mouseEventsOn();
       penStatus.value = false;
@@ -264,7 +282,12 @@ export default defineComponent({
       }
     };
     const select = async () => {
-      tool.value = ToolType.Select;
+      if (tool.value === ToolType.Select) {
+        console.log('test');
+        tool.value = ToolType.None;
+      } else {
+        tool.value = ToolType.Select;
+      }
       mouseEventsOff();
       penStatus.value = false;
       canvasData.isDrawingMode = false;
