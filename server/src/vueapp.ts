@@ -2,11 +2,11 @@ import express from "express";
 import compression from "compression";  // compresses requests
 import bodyParser from "body-parser";
 import lusca from "lusca";
+import path from "path";
 
-const path = __dirname + "/vue";
 const app = express();
 
-app.use(express.static(path));
+app.use(express.static(path.join(__dirname, "public/vue"), { maxAge: 31557600000 }));
 
 /**
  * Express configuration
