@@ -401,6 +401,7 @@ export default defineComponent({
       initFabricCanvas,
       lineTool,
       getDropDown,
+      getId,
     };
   },
 });
