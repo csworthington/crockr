@@ -1,8 +1,12 @@
 // vue.config.js
 module.exports = {
   devServer: {
+    disableHostCheck: true,
+    port: 8080,
+    public: '0.0.0.0:8080',
     proxy: 'http://localhost:3000',
   },
+  publicPath: '/',
   css: {
     loaderOptions: {
       sass: {
