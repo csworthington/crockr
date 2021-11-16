@@ -22,6 +22,9 @@
   <div>
     <span>current tool = {{ tool }}</span>
   </div>
+  <div>
+    <button @click="getId">Get ID</button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -31,6 +34,9 @@ import {
   defineComponent, onMounted, reactive, Ref, ref, watch, WritableComputedRef,
 } from 'vue';
 import { useStore } from 'vuex';
+import axios, { AxiosResponse } from 'axios';
+
+// Vue Components
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 
 export default defineComponent({
@@ -296,6 +302,14 @@ export default defineComponent({
         }
       });
     };
+
+    const getId = async () => {
+      axios.get('api/uuid').then((response: AxiosResponse) => {
+        console.log('success');
+        console.dir(response.data);
+      });
+    };
+
     // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
     return {
@@ -310,6 +324,7 @@ export default defineComponent({
       initFabricCanvas,
       lineTool,
       getDropDown,
+      getId,
     };
   },
 });

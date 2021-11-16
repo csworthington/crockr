@@ -4,6 +4,8 @@ import bodyParser from "body-parser";
 import lusca from "lusca";
 import path from "path";
 
+import * as testApiController from "./controllers/testapi";
+
 const app = express();
 
 app.use(express.static(path.join(__dirname, "public/vue"), { maxAge: 31557600000 }));
@@ -22,5 +24,7 @@ app.get("/", (request, response) => {
   console.log(`Path is ${path}`);
   response.sendFile(path + "index.html");
 });
+
+app.get("/api/uuid", testApiController.getUUID);
 
 export default app;
