@@ -26,7 +26,6 @@
 
 <script lang="ts">
 /* eslint-disable no-shadow */
-import { fabric } from 'fabric';
 import {
   computed,
   defineComponent,
@@ -40,7 +39,15 @@ import {
   onBeforeUnmount,
 } from 'vue';
 import { useStore } from 'vuex';
+import { fabric } from 'fabric';
+
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
+import {
+  RectWithID,
+  CircleWithID,
+  LineWithID,
+} from '@/utils/fabric-object-extender';
+import getUUID from '@/utils/id-generator';
 
 enum ToolType {
   None = 'NONE',
@@ -79,7 +86,7 @@ export default defineComponent({
     // determines how thick line tool and pen tool are
     let lineThickness = 2;
 
-    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:9
+    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -99,7 +106,7 @@ export default defineComponent({
       origY = pointer.y;
 
       if (tool.value === ToolType.Rectangle) {
-        rect = new fabric.Rect({
+        rect = new RectWithID({
           left: origX,
           top: origY,
           originX: 'left',
@@ -114,7 +121,7 @@ export default defineComponent({
         });
         canvasData.add(rect);
       } else if (tool.value === ToolType.Circle) {
-        circ = new fabric.Circle({
+        circ = new CircleWithID({
           left: pointer.x,
           top: pointer.y,
           radius: 1,
@@ -123,7 +130,6 @@ export default defineComponent({
           fill: 'White',
           originX: 'center',
           originY: 'center',
-
         });
         strokeWidth = circ.strokeWidth;
         canvasData.add(circ);
@@ -135,7 +141,7 @@ export default defineComponent({
           lTfirstCoordPlaced = true;
           const width = lineThickness;
 
-          line = new fabric.Line(
+          line = new LineWithID(
             [
               lineToollTFirstCoordPlaced[0],
               lineToollTFirstCoordPlaced[1],
@@ -269,7 +275,6 @@ export default defineComponent({
 
     const rectangle = async () => {
       if (tool.value === ToolType.Rectangle) {
-        console.log('test');
         tool.value = ToolType.None;
       } else {
         tool.value = ToolType.Rectangle;
@@ -281,7 +286,6 @@ export default defineComponent({
     };
     const circle = async () => {
       if (tool.value === ToolType.Circle) {
-        console.log('test');
         tool.value = ToolType.None;
       } else {
         tool.value = ToolType.Circle;
@@ -302,7 +306,6 @@ export default defineComponent({
     };
     const select = async () => {
       if (tool.value === ToolType.Select) {
-        console.log('test');
         tool.value = ToolType.None;
       } else {
         tool.value = ToolType.Select;
@@ -317,12 +320,16 @@ export default defineComponent({
         canvasData.clear();
       }
     };
-    // handles when line thickness is changed
+
+    /**
+     * Handle event when line thickness is changed
+     */
     const getDropDown = async (event: any) => {
       if (event.target.value === undefined) { return; }
       lineThickness = parseInt(event.target.value, 10);
       canvasData.freeDrawingBrush.width = lineThickness;
     };
+
     /**
      * Initialize the Fabric.js canvas
      */
@@ -350,6 +357,17 @@ export default defineComponent({
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
+        }
+      });
+
+      /**
+       * Whenever a new object is added to the canvas
+       */
+      // TODO: Probably shouldn't be casting evt here to any
+      canvasData.on('object:added', (evt: any) => {
+        if (evt.target !== undefined && 'id' in evt?.target === false) {
+          // eslint-disable-next-line no-param-reassign
+          evt.target.id = getUUID();
         }
       });
     };
