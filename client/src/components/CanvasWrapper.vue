@@ -1,23 +1,26 @@
 <template>
   <div id="canvas-wrapper-div" class="canvas-border">
-    <canvas id="main-canvas" height="480"></canvas>
+    <canvas id="main-canvas"></canvas>
   </div>
   <div>
     <span>
       <ColourPicker />
     </span>
-    <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
-    <span><button @click="rectangle"> Rectangle </button></span>
-    <span><button @click="circle"> Circle </button></span>
-    <span><button @click="select"> select </button></span>
+    <span><button @click="handleToolChange('PEN')">Pen tool toggle</button></span>
+    <span><button @click="handleToolChange('RECTANGLE')"> Rectangle </button></span>
+    <span><button @click="handleToolChange('CIRCLE')"> Circle </button></span>
+    <span><button @click="handleToolChange('SELECT')"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
-    <span><button @click="lineTool(event)"> Line Tool </button></span>
-    <span><select name = 'thick' @click="getDropDown">
-      <option value = '2'> 2px </option>
-      <option value = '5'> 5px </option>
-      <option value = '8'> 8px </option>
-      <option value = '20'> 20px </option>
-    </select></span>
+    <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
+    <span>
+      <select name="thick" v-model="lineThickness">
+        <option v-for="option in thicknessOptions"
+                :key="option.value"
+                :value="option.value">
+          {{ option.text }}
+        </option>
+      </select>
+    </span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -26,13 +29,28 @@
 
 <script lang="ts">
 /* eslint-disable no-shadow */
-import { fabric } from 'fabric';
 import {
   computed,
-  defineComponent, onMounted, reactive, Ref, ref, watch, WritableComputedRef,
+  defineComponent,
+  onMounted,
+  reactive,
+  Ref,
+  ref,
+  watch,
+  WritableComputedRef,
+  onBeforeMount,
+  onBeforeUnmount,
 } from 'vue';
 import { useStore } from 'vuex';
+import { fabric } from 'fabric';
+
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
+import {
+  RectWithID,
+  CircleWithID,
+  LineWithID,
+} from '@/utils/fabric-object-extender';
+import getUUID from '@/utils/id-generator';
 
 enum ToolType {
   None = 'NONE',
@@ -51,8 +69,7 @@ export default defineComponent({
   setup(props) {
     const store = useStore();
 
-    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {
-    }));
+    let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
     // When line tool is active it determines if first click has occured
@@ -62,15 +79,24 @@ export default defineComponent({
     // stores the first coord when line tool is active
     let lineToollTFirstCoordPlaced:number[];
     let rect: fabric.Object;
-    let circ: fabric.Object;
+    let circ: fabric.Circle;
     let isDown: boolean;
     let origX: number;
     let origY: number;
     const tool = ref(ToolType.None);
     let radius: any;
     let strokeWidth: any;
+
     // determines how thick line tool and pen tool are
-    let lineThickness = 5;
+    const lineThickness: Ref<number> = ref(2);
+    const thicknessOptions = [
+      { text: '2px', value: 2 },
+      { text: '5px', value: 5 },
+      { text: '8px', value: 8 },
+      { text: '20px', value: 20 },
+    ];
+
+    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -81,125 +107,224 @@ export default defineComponent({
         store.commit('updatePrimaryToolColour', newValue);
       },
     });
-    // event handler when mouse is pressed
-    function onMouseDown(o: fabric.IEvent) {
-      isDown = true;
-      const pointer = canvasData.getPointer(o.e);
-      origX = pointer.x;
-      origY = pointer.y;
 
-      if (tool.value === ToolType.Rectangle) {
-        rect = new fabric.Rect({
-          left: origX,
-          top: origY,
-          originX: 'left',
-          originY: 'top',
-          width: pointer.x - origX,
-          height: pointer.y - origY,
-          angle: 0,
-          fill: store.state.primaryToolColour,
-          strokeWidth: 2,
-          stroke: 'blue',
-          transparentCorners: false,
-        });
-        canvasData.add(rect);
-      } else if (tool.value === ToolType.Circle) {
-        circ = new fabric.Circle({
-          left: pointer.x,
-          top: pointer.y,
-          radius: 1,
-          strokeWidth: 2,
-          stroke: store.state.primaryToolColour,
-          fill: 'White',
-          originX: 'center',
-          originY: 'center',
+    /**
+     * Start drawing a line on the canvas when the line tool is selected and the
+     * mouse:down event has been fired by the canvas
+     */
+    function lineMouseDown() {
+      if (lTfirstCoordPlaced === false) {
+        lineToollTFirstCoordPlaced = [origX, origY];
+        lTfirstCoordPlaced = true;
+        const width = lineThickness.value;
 
-        });
-        strokeWidth = circ.strokeWidth;
-        canvasData.add(circ);
-        // case line tool is selected
-      } else if (tool.value === ToolType.Line) {
-        // if first coord not placed, set it and start drawing line to mouse
-        if (lTfirstCoordPlaced === false) {
-          lineToollTFirstCoordPlaced = [origX, origY];
-          lTfirstCoordPlaced = true;
-          const width = lineThickness;
-          // eslint-disable-next-line max-len
-          line = new fabric.Line([lineToollTFirstCoordPlaced[0], lineToollTFirstCoordPlaced[1], origX, origY], {
+        line = new LineWithID(
+          [
+            lineToollTFirstCoordPlaced[0],
+            lineToollTFirstCoordPlaced[1],
+            origX,
+            origY,
+          ],
+          {
             stroke: store.state.primaryToolColour,
             strokeWidth: width,
             opacity: 0.5,
             strokeUniform: true,
             padding: 5,
-          });
-          canvasData.add(line);
-          // first coord already place so finalize line
-        } else {
-          line.set({ x2: origX, y2: origY, opacity: 1 });
-          line.setCoords();
-          canvasData.renderAll();
-          lTfirstCoordPlaced = false;
-          // tool.value = ToolType.Select;
-        }
+          },
+        );
+        canvasData.add(line);
+        // first coord already place so finalize line
+      } else {
+        line.set({ x2: origX, y2: origY, opacity: 1 });
+        line.setCoords();
+        canvasData.renderAll();
+        lTfirstCoordPlaced = false;
       }
     }
-    // Mouse movemement handler
-    function onMouseMove(o: fabric.IEvent) {
-      if (!isDown && tool.value !== ToolType.Line) return;
-      const pointer = canvasData.getPointer(o.e);
-      radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
-      if (tool.value === ToolType.Rectangle) {
-        if (origX > pointer.x) {
-          rect.set({ left: Math.abs(pointer.x) });
-        }
-        if (origY > pointer.y) {
-          rect.set({ top: Math.abs(pointer.y) });
-        }
 
-        rect.set({ width: Math.abs(origX - pointer.x) });
-        rect.set({ height: Math.abs(origY - pointer.y) });
-        rect.setCoords();
+    /**
+     * Place a rectangle on the canvas when the rectangle tool is selected and
+     * the mouse:down event has been fired by the canvas
+     */
+    function rectangleDown(x : number, y : number) {
+      rect = new RectWithID({
+        left: origX,
+        top: origY,
+        originX: 'left',
+        originY: 'top',
+        width: x - origX,
+        height: y - origY,
+        angle: 0,
+        fill: store.state.primaryToolColour,
+        strokeWidth: 2,
+        stroke: store.state.primaryToolColour,
+        transparentCorners: false,
+      });
+      canvasData.add(rect);
+    }
+
+    /**
+     * Place a circle on the canvas when the circle tool is selected and
+     * the mouse:down event has been fired by the canvas
+     */
+    function circleDown(x : number, y : number) {
+      circ = new CircleWithID({
+        left: x,
+        top: y,
+        radius: 1,
+        strokeWidth: 2,
+        stroke: store.state.primaryToolColour,
+        fill: store.state.primaryToolColour,
+        originX: 'center',
+        originY: 'center',
+      });
+      strokeWidth = circ.strokeWidth;
+      canvasData.add(circ);
+    }
+
+    /**
+     * Move one end of the line when the first part of the line has been placed down and
+     * the mouse:move event has been fired by the canvas
+     */
+    function lineMove(x : number, y : number) {
+      if (lTfirstCoordPlaced === true) {
+        line.set({ x2: x, y2: y });
         canvasData.renderAll();
+      }
+    }
+
+    /**
+     * Redraw the rectangle on the canvas when the mouse is being moved
+     */
+    function rectangleMove(x : number, y : number) {
+      if (origX > x) {
+        rect.set({ left: Math.abs(x) });
+      }
+      if (origY > y) {
+        rect.set({ top: Math.abs(y) });
+      }
+
+      rect.set({ width: Math.abs(origX - x) });
+      rect.set({ height: Math.abs(origY - y) });
+      rect.setCoords();
+      canvasData.renderAll();
+    }
+
+    /**
+     * Redraw the circle on the canvas when the mouse is being moved
+     */
+    function circleMove(x : number, y : number) {
+      if (radius > strokeWidth) {
+        radius -= strokeWidth / 2;
+      }
+      circ.setRadius(radius);
+      if (origX > x) {
+        circ.set({ originX: 'right' });
+      } else {
+        circ.set({ originX: 'left' });
+      }
+      if (origY > y) {
+        circ.set({ originY: 'bottom' });
+      } else {
+        circ.set({ originY: 'top' });
+      }
+      circ.setCoords();
+      canvasData.renderAll();
+    }
+
+    /**
+     * Primary event handler for fabric.js canvas mouse:down event
+     * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
+     */
+    function handleMouseDownEvent(evt: fabric.IEvent<Event>) {
+      isDown = true;
+      const pointer = canvasData.getPointer(evt.e);
+      origX = pointer.x;
+      origY = pointer.y;
+
+      if (tool.value === ToolType.Rectangle) {
+        rectangleDown(pointer.x, pointer.y);
       } else if (tool.value === ToolType.Circle) {
-        if (radius > strokeWidth) {
-          radius -= strokeWidth / 2;
-        }
-        circ.set({ strokeWidth: radius });
-        if (origX > pointer.x) {
-          circ.set({ originX: 'right' });
-        } else {
-          circ.set({ originX: 'left' });
-        }
-        if (origY > pointer.y) {
-          circ.set({ originY: 'bottom' });
-        } else {
-          circ.set({ originY: 'top' });
-        }
-        circ.setCoords();
-        canvasData.renderAll();
+        circleDown(pointer.x, pointer.y);
+        // case line tool is selected
+      } else if (tool.value === ToolType.Line) {
+        // if first coord not placed, set it and start drawing line to mouse
+        lineMouseDown();
+      }
+    }
+
+    /**
+     * Primary event handler for fabric.js canvas mouse:move event
+     * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
+     */
+    function handleMouseMoveEvent(evt: fabric.IEvent<Event>) {
+      if (!isDown && tool.value !== ToolType.Line) return;
+
+      const pointer = canvasData.getPointer(evt.e);
+      radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
+
+      if (tool.value === ToolType.Rectangle) {
+        rectangleMove(pointer.x, pointer.y);
+      } else if (tool.value === ToolType.Circle) {
+        circleMove(pointer.x, pointer.y);
         // line tool handler, makes line follow mouse
       } else if (tool.value === ToolType.Line) {
-        if (lTfirstCoordPlaced === true) {
-          line.set({ x2: pointer.x, y2: pointer.y });
-          canvasData.renderAll();
-        }
+        lineMove(pointer.x, pointer.y);
       }
     }
 
-    function onMouseUp(o: fabric.IEvent) {
+    /**
+     * Primary event handler for fabric.js canvas mouse:up event
+     * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
+     */
+    function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
-      if (tool.value !== ToolType.Line) {
-        canvasData.off('mouse:down', onMouseDown);
-        canvasData.off('mouse:move', onMouseMove);
-        canvasData.off('mouse:up', onMouseUp);
-      }
     }
 
-    // Watch for changes to primaryColour, and change brush colour when primaryColour changes
+    /**
+     * Disable all custom event handlers for the fabric.js canvas
+     */
+    function mouseEventsOff() {
+      canvasData.off('mouse:down', handleMouseDownEvent);
+      canvasData.off('mouse:move', handleMouseMoveEvent);
+      canvasData.off('mouse:up', handleMouseUpEvent);
+    }
+
+    /**
+     * Enable all custom event handlers for the fabric.js canvas
+     */
+    function mouseEventsOn() {
+      canvasData.on('mouse:down', handleMouseDownEvent);
+      canvasData.on('mouse:move', handleMouseMoveEvent);
+      canvasData.on('mouse:up', handleMouseUpEvent);
+    }
+
+    /**
+     * Change the freeDrawingBrush width whenever lineThickness is changed.
+     * Needed for changing the thickness of the brush when the pen tool is
+     * active
+     */
+    watch(() => lineThickness.value, (currentValue: number) => {
+      canvasData.freeDrawingBrush.width = currentValue;
+    });
+
+    /**
+     * Watch for changes to primaryColour, and change brush colour when primaryColour changes
+     */
     watch(primaryColour, (currentValue: string) => {
       canvasData.freeDrawingBrush.color = currentValue;
     });
+
+    /**
+     * Watch for change in tool type.
+     * Enable object selection when select tool is active, disable otherwise
+     * Enable drawing mode on canvas when pen tool is active, disable otherwise
+     */
     watch(() => tool.value, (currentValue: ToolType) => {
+      if (currentValue !== ToolType.Pen) {
+        canvasData.isDrawingMode = false;
+      }
       if (currentValue === ToolType.Select) {
         canvasData.selection = true;
         canvasData.skipTargetFind = false;
@@ -208,50 +333,48 @@ export default defineComponent({
         canvasData.skipTargetFind = true;
       }
     });
-    // watch(lineThickness, (currentValue: any) => {
-    // canvasData.freeDrawingBrush.width = currentValue;
-    // });
-    function mouseEventsOff() {
-      canvasData.off('mouse:down', onMouseDown);
-      canvasData.off('mouse:move', onMouseMove);
-      canvasData.off('mouse:up', onMouseUp);
-    }
-    function mouseEventsOn() {
-      canvasData.on('mouse:down', onMouseDown);
-      canvasData.on('mouse:move', onMouseMove);
-      canvasData.on('mouse:up', onMouseUp);
+
+    /**
+     * Handle when a user selects a new tool
+     */
+    function handleToolChange(clickedTool : ToolType) {
+      mouseEventsOff();
+      mouseEventsOn();
+      canvasData.isDrawingMode = false;
+      switch (clickedTool) {
+        case ToolType.Pen: {
+          tool.value = ToolType.Pen;
+          canvasData.isDrawingMode = true;
+          canvasData.freeDrawingBrush.color = primaryColour.value;
+          canvasData.freeDrawingBrush.width = lineThickness.value;
+          break;
+        }
+        case ToolType.Rectangle: {
+          tool.value = ToolType.Rectangle;
+          break;
+        }
+        case ToolType.Circle: {
+          tool.value = ToolType.Circle;
+          break;
+        }
+        case ToolType.Select: {
+          tool.value = ToolType.Select;
+          break;
+        }
+        case ToolType.Line: {
+          tool.value = ToolType.Line;
+          break;
+        }
+        default: {
+          tool.value = ToolType.None;
+          break;
+        }
+      }
     }
 
-    const penStatus: Ref<boolean> = ref(false);
-    // handles the swapping to line tool
-    const lineTool = async () => {
-      tool.value = ToolType.Line;
-      mouseEventsOn();
-    };
-    const togglePenTool = async () => {
-      penStatus.value = !penStatus.value;
-      canvasData.isDrawingMode = penStatus.value;
-      canvasData.freeDrawingBrush.color = primaryColour.value;
-      canvasData.freeDrawingBrush.width = lineThickness;
-      tool.value = ToolType.Pen;
-      mouseEventsOff();
-    };
-
-    const rectangle = async () => {
-      tool.value = ToolType.Rectangle;
-      mouseEventsOff();
-      mouseEventsOn();
-      penStatus.value = false;
-      canvasData.isDrawingMode = false;
-    };
-    const circle = async () => {
-      tool.value = ToolType.Circle;
-      mouseEventsOff();
-      mouseEventsOn();
-      penStatus.value = false;
-      canvasData.isDrawingMode = false;
-    };
-    // deletes selected object
+    /**
+     * Delete a specific object when the user presses the delete button
+     */
     const deleteSelected = async () => {
       const objectList = canvasData.getActiveObjects();
       objectList.forEach((object) => { canvasData.remove(object); });
@@ -260,23 +383,14 @@ export default defineComponent({
         elem.remove();
       }
     };
-    const select = async () => {
-      tool.value = ToolType.Select;
-      mouseEventsOff();
-      penStatus.value = false;
-      canvasData.isDrawingMode = false;
-    };
-    // clears board
+
+    /**
+     * Clear the canvas of all objects when the user selects the clear button
+     */
     const clearBoard = async () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
       }
-    };
-    // handles when line thickness is changed
-    const getDropDown = async (event: any) => {
-      if (event.target.value === undefined) { return; }
-      lineThickness = parseInt(event.target.value, 10);
-      canvasData.freeDrawingBrush.width = lineThickness;
     };
     /**
      * Initialize the Fabric.js canvas
@@ -288,7 +402,7 @@ export default defineComponent({
 
       canvasData = new fabric.Canvas('main-canvas', {
         width: canvasDiv.clientWidth,
-        height: canvasDiv.clientHeight,
+        height: canvasDiv.clientWidth / canvasRatio,
         perPixelTargetFind: true,
         targetFindTolerance: 5,
       });
@@ -307,21 +421,51 @@ export default defineComponent({
           elem.remove();
         }
       });
+
+      /**
+       * Whenever a new object is added to the canvas
+       */
+      // TODO: Probably shouldn't be casting evt here to any
+      canvasData.on('object:added', (evt: any) => {
+        if (evt.target !== undefined && 'id' in evt?.target === false) {
+          // eslint-disable-next-line no-param-reassign
+          evt.target.id = getUUID();
+        }
+      });
     };
-    // When component is mounted, run initFabricCanvas
+
+    /**
+     * Event handler for resizing the canvas when the size of the webpage changes
+     */
+    const resizeCanvas = () => {
+      const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
+
+      const containerWidth = outerCanvasContainer.clientWidth;
+      const scale = containerWidth / canvasData.getWidth();
+      const zoom = canvasData.getZoom() * scale;
+
+      canvasData.setDimensions({
+        width: containerWidth,
+        height: containerWidth / canvasRatio,
+      });
+
+      canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
+    };
+
+    // Hook resize callback into creation and destruction of this element
+    onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
+    onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
+
     onMounted(initFabricCanvas);
     return {
+      resizeCanvas,
       tool,
-      penStatus,
       canvasData,
-      togglePenTool,
-      rectangle,
       clearBoard,
-      circle,
-      select,
       initFabricCanvas,
-      lineTool,
-      getDropDown,
+      handleToolChange,
+      lineThickness,
+      thicknessOptions,
     };
   },
 });
