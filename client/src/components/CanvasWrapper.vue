@@ -6,6 +6,9 @@
     <span>
       <ColourPicker />
     </span>
+    <span>
+      <Rectangle />
+    </span>
     <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
     <span><button @click="rectangle"> Rectangle </button></span>
     <span><button @click="circle"> Circle </button></span>
@@ -42,6 +45,7 @@ import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
+import Rectangle from '@/components/ToolPalette/Rectangle.vue';
 import {
   RectWithID,
   CircleWithID,
@@ -62,6 +66,7 @@ export default defineComponent({
   name: 'CanvasWrapper',
   components: {
     ColourPicker,
+    Rectangle,
   },
   setup(props) {
     const store = useStore();
@@ -76,12 +81,12 @@ export default defineComponent({
     // stores the first coord when line tool is active
     let lineToollTFirstCoordPlaced:number[];
     let rect: fabric.Object;
-    let circ: fabric.Object;
+    let circ: fabric.Circle;
     let isDown: boolean;
     let origX: number;
     let origY: number;
     const tool = ref(ToolType.None);
-    let radius: any;
+    let radius: number;
     let strokeWidth: any;
     // determines how thick line tool and pen tool are
     let lineThickness = 2;
@@ -127,7 +132,7 @@ export default defineComponent({
           radius: 1,
           strokeWidth: 2,
           stroke: store.state.primaryToolColour,
-          fill: 'White',
+          fill: store.state.secondaryToolColour,
           originX: 'center',
           originY: 'center',
         });
@@ -188,7 +193,7 @@ export default defineComponent({
         if (radius > strokeWidth) {
           radius -= strokeWidth / 2;
         }
-        circ.set({ strokeWidth: radius });
+        circ.setRadius(radius);
         if (origX > pointer.x) {
           circ.set({ originX: 'right' });
         } else {
@@ -258,7 +263,10 @@ export default defineComponent({
       } else {
         tool.value = ToolType.Line;
       }
+      mouseEventsOff();
       mouseEventsOn();
+      penStatus.value = false;
+      canvasData.isDrawingMode = false;
     };
     const togglePenTool = async () => {
       penStatus.value = !penStatus.value;
