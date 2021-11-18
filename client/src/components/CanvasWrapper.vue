@@ -6,12 +6,13 @@
     <span>
       <ColourPicker />
     </span>
-    <span><button @click="togglePenTool">Pen tool toggle</button></span><span>{{ penStatus }}</span>
-    <span><button @click="rectangle"> Rectangle </button></span>
-    <span><button @click="circle"> Circle </button></span>
-    <span><button @click="select"> select </button></span>
+    <span><button @click="handleToolChange(0)">Pen tool toggle</button></span>
+    <span>{{ penStatus }}</span>
+    <span><button @click="handleToolChange(1)"> Rectangle </button></span>
+    <span><button @click="handleToolChange(2)"> Circle </button></span>
+    <span><button @click="handleToolChange(3)"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
-    <span><button @click="lineTool(event)"> Line Tool </button></span>
+    <span><button @click="handleToolChange(4)"> Line Tool </button></span>
     <span><select name = 'thick' @click="getDropDown">
       <option value = '2'> 2px </option>
       <option value = '5'> 5px </option>
@@ -98,6 +99,69 @@ export default defineComponent({
       },
     });
 
+    function lineMouseDown() {
+      if (lTfirstCoordPlaced === false) {
+        lineToollTFirstCoordPlaced = [origX, origY];
+        lTfirstCoordPlaced = true;
+        const width = lineThickness;
+
+        line = new LineWithID(
+          [
+            lineToollTFirstCoordPlaced[0],
+            lineToollTFirstCoordPlaced[1],
+            origX,
+            origY,
+          ],
+          {
+            stroke: store.state.primaryToolColour,
+            strokeWidth: width,
+            opacity: 0.5,
+            strokeUniform: true,
+            padding: 5,
+          },
+        );
+        canvasData.add(line);
+        // first coord already place so finalize line
+      } else {
+        line.set({ x2: origX, y2: origY, opacity: 1 });
+        line.setCoords();
+        canvasData.renderAll();
+        lTfirstCoordPlaced = false;
+        // tool.value = ToolType.Select;
+      }
+      console.log('system.test');
+    }
+    function rectangleDown(x : number, y : number) {
+      rect = new RectWithID({
+        left: origX,
+        top: origY,
+        originX: 'left',
+        originY: 'top',
+        width: x - origX,
+        height: y - origY,
+        angle: 0,
+        fill: store.state.primaryToolColour,
+        strokeWidth: 2,
+        stroke: 'blue',
+        transparentCorners: false,
+      });
+      canvasData.add(rect);
+    }
+    function circleDown(x : number, y : number) {
+      circ = new CircleWithID({
+        left: x,
+        top: y,
+        radius: 1,
+        strokeWidth: 2,
+        stroke: store.state.primaryToolColour,
+        fill: 'White',
+        originX: 'center',
+        originY: 'center',
+      });
+      strokeWidth = circ.strokeWidth;
+      canvasData.add(circ);
+    }
+
     // event handler when mouse is pressed
     function onMouseDown(o: fabric.IEvent) {
       isDown = true;
@@ -106,66 +170,51 @@ export default defineComponent({
       origY = pointer.y;
 
       if (tool.value === ToolType.Rectangle) {
-        rect = new RectWithID({
-          left: origX,
-          top: origY,
-          originX: 'left',
-          originY: 'top',
-          width: pointer.x - origX,
-          height: pointer.y - origY,
-          angle: 0,
-          fill: store.state.primaryToolColour,
-          strokeWidth: 2,
-          stroke: 'blue',
-          transparentCorners: false,
-        });
-        canvasData.add(rect);
+        rectangleDown(pointer.x, pointer.y);
       } else if (tool.value === ToolType.Circle) {
-        circ = new CircleWithID({
-          left: pointer.x,
-          top: pointer.y,
-          radius: 1,
-          strokeWidth: 2,
-          stroke: store.state.primaryToolColour,
-          fill: 'White',
-          originX: 'center',
-          originY: 'center',
-        });
-        strokeWidth = circ.strokeWidth;
-        canvasData.add(circ);
+        circleDown(pointer.x, pointer.y);
         // case line tool is selected
       } else if (tool.value === ToolType.Line) {
         // if first coord not placed, set it and start drawing line to mouse
-        if (lTfirstCoordPlaced === false) {
-          lineToollTFirstCoordPlaced = [origX, origY];
-          lTfirstCoordPlaced = true;
-          const width = lineThickness;
-
-          line = new LineWithID(
-            [
-              lineToollTFirstCoordPlaced[0],
-              lineToollTFirstCoordPlaced[1],
-              origX,
-              origY,
-            ],
-            {
-              stroke: store.state.primaryToolColour,
-              strokeWidth: width,
-              opacity: 0.5,
-              strokeUniform: true,
-              padding: 5,
-            },
-          );
-          canvasData.add(line);
-          // first coord already place so finalize line
-        } else {
-          line.set({ x2: origX, y2: origY, opacity: 1 });
-          line.setCoords();
-          canvasData.renderAll();
-          lTfirstCoordPlaced = false;
-          // tool.value = ToolType.Select;
-        }
+        lineMouseDown();
       }
+    }
+    function lineMove(x : number, y : number) {
+      if (lTfirstCoordPlaced === true) {
+        line.set({ x2: x, y2: y });
+        canvasData.renderAll();
+      }
+    }
+    function rectangleMove(x : number, y : number) {
+      if (origX > x) {
+        rect.set({ left: Math.abs(x) });
+      }
+      if (origY > y) {
+        rect.set({ top: Math.abs(y) });
+      }
+
+      rect.set({ width: Math.abs(origX - x) });
+      rect.set({ height: Math.abs(origY - y) });
+      rect.setCoords();
+      canvasData.renderAll();
+    }
+    function circleMove(x : number, y : number) {
+      if (radius > strokeWidth) {
+        radius -= strokeWidth / 2;
+      }
+      circ.set({ strokeWidth: radius });
+      if (origX > x) {
+        circ.set({ originX: 'right' });
+      } else {
+        circ.set({ originX: 'left' });
+      }
+      if (origY > y) {
+        circ.set({ originY: 'bottom' });
+      } else {
+        circ.set({ originY: 'top' });
+      }
+      circ.setCoords();
+      canvasData.renderAll();
     }
     // Mouse movemement handler
     function onMouseMove(o: fabric.IEvent) {
@@ -173,51 +222,17 @@ export default defineComponent({
       const pointer = canvasData.getPointer(o.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
       if (tool.value === ToolType.Rectangle) {
-        if (origX > pointer.x) {
-          rect.set({ left: Math.abs(pointer.x) });
-        }
-        if (origY > pointer.y) {
-          rect.set({ top: Math.abs(pointer.y) });
-        }
-
-        rect.set({ width: Math.abs(origX - pointer.x) });
-        rect.set({ height: Math.abs(origY - pointer.y) });
-        rect.setCoords();
-        canvasData.renderAll();
+        rectangleMove(pointer.x, pointer.y);
       } else if (tool.value === ToolType.Circle) {
-        if (radius > strokeWidth) {
-          radius -= strokeWidth / 2;
-        }
-        circ.set({ strokeWidth: radius });
-        if (origX > pointer.x) {
-          circ.set({ originX: 'right' });
-        } else {
-          circ.set({ originX: 'left' });
-        }
-        if (origY > pointer.y) {
-          circ.set({ originY: 'bottom' });
-        } else {
-          circ.set({ originY: 'top' });
-        }
-        circ.setCoords();
-        canvasData.renderAll();
+        circleMove(pointer.x, pointer.y);
         // line tool handler, makes line follow mouse
       } else if (tool.value === ToolType.Line) {
-        if (lTfirstCoordPlaced === true) {
-          line.set({ x2: pointer.x, y2: pointer.y });
-          canvasData.renderAll();
-        }
+        lineMove(pointer.x, pointer.y);
       }
     }
 
     function onMouseUp(o: fabric.IEvent) {
       isDown = false;
-      if (tool.value !== ToolType.Line && tool.value !== ToolType.Rectangle) {
-        canvasData.off('mouse:down', onMouseDown);
-        canvasData.off('mouse:move', onMouseMove);
-        canvasData.off('mouse:up', onMouseUp);
-        tool.value = ToolType.None;
-      }
     }
 
     // Watch for changes to primaryColour, and change brush colour when primaryColour changes
@@ -252,49 +267,43 @@ export default defineComponent({
 
     const penStatus: Ref<boolean> = ref(false);
     // handles the swapping to line tool
-    const lineTool = async () => {
-      if (tool.value === ToolType.Line) {
-        tool.value = ToolType.None;
-      } else {
-        tool.value = ToolType.Line;
-      }
-      mouseEventsOn();
-    };
-    const togglePenTool = async () => {
-      penStatus.value = !penStatus.value;
-      canvasData.isDrawingMode = penStatus.value;
-      canvasData.freeDrawingBrush.color = primaryColour.value;
-      canvasData.freeDrawingBrush.width = lineThickness;
-      if (tool.value === ToolType.Pen) {
-        tool.value = ToolType.None;
-      } else {
-        tool.value = ToolType.Pen;
-      }
-      mouseEventsOff();
-    };
 
-    const rectangle = async () => {
-      if (tool.value === ToolType.Rectangle) {
-        tool.value = ToolType.None;
-      } else {
-        tool.value = ToolType.Rectangle;
-      }
+    function handleToolChange(clickedTool : number) {
       mouseEventsOff();
       mouseEventsOn();
       penStatus.value = false;
       canvasData.isDrawingMode = false;
-    };
-    const circle = async () => {
-      if (tool.value === ToolType.Circle) {
-        tool.value = ToolType.None;
-      } else {
-        tool.value = ToolType.Circle;
+      switch (clickedTool) {
+        case 0: {
+          tool.value = ToolType.Pen;
+          canvasData.isDrawingMode = true;
+          canvasData.freeDrawingBrush.color = primaryColour.value;
+          canvasData.freeDrawingBrush.width = lineThickness;
+          break;
+        }
+        case 1: {
+          tool.value = ToolType.Rectangle;
+          break;
+        }
+        case 2: {
+          tool.value = ToolType.Circle;
+          break;
+        }
+        case 3: {
+          tool.value = ToolType.Select;
+          break;
+        }
+        case 4: {
+          tool.value = ToolType.Line;
+          break;
+        }
+        default: {
+          tool.value = ToolType.None;
+          break;
+        }
       }
-      mouseEventsOff();
-      mouseEventsOn();
-      penStatus.value = false;
-      canvasData.isDrawingMode = false;
-    };
+    }
+
     // deletes selected object
     const deleteSelected = async () => {
       const objectList = canvasData.getActiveObjects();
@@ -304,16 +313,7 @@ export default defineComponent({
         elem.remove();
       }
     };
-    const select = async () => {
-      if (tool.value === ToolType.Select) {
-        tool.value = ToolType.None;
-      } else {
-        tool.value = ToolType.Select;
-      }
-      mouseEventsOff();
-      penStatus.value = false;
-      canvasData.isDrawingMode = false;
-    };
+
     // clears board
     const clearBoard = async () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
@@ -399,14 +399,10 @@ export default defineComponent({
       tool,
       penStatus,
       canvasData,
-      togglePenTool,
-      rectangle,
       clearBoard,
-      circle,
-      select,
       initFabricCanvas,
-      lineTool,
       getDropDown,
+      handleToolChange,
     };
   },
 });
