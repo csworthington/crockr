@@ -6,12 +6,12 @@
     <span>
       <ColourPicker />
     </span>
-    <span><button @click="handleToolChange(0)">Pen tool toggle</button></span>
-    <span><button @click="handleToolChange(1)"> Rectangle </button></span>
-    <span><button @click="handleToolChange(2)"> Circle </button></span>
-    <span><button @click="handleToolChange(3)"> select </button></span>
+    <span><button @click="handleToolChange('PEN')">Pen tool toggle</button></span>
+    <span><button @click="handleToolChange('RECTANGLE')"> Rectangle </button></span>
+    <span><button @click="handleToolChange('CIRCLE')"> Circle </button></span>
+    <span><button @click="handleToolChange('SELECT')"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
-    <span><button @click="handleToolChange(4)"> Line Tool </button></span>
+    <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -86,17 +86,17 @@ export default defineComponent({
     const tool = ref(ToolType.None);
     let radius: any;
     let strokeWidth: any;
+
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
-
-    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
-
     const thicknessOptions = [
       { text: '2px', value: 2 },
       { text: '5px', value: 5 },
       { text: '8px', value: 8 },
       { text: '20px', value: 20 },
     ];
+
+    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -108,6 +108,10 @@ export default defineComponent({
       },
     });
 
+    /**
+     * Start drawing a line on the canvas when the line tool is selected and the
+     * mouse:down event has been fired by the canvas
+     */
     function lineMouseDown() {
       if (lTfirstCoordPlaced === false) {
         lineToollTFirstCoordPlaced = [origX, origY];
@@ -136,10 +140,13 @@ export default defineComponent({
         line.setCoords();
         canvasData.renderAll();
         lTfirstCoordPlaced = false;
-        // tool.value = ToolType.Select;
       }
-      console.log('system.test');
     }
+
+    /**
+     * Place a rectangle on the canvas when the rectangle tool is selected and
+     * the mouse:down event has been fired by the canvas
+     */
     function rectangleDown(x : number, y : number) {
       rect = new RectWithID({
         left: origX,
@@ -156,6 +163,11 @@ export default defineComponent({
       });
       canvasData.add(rect);
     }
+
+    /**
+     * Place a circle on the canvas when the circle tool is selected and
+     * the mouse:down event has been fired by the canvas
+     */
     function circleDown(x : number, y : number) {
       circ = new CircleWithID({
         left: x,
@@ -171,29 +183,20 @@ export default defineComponent({
       canvasData.add(circ);
     }
 
-    // event handler when mouse is pressed
-    function onMouseDown(o: fabric.IEvent) {
-      isDown = true;
-      const pointer = canvasData.getPointer(o.e);
-      origX = pointer.x;
-      origY = pointer.y;
-
-      if (tool.value === ToolType.Rectangle) {
-        rectangleDown(pointer.x, pointer.y);
-      } else if (tool.value === ToolType.Circle) {
-        circleDown(pointer.x, pointer.y);
-        // case line tool is selected
-      } else if (tool.value === ToolType.Line) {
-        // if first coord not placed, set it and start drawing line to mouse
-        lineMouseDown();
-      }
-    }
+    /**
+     * Move one end of the line when the first part of the line has been placed down and
+     * the mouse:move event has been fired by the canvas
+     */
     function lineMove(x : number, y : number) {
       if (lTfirstCoordPlaced === true) {
         line.set({ x2: x, y2: y });
         canvasData.renderAll();
       }
     }
+
+    /**
+     * Redraw the rectangle on the canvas when the mouse is being moved
+     */
     function rectangleMove(x : number, y : number) {
       if (origX > x) {
         rect.set({ left: Math.abs(x) });
@@ -207,6 +210,10 @@ export default defineComponent({
       rect.setCoords();
       canvasData.renderAll();
     }
+
+    /**
+     * Redraw the circle on the canvas when the mouse is being moved
+     */
     function circleMove(x : number, y : number) {
       if (radius > strokeWidth) {
         radius -= strokeWidth / 2;
@@ -225,11 +232,38 @@ export default defineComponent({
       circ.setCoords();
       canvasData.renderAll();
     }
-    // Mouse movemement handler
-    function onMouseMove(o: fabric.IEvent) {
+
+    /**
+     * Primary event handler for fabric.js canvas mouse:down event
+     * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
+     */
+    function handleMouseDownEvent(evt: fabric.IEvent<Event>) {
+      isDown = true;
+      const pointer = canvasData.getPointer(evt.e);
+      origX = pointer.x;
+      origY = pointer.y;
+
+      if (tool.value === ToolType.Rectangle) {
+        rectangleDown(pointer.x, pointer.y);
+      } else if (tool.value === ToolType.Circle) {
+        circleDown(pointer.x, pointer.y);
+        // case line tool is selected
+      } else if (tool.value === ToolType.Line) {
+        // if first coord not placed, set it and start drawing line to mouse
+        lineMouseDown();
+      }
+    }
+
+    /**
+     * Primary event handler for fabric.js canvas mouse:move event
+     * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
+     */
+    function handleMouseMoveEvent(evt: fabric.IEvent<Event>) {
       if (!isDown && tool.value !== ToolType.Line) return;
-      const pointer = canvasData.getPointer(o.e);
+
+      const pointer = canvasData.getPointer(evt.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
+
       if (tool.value === ToolType.Rectangle) {
         rectangleMove(pointer.x, pointer.y);
       } else if (tool.value === ToolType.Circle) {
@@ -240,14 +274,53 @@ export default defineComponent({
       }
     }
 
-    function onMouseUp(o: fabric.IEvent) {
+    /**
+     * Primary event handler for fabric.js canvas mouse:up event
+     * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
+     */
+    function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
     }
 
-    // Watch for changes to primaryColour, and change brush colour when primaryColour changes
+    /**
+     * Disable all custom event handlers for the fabric.js canvas
+     */
+    function mouseEventsOff() {
+      canvasData.off('mouse:down', handleMouseDownEvent);
+      canvasData.off('mouse:move', handleMouseMoveEvent);
+      canvasData.off('mouse:up', handleMouseUpEvent);
+    }
+
+    /**
+     * Enable all custom event handlers for the fabric.js canvas
+     */
+    function mouseEventsOn() {
+      canvasData.on('mouse:down', handleMouseDownEvent);
+      canvasData.on('mouse:move', handleMouseMoveEvent);
+      canvasData.on('mouse:up', handleMouseUpEvent);
+    }
+
+    /**
+     * Change the freeDrawingBrush width whenever lineThickness is changed.
+     * Needed for changing the thickness of the brush when the pen tool is
+     * active
+     */
+    watch(() => lineThickness.value, (currentValue: number) => {
+      canvasData.freeDrawingBrush.width = currentValue;
+    });
+
+    /**
+     * Watch for changes to primaryColour, and change brush colour when primaryColour changes
+     */
     watch(primaryColour, (currentValue: string) => {
       canvasData.freeDrawingBrush.color = currentValue;
     });
+
+    /**
+     * Watch for change in tool type.
+     * Enable object selection when select tool is active, disable otherwise
+     * Enable drawing mode on canvas when pen tool is active, disable otherwise
+     */
     watch(() => tool.value, (currentValue: ToolType) => {
       if (currentValue !== ToolType.Pen) {
         canvasData.isDrawingMode = false;
@@ -262,52 +335,33 @@ export default defineComponent({
     });
 
     /**
-     * Change the freeDrawingBrush width whenever lineThickness is changed.
-     * Needed for changing the thickness of the brush when the pen tool is
-     * active
+     * Handle when a user selects a new tool
      */
-    watch(() => lineThickness.value, (currentValue: number) => {
-      canvasData.freeDrawingBrush.width = currentValue;
-    });
-
-    function mouseEventsOff() {
-      canvasData.off('mouse:down', onMouseDown);
-      canvasData.off('mouse:move', onMouseMove);
-      canvasData.off('mouse:up', onMouseUp);
-    }
-    function mouseEventsOn() {
-      canvasData.on('mouse:down', onMouseDown);
-      canvasData.on('mouse:move', onMouseMove);
-      canvasData.on('mouse:up', onMouseUp);
-    }
-
-    // handles the swapping to line tool
-
-    function handleToolChange(clickedTool : number) {
+    function handleToolChange(clickedTool : ToolType) {
       mouseEventsOff();
       mouseEventsOn();
       canvasData.isDrawingMode = false;
       switch (clickedTool) {
-        case 0: {
+        case ToolType.Pen: {
           tool.value = ToolType.Pen;
           canvasData.isDrawingMode = true;
           canvasData.freeDrawingBrush.color = primaryColour.value;
           canvasData.freeDrawingBrush.width = lineThickness.value;
           break;
         }
-        case 1: {
+        case ToolType.Rectangle: {
           tool.value = ToolType.Rectangle;
           break;
         }
-        case 2: {
+        case ToolType.Circle: {
           tool.value = ToolType.Circle;
           break;
         }
-        case 3: {
+        case ToolType.Select: {
           tool.value = ToolType.Select;
           break;
         }
-        case 4: {
+        case ToolType.Line: {
           tool.value = ToolType.Line;
           break;
         }
@@ -318,7 +372,9 @@ export default defineComponent({
       }
     }
 
-    // deletes selected object
+    /**
+     * Delete a specific object when the user presses the delete button
+     */
     const deleteSelected = async () => {
       const objectList = canvasData.getActiveObjects();
       objectList.forEach((object) => { canvasData.remove(object); });
@@ -328,20 +384,13 @@ export default defineComponent({
       }
     };
 
-    // clears board
+    /**
+     * Clear the canvas of all objects when the user selects the clear button
+     */
     const clearBoard = async () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
       }
-    };
-
-    /**
-     * Handle event when line thickness is changed
-     */
-    const getDropDown = async (event: any) => {
-      if (event.target.value === undefined) { return; }
-      lineThickness.value = parseInt(event.target.value, 10);
-      canvasData.freeDrawingBrush.width = lineThickness.value;
     };
 
     /**
@@ -386,7 +435,9 @@ export default defineComponent({
       });
     };
 
-    // Make canvas responsive when window is resized
+    /**
+     * Event handler for resizing the canvas when the size of the webpage changes
+     */
     const resizeCanvas = () => {
       const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
 
@@ -406,7 +457,6 @@ export default defineComponent({
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
 
-    // When component is mounted, run initFabricCanvas
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -414,7 +464,6 @@ export default defineComponent({
       canvasData,
       clearBoard,
       initFabricCanvas,
-      getDropDown,
       handleToolChange,
       lineThickness,
       thicknessOptions,
