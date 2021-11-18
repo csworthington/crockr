@@ -77,7 +77,7 @@ export default defineComponent({
     // stores the first coord when line tool is active
     let lineToollTFirstCoordPlaced:number[];
     let rect: fabric.Object;
-    let circ: fabric.Object;
+    let circ: fabric.Circle;
     let isDown: boolean;
     let origX: number;
     let origY: number;
@@ -154,7 +154,7 @@ export default defineComponent({
         radius: 1,
         strokeWidth: 2,
         stroke: store.state.primaryToolColour,
-        fill: 'White',
+        fill: '',
         originX: 'center',
         originY: 'center',
       });
@@ -202,7 +202,7 @@ export default defineComponent({
       if (radius > strokeWidth) {
         radius -= strokeWidth / 2;
       }
-      circ.set({ strokeWidth: radius });
+      circ.setRadius(radius);
       if (origX > x) {
         circ.set({ originX: 'right' });
       } else {
