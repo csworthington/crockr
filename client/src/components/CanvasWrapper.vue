@@ -154,7 +154,7 @@ export default defineComponent({
         radius: 1,
         strokeWidth: 2,
         stroke: store.state.primaryToolColour,
-        fill: '',
+        fill: 'store.state.primaryToolColour',
         originX: 'center',
         originY: 'center',
       });
