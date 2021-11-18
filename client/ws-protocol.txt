@@ -1,0 +1,12 @@
+Connecting to the server:
+
+1. Client sends GET request to ws port on server. This request includes following information:
+    - Some way of identifying the client (maybe session id?)
+    - The ID of the room it would like to access (fixed for the moment)
+
+2. Server receives request and verifies the following:
+    - Does ID of the room exist?
+    - Does the client with that ID have permission to access that room?
+If criteria is satisfied, 
+
+3. 
