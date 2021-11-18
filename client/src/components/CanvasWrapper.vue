@@ -265,9 +265,16 @@ export default defineComponent({
         canvasData.skipTargetFind = true;
       }
     });
-    // watch(lineThickness, (currentValue: any) => {
-    // canvasData.freeDrawingBrush.width = currentValue;
-    // });
+
+    /**
+     * Change the freeDrawingBrush width whenever lineThickness is changed.
+     * Needed for changing the thickness of the brush when the pen tool is
+     * active
+     */
+    watch(() => lineThickness.value, (currentValue: number) => {
+      canvasData.freeDrawingBrush.width = currentValue;
+    });
+
     function mouseEventsOff() {
       canvasData.off('mouse:down', onMouseDown);
       canvasData.off('mouse:move', onMouseMove);
