@@ -13,12 +13,18 @@
     <span><button @click="handleToolChange(3)"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange(4)"> Line Tool </button></span>
-    <span><select name = 'thick' @click="getDropDown">
-      <option value = '2'> 2px </option>
-      <option value = '5'> 5px </option>
-      <option value = '8'> 8px </option>
-      <option value = '20'> 20px </option>
-    </select></span>
+    <span>
+      <!-- <select name='thick' @click="getDropDown"> -->
+      <select name="thick" v-model="lineThickness">
+        <option v-for="option in thicknessOptions" :key="option.value" :value="option.value">
+          {{ option.text }}
+        </option>
+        <!-- <option value = '2'> 2px </option>
+        <option value = '5'> 5px </option>
+        <option value = '8'> 8px </option>
+        <option value = '20'> 20px </option> -->
+      </select>
+    </span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -85,9 +91,18 @@ export default defineComponent({
     let radius: any;
     let strokeWidth: any;
     // determines how thick line tool and pen tool are
-    let lineThickness = 2;
+    // let lineThickness = 2;
 
     const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
+
+    const lineThickness = ref(2);
+
+    const thicknessOptions = [
+      { text: '2px', value: 2 },
+      { text: '5px', value: 5 },
+      { text: '8px', value: 8 },
+      { text: '20px', value: 20 },
+    ];
 
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
@@ -103,7 +118,7 @@ export default defineComponent({
       if (lTfirstCoordPlaced === false) {
         lineToollTFirstCoordPlaced = [origX, origY];
         lTfirstCoordPlaced = true;
-        const width = lineThickness;
+        const width = lineThickness.value;
 
         line = new LineWithID(
           [
@@ -278,7 +293,7 @@ export default defineComponent({
           tool.value = ToolType.Pen;
           canvasData.isDrawingMode = true;
           canvasData.freeDrawingBrush.color = primaryColour.value;
-          canvasData.freeDrawingBrush.width = lineThickness;
+          canvasData.freeDrawingBrush.width = lineThickness.value;
           break;
         }
         case 1: {
@@ -326,8 +341,8 @@ export default defineComponent({
      */
     const getDropDown = async (event: any) => {
       if (event.target.value === undefined) { return; }
-      lineThickness = parseInt(event.target.value, 10);
-      canvasData.freeDrawingBrush.width = lineThickness;
+      lineThickness.value = parseInt(event.target.value, 10);
+      canvasData.freeDrawingBrush.width = lineThickness.value;
     };
 
     /**
@@ -403,6 +418,8 @@ export default defineComponent({
       initFabricCanvas,
       getDropDown,
       handleToolChange,
+      lineThickness,
+      thicknessOptions,
     };
   },
 });
