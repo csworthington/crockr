@@ -7,7 +7,6 @@
       <ColourPicker />
     </span>
     <span><button @click="handleToolChange(0)">Pen tool toggle</button></span>
-    <span>{{ penStatus }}</span>
     <span><button @click="handleToolChange(1)"> Rectangle </button></span>
     <span><button @click="handleToolChange(2)"> Circle </button></span>
     <span><button @click="handleToolChange(3)"> select </button></span>
@@ -95,7 +94,7 @@ export default defineComponent({
 
     const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
-    const lineThickness = ref(2);
+    const lineThickness: Ref<number> = ref(2);
 
     const thicknessOptions = [
       { text: '2px', value: 2 },
@@ -280,13 +279,11 @@ export default defineComponent({
       canvasData.on('mouse:up', onMouseUp);
     }
 
-    const penStatus: Ref<boolean> = ref(false);
     // handles the swapping to line tool
 
     function handleToolChange(clickedTool : number) {
       mouseEventsOff();
       mouseEventsOn();
-      penStatus.value = false;
       canvasData.isDrawingMode = false;
       switch (clickedTool) {
         case 0: {
@@ -412,7 +409,6 @@ export default defineComponent({
     return {
       resizeCanvas,
       tool,
-      penStatus,
       canvasData,
       clearBoard,
       initFabricCanvas,
