@@ -13,15 +13,12 @@
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange(4)"> Line Tool </button></span>
     <span>
-      <!-- <select name='thick' @click="getDropDown"> -->
       <select name="thick" v-model="lineThickness">
-        <option v-for="option in thicknessOptions" :key="option.value" :value="option.value">
+        <option v-for="option in thicknessOptions"
+                :key="option.value"
+                :value="option.value">
           {{ option.text }}
         </option>
-        <!-- <option value = '2'> 2px </option>
-        <option value = '5'> 5px </option>
-        <option value = '8'> 8px </option>
-        <option value = '20'> 20px </option> -->
       </select>
     </span>
   </div>
@@ -90,11 +87,9 @@ export default defineComponent({
     let radius: any;
     let strokeWidth: any;
     // determines how thick line tool and pen tool are
-    // let lineThickness = 2;
+    const lineThickness: Ref<number> = ref(2);
 
     const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
-
-    const lineThickness: Ref<number> = ref(2);
 
     const thicknessOptions = [
       { text: '2px', value: 2 },
@@ -156,7 +151,7 @@ export default defineComponent({
         angle: 0,
         fill: store.state.primaryToolColour,
         strokeWidth: 2,
-        stroke: 'blue',
+        stroke: store.state.primaryToolColour,
         transparentCorners: false,
       });
       canvasData.add(rect);
@@ -168,7 +163,7 @@ export default defineComponent({
         radius: 1,
         strokeWidth: 2,
         stroke: store.state.primaryToolColour,
-        fill: 'store.state.primaryToolColour',
+        fill: store.state.primaryToolColour,
         originX: 'center',
         originY: 'center',
       });
