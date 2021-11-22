@@ -19,27 +19,28 @@
 <script lang="ts">
 import { computed, defineComponent, WritableComputedRef } from 'vue';
 import { useStore } from 'vuex';
+import { key } from '@/store/index';
 
 export default defineComponent({
   setup() {
-    const store = useStore();
+    const store = useStore(key);
 
     // Selected tool colour. Stored in Vuex Store
     const primaryToolColour: WritableComputedRef<string> = computed({
       get(): string {
-        return store.state.primaryToolColour;
+        return store.state.colourPalette.primaryToolColour;
       },
       set(newValue: string): void {
-        store.commit('updatePrimaryToolColour', newValue);
+        store.commit('colourPalette/updatePrimaryToolColour', newValue);
       },
     });
 
     const secondaryToolColour: WritableComputedRef<string> = computed({
       get(): string {
-        return store.state.secondaryToolColour;
+        return store.state.colourPalette.secondaryToolColour;
       },
       set(newValue: string): void {
-        store.commit('updateSecondaryToolColour', newValue);
+        store.commit('colourPalette/updateSecondaryToolColour', newValue);
       },
     });
 
