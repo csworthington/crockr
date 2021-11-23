@@ -3,7 +3,9 @@ import { Commit } from 'vuex';
 
 enum ChatStoreActions {
   AddMessage = 'ADD_MESSAGE',
-  DeleteMessage = 'DELETE_MESSAGE'
+  DeleteMessage = 'DELETE_MESSAGE',
+  SetConnection = 'SET_CONNECTION',
+  SetError = 'SET_ERROR',
 }
 
 interface ChatMessage {
@@ -13,11 +15,15 @@ interface ChatMessage {
 }
 
 export interface ChatMessagesState {
+  connected: boolean;
+  error: null | string;
   chatMessages: ChatMessage[];
   limit: number;
 }
 
 const state: ChatMessagesState = {
+  connected: false,
+  error: null,
   chatMessages: [],
   limit: 5,
 };
@@ -33,6 +39,15 @@ const actions = {
   deleteMessage({ commit }: {commit: Commit}, message: ChatMessage): void {
     commit(ChatStoreActions.DeleteMessage, message);
   },
+  connectionOpened({ commit }: {commit: Commit}): void {
+    commit(ChatStoreActions.SetConnection, true);
+  },
+  connectionClosed({ commit }: {commit: Commit}): void {
+    commit(ChatStoreActions.SetConnection, false);
+  },
+  connectionError({ commit }: {commit: Commit}, error: null | string): void {
+    commit(ChatStoreActions.SetError, error);
+  },
 };
 
 const mutations = {
@@ -44,6 +59,12 @@ const mutations = {
   },
   DELETE_MESSAGE(state: ChatMessagesState, message: ChatMessage): void {
     state.chatMessages = state.chatMessages.filter((m) => m.id !== message.id);
+  },
+  SET_CONNECTION(state: ChatMessagesState, message: boolean): void {
+    state.connected = message;
+  },
+  SET_ERROR(state: ChatMessagesState, error: null | string): void {
+    state.error = error;
   },
 };
 

@@ -9,7 +9,7 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 
-import WebSocketManager from '@/components/websockets/WebSocketManager.vue';
+import WebSocketManager from '@/components/websockets/WSManager.vue';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
 
 export default defineComponent({

@@ -44,7 +44,7 @@ import {
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
-import { key } from '@/store/index';
+import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import Rectangle from '@/components/ToolPalette/Rectangle.vue';
 import {
@@ -69,7 +69,7 @@ export default defineComponent({
     ColourPicker,
   },
   setup(props) {
-    const store = useStore(key);
+    const store = useStore(StoreKey);
 
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;

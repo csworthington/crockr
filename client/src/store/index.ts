@@ -1,19 +1,14 @@
-import { InjectionKey } from 'vue';
-import { createStore, Store } from 'vuex';
+import { createStore } from 'vuex';
+import { State } from '@/store/typings.d';
+import { chat } from '@/store/modules/chat';
+import { colourPalette } from '@/store/modules/colourPalette';
+import { socket } from '@/store/modules/socket';
 
-import { chat, ChatMessagesState } from '@/store/modules/chat';
-import { colourPalette, ColourPaletteState } from '@/store/modules/colourPalette';
-
-export interface State {
-  chat: ChatMessagesState
-  colourPalette: ColourPaletteState
-}
-
-export const key: InjectionKey<Store<State>> = Symbol('state key');
-
+// eslint-disable-next-line import/prefer-default-export
 export const store = createStore<State>({
   modules: {
     chat,
     colourPalette,
+    socket,
   },
 });

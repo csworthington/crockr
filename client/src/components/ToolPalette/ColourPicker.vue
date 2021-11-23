@@ -19,11 +19,11 @@
 <script lang="ts">
 import { computed, defineComponent, WritableComputedRef } from 'vue';
 import { useStore } from 'vuex';
-import { key } from '@/store/index';
+import { StoreKey } from '@/symbols';
 
 export default defineComponent({
   setup() {
-    const store = useStore(key);
+    const store = useStore(StoreKey);
 
     // Selected tool colour. Stored in Vuex Store
     const primaryToolColour: WritableComputedRef<string> = computed({
