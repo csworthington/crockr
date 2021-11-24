@@ -1,14 +1,14 @@
-/* eslint-disable no-shadow */
+/* eslint-disable no-param-reassign */
 import { Commit } from 'vuex';
 
-enum ChatStoreActions {
+export enum ChatStoreActions {
   AddMessage = 'ADD_MESSAGE',
   DeleteMessage = 'DELETE_MESSAGE',
   SetConnection = 'SET_CONNECTION',
   SetError = 'SET_ERROR',
 }
 
-interface ChatMessage {
+export interface ChatMessage {
   id: string;
   timestamp: string;
   message: string;
@@ -29,7 +29,7 @@ const state: ChatMessagesState = {
 };
 
 const getters = {
-  displayMessages: (state: ChatMessagesState): ChatMessage[] => state.chatMessages,
+  displayMessages: (chatState: ChatMessagesState): ChatMessage[] => chatState.chatMessages,
 };
 
 const actions = {
@@ -51,20 +51,20 @@ const actions = {
 };
 
 const mutations = {
-  ADD_MESSAGE(state: ChatMessagesState, message: ChatMessage): void {
-    while (state.chatMessages.length >= state.limit) {
-      state.chatMessages.shift();
+  ADD_MESSAGE(chatstate: ChatMessagesState, message: ChatMessage): void {
+    while (chatstate.chatMessages.length >= chatstate.limit) {
+      chatstate.chatMessages.shift();
     }
-    state.chatMessages.push(message);
+    chatstate.chatMessages.push(message);
   },
-  DELETE_MESSAGE(state: ChatMessagesState, message: ChatMessage): void {
-    state.chatMessages = state.chatMessages.filter((m) => m.id !== message.id);
+  DELETE_MESSAGE(chatState: ChatMessagesState, message: ChatMessage): void {
+    chatState.chatMessages = chatState.chatMessages.filter((m) => m.id !== message.id);
   },
-  SET_CONNECTION(state: ChatMessagesState, message: boolean): void {
-    state.connected = message;
+  SET_CONNECTION(chatState: ChatMessagesState, message: boolean): void {
+    chatState.connected = message;
   },
-  SET_ERROR(state: ChatMessagesState, error: null | string): void {
-    state.error = error;
+  SET_ERROR(chatState: ChatMessagesState, error: null | string): void {
+    chatState.error = error;
   },
 };
 

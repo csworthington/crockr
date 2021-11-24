@@ -11,6 +11,9 @@ wsServer.on("connection", (socket: ws.WebSocket) => {
 
     if (message.toString() === "browserPing") {
       console.log("received ping from browser");
+    } else {
+      // Send back the string, but in caps
+      socket.send(message.toString().toUpperCase());
     }
   });
 

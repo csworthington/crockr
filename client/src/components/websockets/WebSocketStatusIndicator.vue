@@ -6,13 +6,22 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch } from 'vue';
+import {
+  defineComponent, onMounted, ref, watch,
+} from 'vue';
 import { useStore } from 'vuex';
-import { StoreKey } from '@/symbols';
+import { SocketKey, StoreKey } from '@/symbols';
+import { useSocket } from '@/useSocket';
 
 export default defineComponent({
   setup() {
     const store = useStore(StoreKey);
+
+    onMounted(() => {
+      const socket = useSocket();
+      console.log(socket);
+    });
+
     // UTF-8 Checkmark character. (✔️) Placeholder until better character can be found
     const CONNECTED_SYMBOL = '✔️';
     const DISCONNECTED_SYMBOL = 'X';
