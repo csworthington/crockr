@@ -7,33 +7,21 @@ import app from "./simpleapp";
 import wsServer from "./websockets";
 
 
-/**
- * Error Handler. Provides full stack
- */
-if (process.env.NODE_ENV === "development") {
-  app.use(errorHandler());
-}
 
+ 
+//creation of socket
 
-/**
- * Start Express server.
- */
-const server = app.listen(app.get("port"), () => {
-  console.log(
-    "  App is running at http://localhost:%d in %s mode",
-    app.get("port"),
-    app.get("env")
-  );
-  console.log("  Press CTRL-C to stop\n");
-});
+ const server = new WebSocket.Server({ port: 3000 });
+ //hadnleing when a connection is made
+ server.on("connection", function connection(socket) {
 
-/**
- * Set up websockets server
- */
-server.on("upgrade", (request: IncomingMessage, socket: Socket, head: Buffer) => {
-  wsServer.handleUpgrade(request, socket, head, (socket: WebSocket) => {
-    wsServer.emit("connection", socket, request);
-  });
-});
+   //handling waht to do when msg recieved 
+   socket.on("message", function incoming(message) {
+     console.log("received: %s", message);
+     socket.send("Got the following msg: " + message);
+   });
 
-export default server;
+   socket.send("Connected");
+ });
+
+//export default wsServer;

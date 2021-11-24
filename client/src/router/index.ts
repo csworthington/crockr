@@ -21,6 +21,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Canvas',
     component: Canvas,
   },
+  {
+    path: '/serverTest',
+    name: 'ServerTest',
+    component: () => import(/* webpackChunkName: "about" */ '../views/ServerTest.vue'),
+  },
 ];
 
 const router = createRouter({
