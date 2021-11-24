@@ -8,8 +8,11 @@
     <span><button @click="sendMessage">Send Message</button></span>
   </div>
   <div>
+    LastMessage: {{ lastMsg }}
+  </div>
+  <div>
     Log:
-    <ul>
+    <ul id="message-list">
       <li v-for="msg in messages" :key="msg.id">
         <span>"{{ msg.message }}"</span>
         <span>{{ msg.timestamp }}</span>
@@ -24,11 +27,10 @@ import {
   defineComponent,
   getCurrentInstance,
   ref,
-  computed,
   Ref,
 } from 'vue';
 
-import { useStore } from 'vuex';
+import { mapState, useStore } from 'vuex';
 import getUUID from '@/utils/id-generator';
 import { StoreKey } from '@/symbols';
 import { ChatMessage } from '@/store/modules/chat';
@@ -43,31 +45,32 @@ interface Message {
 export default defineComponent({
   setup() {
     const vm = getCurrentInstance() as ComponentInternalInstance;
-    // const messages: Ref<Message[]> = ref([{
-    //   id: getUUID(),
-    //   sender: 'nobody',
-    //   content: 'asdf1234',
-    //   timestamp: Date.now(),
-    // }]);
+
+    const chatRenderKey = ref(0);
+    const forceRerender = (): void => { chatRenderKey.value += 1; };
+
+    const createMessage = (content: string): ChatMessage => ({
+      id: getUUID(),
+      message: content,
+      timestamp: new Date().toISOString(),
+    });
 
     const store = useStore(StoreKey);
     const socket = new WebSocket(process.env.VUE_APP_WEB_SOCKET_URL);
     const chatInput = ref('');
-    const messages: Ref<ChatMessage[]> = ref([]);
+    const messages: Ref<ChatMessage[]> = ref([createMessage('hi'), createMessage('bye')]);
+    const lastMsg = ref('');
+    // const messages = reactive(store.getters['chat/displayMessages']);
 
-    const computedMessages = computed((): ChatMessage[] => store.getters.displayMessages);
+    const updateMessages = async (newMessages: ChatMessage[]) => {
+      messages.value = newMessages;
+    };
 
-    // Subscribe to mutations
-    // store.subscribe((mutation, state) => {
-    //   if (mutation.type === 'chat/SEND_MESSAGE') {
-    //     console.log(mutation.payload);
-    //   }
-    // });
-
-    store.dispatch('chat/ADD_MESSAGE', {
-      id: getUUID(),
-      message: 'asdf',
-      timestamp: new Date().toISOString(),
+    const unsubscribeFromChat = store.subscribe((mutation, storeObj) => {
+      if (mutation.type === 'chat/ADD_MESSAGE') {
+        // updateMessages(store.getters['chat/displayMessages']);
+        lastMsg.value = mutation.payload.message;
+      }
     });
 
     const createConnection = () => {
@@ -80,16 +83,20 @@ export default defineComponent({
       }
     };
 
-    const createMessage = (content: string): ChatMessage => ({
-      id: getUUID(),
-      message: content,
-      timestamp: new Date().toISOString(),
-    });
-
     socket.addEventListener('open', (ev: Event) => {
       socket.addEventListener('message', (evt: MessageEvent) => {
+        const listParent = document.getElementById('message-list') as HTMLUListElement;
+        if (listParent) {
+          console.log('appending...');
+          const entry = document.createElement('li');
+          entry.appendChild(document.createTextNode(evt.data));
+          listParent.appendChild(entry);
+        } else {
+          console.log('no list found');
+        }
         console.log('message received');
         console.log(evt.data);
+        store.commit('chat/ADD_MESSAGE', createMessage(evt.data));
         // messages.push(createMessage(evt.data, 'server'));
       });
     });
@@ -114,7 +121,8 @@ export default defineComponent({
       sendMessage,
       chatInput,
       messages,
-      computedMessages,
+      lastMsg,
+      chatRenderKey,
     };
   },
 });
