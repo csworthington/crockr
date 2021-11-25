@@ -12,6 +12,7 @@
     <span><button @click="handleToolChange('SELECT')"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
+    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -437,6 +438,7 @@ export default defineComponent({
       });
 
       console.dir(canvasData);
+      console.log(canvasData.toObject());
     };
 
     /**
@@ -461,6 +463,10 @@ export default defineComponent({
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
 
+    const printCanvasToConsole = () => {
+      console.dir(canvasData.toObject());
+    };
+
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -471,6 +477,7 @@ export default defineComponent({
       handleToolChange,
       lineThickness,
       thicknessOptions,
+      printCanvasToConsole,
     };
   },
 });

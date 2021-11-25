@@ -1,3 +1,4 @@
+/* eslint-disable no-param-reassign */
 /* eslint-disable no-shadow */
 export interface SocketState {
   isConnected: boolean;
@@ -23,12 +24,12 @@ const state = {
 const mutations = {
   /**
    * Handle the onopen event emitted by the socket
-   * @param {SocketState} state The current state of the socket
+   * @param {SocketState} socketState The current state of the socket
    * @param {Event} event The onopen event emitted by the socket
    */
-  SOCKET_ONOPEN(state: SocketState, event: Event): void {
+  SOCKET_ONOPEN(socketState: SocketState, event: Event): void {
     const socket = event.currentTarget;
-    state.isConnected = true;
+    socketState.isConnected = true;
     console.log('connected to socket');
     console.dir(event.currentTarget);
     // When the connection is successful, start sending heartbeat messages regularly to avoid
@@ -43,29 +44,29 @@ const mutations = {
     // }, state.socket.heartBeatInterval);
   },
   // Connection closed
-  SOCKET_ONCLOSE(state: SocketState, event: Event): void {
-    state.isConnected = false;
+  SOCKET_ONCLOSE(socketState: SocketState, event: Event): void {
+    socketState.isConnected = false;
     // Stop the heartbeat message when the connection is closed
     clearInterval(state.heartBeatTimer);
-    state.heartBeatTimer = 0;
+    socketState.heartBeatTimer = 0;
     console.log(`Websocket closed at: ${new Date()}`);
     console.log(event);
   },
   // An error occurred
-  SOCKET_ONERROR(state: SocketState, event: Event): void {
-    console.error(state, event);
+  SOCKET_ONERROR(socketState: SocketState, event: Event): void {
+    console.error(socketState, event);
   },
   // Receive the message sent by the server
-  SOCKET_ONMESSAGE(state: SocketState, message: string): void {
-    state.message = message;
+  SOCKET_ONMESSAGE(socketState: SocketState, message: string): void {
+    socketState.message = message;
   },
   // Auto reconnect
-  SOCKET_RECONNECT(state: SocketState, count: number): void {
-    console.info('Reconnecting...', state, count);
+  SOCKET_RECONNECT(socketState: SocketState, count: number): void {
+    console.info('Reconnecting...', socketState, count);
   },
   // Reconnect error
-  SOCKET_RECONNECT_ERROR(state: SocketState): void {
-    state.reconnectError = true;
+  SOCKET_RECONNECT_ERROR(socketState: SocketState): void {
+    socketState.reconnectError = true;
   },
 };
 
