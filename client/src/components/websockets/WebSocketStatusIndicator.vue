@@ -17,10 +17,10 @@ export default defineComponent({
   setup() {
     const store = useStore(StoreKey);
 
-    onMounted(() => {
-      const socket = useSocket();
-      console.log(socket);
-    });
+    // onMounted(() => {
+    //   const socket = useSocket();
+    //   console.log(socket);
+    // });
 
     // UTF-8 Checkmark character. (✔️) Placeholder until better character can be found
     const CONNECTED_SYMBOL = '✔️';

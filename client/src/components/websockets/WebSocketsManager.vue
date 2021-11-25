@@ -8,9 +8,6 @@
     <span><button @click="sendMessage">Send Message</button></span>
   </div>
   <div>
-    LastMessage: {{ lastMsg }}
-  </div>
-  <div>
     Log:
     <ul id="message-list">
       <li v-for="msg in messages" :key="msg.id">
@@ -58,8 +55,8 @@ export default defineComponent({
     const store = useStore(StoreKey);
     const socket = new WebSocket(process.env.VUE_APP_WEB_SOCKET_URL);
     const chatInput = ref('');
-    const messages: Ref<ChatMessage[]> = ref([createMessage('hi'), createMessage('bye')]);
-    const lastMsg = ref('');
+    // const messages: Ref<ChatMessage[]> = ref([createMessage('hi'), createMessage('bye')]);
+    const messages: Ref<ChatMessage[]> = ref([]);
     // const messages = reactive(store.getters['chat/displayMessages']);
 
     const updateMessages = async (newMessages: ChatMessage[]) => {
@@ -69,7 +66,7 @@ export default defineComponent({
     const unsubscribeFromChat = store.subscribe((mutation, storeObj) => {
       if (mutation.type === 'chat/ADD_MESSAGE') {
         // updateMessages(store.getters['chat/displayMessages']);
-        lastMsg.value = mutation.payload.message;
+        // lastMsg.value = mutation.payload.message;
       }
     });
 
@@ -83,35 +80,30 @@ export default defineComponent({
       }
     };
 
+    const addMessageToDoc = (msg: ChatMessage) => {
+      const listParent = document.getElementById('message-list') as HTMLUListElement;
+      if (listParent) {
+        const entry = document.createElement('li');
+        entry.appendChild(document.createTextNode(`${msg.timestamp}: ${msg.message}`));
+        listParent.appendChild(entry);
+      } else {
+        console.log('no list found');
+      }
+    };
+
     socket.addEventListener('open', (ev: Event) => {
       socket.addEventListener('message', (evt: MessageEvent) => {
-        const listParent = document.getElementById('message-list') as HTMLUListElement;
-        if (listParent) {
-          console.log('appending...');
-          const entry = document.createElement('li');
-          entry.appendChild(document.createTextNode(evt.data));
-          listParent.appendChild(entry);
-        } else {
-          console.log('no list found');
-        }
-        console.log('message received');
-        console.log(evt.data);
-        store.commit('chat/ADD_MESSAGE', createMessage(evt.data));
-        // messages.push(createMessage(evt.data, 'server'));
+        const msg = createMessage(evt.data);
+        store.commit('chat/ADD_MESSAGE', msg);
+        addMessageToDoc(msg);
       });
     });
 
     const sendMessage = () => {
-      console.log(chatInput.value);
+      const msg = createMessage(chatInput.value);
       store.commit('chat/ADD_MESSAGE', createMessage(chatInput.value));
-      // messages.push(createMessage(chatInput.value, 'client'));
+      addMessageToDoc(msg);
       socket.send(chatInput.value);
-      // console.log(messages);
-      // if (vm.proxy !== null) {
-      //   vm.proxy.$socket.send('data');
-      // } else {
-      //   throw new Error('getCurrentInstance returned null, no globalProperties available');
-      // }
     };
 
     // window.setTimeout(() => { messages.push(createMessage('timed msg', 'timer')); }, 1000);
@@ -121,7 +113,6 @@ export default defineComponent({
       sendMessage,
       chatInput,
       messages,
-      lastMsg,
       chatRenderKey,
     };
   },
