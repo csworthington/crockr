@@ -46,7 +46,7 @@ import { fabric } from 'fabric';
 
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
-import Rectangle from '@/components/ToolPalette/Rectangle.vue';
+// import RectangleTool from '@/components/ToolPalette/Rectangle.vue';
 import {
   RectWithID,
   CircleWithID,
@@ -435,6 +435,8 @@ export default defineComponent({
           evt.target.id = getUUID();
         }
       });
+
+      console.dir(canvasData);
     };
 
     /**
