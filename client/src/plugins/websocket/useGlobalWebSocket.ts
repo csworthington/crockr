@@ -1,6 +1,6 @@
-import { inject } from 'vue';
+import { inject, InjectionKey } from 'vue';
 
-export const GlobalWSSocketSymbol = Symbol('Global Web Socket Plugin Symbol');
+export const GlobalWSSocketSymbol: InjectionKey<WebSocket> = Symbol('Global Web Socket Plugin Symbol');
 
 export function useGlobalWebSocket() {
   const GlobalWebSocket = inject(GlobalWSSocketSymbol);

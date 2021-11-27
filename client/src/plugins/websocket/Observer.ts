@@ -64,7 +64,7 @@ export default class {
     if (opts.mutations) {
       this.mutations = opts.mutations;
     }
-    // 事件触发
+    // Trigger the event
     this.onEvent();
   }
 
@@ -105,7 +105,7 @@ export default class {
       this.reconnectionCount += 1;
       // Clear the timer of the last reconnection
       clearTimeout(this.reconnectTimeoutId);
-      // 开始重连
+      // Start to reconnect
       this.reconnectTimeoutId = setTimeout(() => {
         // If vuex is enabled, the reconnection method in vuex is triggered
         if (this.store) {
@@ -157,8 +157,8 @@ export default class {
 
   /**
    * Trigger methods in vuex
-   * @param eventName 事件名称
-   * @param event 事件
+   * @param eventName Event Name
+   * @param event Event
    */
   // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
   passToStore(eventName: string, event: any): void {
@@ -177,8 +177,8 @@ export default class {
 
   /**
    * The default event handler
-   * @param eventName 事件名称
-   * @param event 事件
+   * @param eventName event name
+   * @param event event
    */
   defaultPassToStore(
     eventName: string,

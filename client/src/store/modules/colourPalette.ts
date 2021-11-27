@@ -16,7 +16,7 @@ const mutations = {
    * @param {ColourPaletteState} state Current state of the store
    * @param {string} newColour The new RGB hex string to set the colour to
    */
-  updatePrimaryToolColour(state: ColourPaletteState, newColour: string): void {
+  updatePrimaryToolColour(paletteState: ColourPaletteState, newColour: string): void {
     // check that string is correct
     const rgbRegex = /^#(?:[0-9a-fA-F]{3}){2}$/gm;
     if (rgbRegex.test(newColour)) {
@@ -31,7 +31,7 @@ const mutations = {
    * @param {ColourPaletteState} state Current state of the store
    * @param {string} newColour The new RGB hex string to set the colour to
    */
-  updateSecondaryToolColour(state: ColourPaletteState, newColour: string): void {
+  updateSecondaryToolColour(paletteState: ColourPaletteState, newColour: string): void {
     // check that string is correct
     const rgbRegex = /^#(?:[0-9a-fA-F]{3}){2}$/gm;
     if (rgbRegex.test(newColour)) {

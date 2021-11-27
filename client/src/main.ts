@@ -18,7 +18,6 @@ app.use(GlobalSocket, process.env.VUE_APP_WEB_SOCKET_URL, {
   store,
   connectManually: true,
 });
-app.provide(SocketKey, app.config.globalProperties.$socket);
 
 app.mount('#app');
 

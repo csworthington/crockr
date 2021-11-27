@@ -15,9 +15,9 @@ export default {
     connection: string,
     opts: websocketOpts = { format: '' },
   ): void {
-    // 没有传入连接，抛出异常 | No incoming connection, throw an exception
+    // No incoming connection, throw an exception
     if (!connection) {
-      throw new Error('[vue-native-socket] Cannot create connection: connection string is null or undefined');
+      throw new Error('[GlobalWebSocket] Cannot create connection: connection string is null or undefined');
     }
 
     let observer: Observer;
@@ -99,13 +99,13 @@ export default {
             {},
             {
               set(target: any, key: any, value: any): boolean {
-                // 添加监听 | Add monitor
+                // Add monitor
                 Emitter.addListener(key, value, vm);
                 target[key] = value;
                 return true;
               },
               deleteProperty(target: { key: any }, key: any): boolean {
-                // 移除监听 | Remove monitor
+                // Remove monitor
                 Emitter.removeListener(key, vm.$options.sockets[key], vm);
                 delete target.key;
                 return true;
@@ -114,18 +114,18 @@ export default {
           );
           if (sockets) {
             Object.keys(sockets).forEach((key: string) => {
-              // 给$options中添加sockets中的key | Add the key in sockets to $options
+              // Add the key in sockets to $options
               this.$options.sockets[key] = sockets[key];
               app.config.globalProperties.sockets[key] = sockets[key];
             });
           }
         } else {
-          // 将对象密封，不能再进行改变 | Seal the object so that it cannot be changed
+          // Seal the object so that it cannot be changed
           Object.seal(this.$options.sockets);
           Object.seal(app.config.globalProperties.sockets);
           if (sockets) {
             Object.keys(sockets).forEach((key: string) => {
-              // 添加监听 | Add monitor
+              // Add monitor
               Emitter.addListener(key, sockets[key], vm);
             });
           }
