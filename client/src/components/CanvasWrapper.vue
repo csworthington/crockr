@@ -45,7 +45,7 @@ import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
-import Rectangle from '@/components/ToolPalette/Rectangle.vue';
+// import Rectangle from '@/components/ToolPalette/Rectangle.vue';
 import {
   RectWithID,
   CircleWithID,

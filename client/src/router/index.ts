@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
 import Home from '../views/Home.vue';
 import Canvas from '../views/Canvas.vue';
+import Web from '../views/Web.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -20,6 +21,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/canvas',
     name: 'Canvas',
     component: Canvas,
+  },
+  {
+    path: '/web',
+    name: 'Websocket',
+    component: Web,
   },
 ];
 
