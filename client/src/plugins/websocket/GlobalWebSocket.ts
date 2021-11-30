@@ -5,6 +5,7 @@ import Observer from '@/plugins/websocket/Observer';
 import Emitter from '@/plugins/websocket/Emitter';
 import { websocketOpts } from '@/plugins/websocket/types/websocketPluginTypes.d';
 import { GlobalWSSocketSymbol } from '@/plugins/websocket/useGlobalWebSocket';
+import ObservableWebSocket from './ObservableWebSocket';
 
 export const GlobalWSDisconnectSymbol = Symbol('Global WebSocket plugin $disconnect function symbol');
 export const GlobalWSConnectSymbol = Symbol('Global WebSocket plugin $connect function symbol');
@@ -20,7 +21,8 @@ export default {
       throw new Error('[GlobalWebSocket] Cannot create connection: connection string is null or undefined');
     }
 
-    let observer: Observer;
+    // let observer: Observer;
+    let observer: ObservableWebSocket;
 
     opts.$setInstance = (wsInstance: EventTarget) => {
       // Add $socket to global properties
@@ -35,10 +37,13 @@ export default {
         // Add a set instance to the parameters passed by the caller
         connectionOpts.$setInstance = opts.$setInstance;
         // Create Observer to establish websocket connection
-        observer = new Observer(connectionUrl, connectionOpts);
+        // observer = new Observer(connectionUrl, connectionOpts);
+        observer = new ObservableWebSocket(connectionUrl, connectionOpts);
         // Add $socket globally
-        app.config.globalProperties.$socket = observer.WebSocket;
-        app.provide(GlobalWSSocketSymbol, observer.WebSocket);
+        // app.config.globalProperties.$socket = observer.WebSocket;
+        // app.provide(GlobalWSSocketSymbol, observer.WebSocket);
+        app.config.globalProperties.$socket = observer.socket;
+        app.provide(GlobalWSSocketSymbol, observer.socket);
       };
 
       // Add connectSocket globally
