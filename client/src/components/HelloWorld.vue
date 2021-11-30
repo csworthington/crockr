@@ -36,12 +36,16 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, inject } from 'vue';
+import { axiosInjectionKey } from '@/symbols';
 
 export default defineComponent({
   name: 'HelloWorld',
   props: {
     msg: String,
+  },
+  setup() {
+    const http = inject(axiosInjectionKey);
   },
 });
 </script>
