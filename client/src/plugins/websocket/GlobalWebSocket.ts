@@ -6,6 +6,7 @@ import Emitter from '@/plugins/websocket/Emitter';
 import { websocketOpts } from '@/plugins/websocket/types/websocketPluginTypes.d';
 import { GlobalWSSocketSymbol } from '@/plugins/websocket/useGlobalWebSocket';
 import ObservableWebSocket from './ObservableWebSocket';
+import ConnectableSocket from './WrappedSocket';
 
 export const GlobalWSDisconnectSymbol = Symbol('Global WebSocket plugin $disconnect function symbol');
 export const GlobalWSConnectSymbol = Symbol('Global WebSocket plugin $connect function symbol');
@@ -25,53 +26,59 @@ export default {
     let observer: ObservableWebSocket;
 
     opts.$setInstance = (wsInstance: EventTarget) => {
+      debugger;
+      console.log('here');
+      console.log(wsInstance);
+      const wrappedSock = ConnectableSocket.fromSocket((wsInstance as WebSocket));
       // Add $socket to global properties
-      app.config.globalProperties.$socket = wsInstance;
-      app.provide(GlobalWSSocketSymbol, wsInstance);
+      app.config.globalProperties.$socket = wrappedSock;
+      app.provide(GlobalWSSocketSymbol, wrappedSock);
     };
 
     // Enable manual connection in configuration options
     if (opts.connectManually) {
-      // Create function for globally connecting socket
-      const connectSocket = (connectionUrl: string, connectionOpts: websocketOpts) => {
-        // Add a set instance to the parameters passed by the caller
-        connectionOpts.$setInstance = opts.$setInstance;
-        // Create Observer to establish websocket connection
-        // observer = new Observer(connectionUrl, connectionOpts);
-        observer = new ObservableWebSocket(connectionUrl, connectionOpts);
-        // Add $socket globally
-        // app.config.globalProperties.$socket = observer.WebSocket;
-        // app.provide(GlobalWSSocketSymbol, observer.WebSocket);
-        app.config.globalProperties.$socket = observer.socket;
-        app.provide(GlobalWSSocketSymbol, observer.socket);
-      };
-
-      // Add connectSocket globally
-      app.config.globalProperties.$connect = connectSocket;
-      app.provide(GlobalWSConnectSymbol, connectSocket);
-
-      // Globally add disconnection processing functions
-      const disconnectSocket = () => {
-        if (observer && observer.reconnection) {
-          // Change the reconnection status to false
-          observer.reconnection = false;
-        }
-        // If the global attribute socket exists, remove it from the global attribute
-        if (app.config.globalProperties.$socket) {
-          // Close the connection
-          app.config.globalProperties.$socket.close();
-          delete app.config.globalProperties.$socket;
-        }
-      };
-      app.config.globalProperties.$disconnect = disconnectSocket;
-      app.provide(GlobalWSDisconnectSymbol, disconnectSocket);
+      observer = new ObservableWebSocket('', opts);
     } else {
       // Manual connection is not enabled
-      observer = new Observer(connection, opts);
-      // Add the $socket attribute globally to connect to the websocket server
-      app.config.globalProperties.$socket = observer.WebSocket;
-      app.provide(GlobalWSSocketSymbol, observer.WebSocket);
+      observer = new ObservableWebSocket(connection, opts);
     }
+    // Add the $socket attribute globally to connect to the websocket server
+    app.config.globalProperties.$socket = observer.socket;
+    app.provide(GlobalWSSocketSymbol, observer.socket);
+
+    // Create function for globally connecting socket
+    const connectSocket = (connectionUrl: string, connectionOpts: websocketOpts) => {
+      // Add a set instance to the parameters passed by the caller
+      connectionOpts.$setInstance = opts.$setInstance;
+      // Create Observer to establish websocket connection
+      // observer = new Observer(connectionUrl, connectionOpts);
+      observer = new ObservableWebSocket(connectionUrl, connectionOpts);
+      // Add $socket globally
+      // app.config.globalProperties.$socket = observer.WebSocket;
+      // app.provide(GlobalWSSocketSymbol, observer.WebSocket);
+      app.config.globalProperties.$socket = observer.socket;
+      app.provide(GlobalWSSocketSymbol, observer.socket);
+    };
+
+    // Add connectSocket globally
+    app.config.globalProperties.$connect = connectSocket;
+    app.provide(GlobalWSConnectSymbol, connectSocket);
+
+    // Globally add disconnection processing functions
+    const disconnectSocket = () => {
+      if (observer && observer.reconnection) {
+        // Change the reconnection status to false
+        observer.reconnection = false;
+      }
+      // If the global attribute socket exists, remove it from the global attribute
+      if (app.config.globalProperties.$socket) {
+        // Close the connection
+        app.config.globalProperties.$socket.close();
+        delete app.config.globalProperties.$socket;
+      }
+    };
+    app.config.globalProperties.$disconnect = disconnectSocket;
+    app.provide(GlobalWSDisconnectSymbol, disconnectSocket);
     const hasProxy = typeof Proxy !== 'undefined'
       && typeof Proxy === 'function'
       && /native code/.test(Proxy.toString());

@@ -1,5 +1,5 @@
 import { createApp } from 'vue';
-import VueNativeSock from 'vue-native-websocket-vue3';
+// import VueNativeSock from 'vue-native-websocket-vue3';
 import axios from 'axios';
 import VueAxios from 'vue-axios';
 import App from './App.vue';

@@ -1,24 +1,32 @@
-export default class WrappedSocket {
+interface IQueuedEventListener {
+  eventName: keyof WebSocketEventMap,
+  callback: (evt: any) => any,
+}
+
+export default class ConnectableSocket {
   private socket: WebSocket | null;
 
   public readyState: number | null;
 
   public protocol: string | null;
 
+  public isConnected: boolean;
+
+  private pendingEventListeners: Array<IQueuedEventListener>;
+
   constructor(url?: string, protocols?: string | string[]) {
     if (url) {
-      if (protocols && protocols !== '') {
-        this.socket = new WebSocket(url, protocols);
-      } else {
-        this.socket = new WebSocket(url);
-      }
+      this.socket = ConnectableSocket.openSocket(url, protocols);
       this.readyState = this.socket.readyState;
       this.protocol = this.socket.protocol;
+      this.isConnected = true;
     } else {
       this.socket = null;
       this.readyState = null;
       this.protocol = null;
+      this.isConnected = false;
     }
+    this.pendingEventListeners = [];
   }
 
   /**
@@ -26,13 +34,32 @@ export default class WrappedSocket {
    * @param socket The socket to create the wrapper from
    * @returns The instantiated websocket object
    */
-  static fromSocket(socket: WebSocket): WrappedSocket {
-    return new WrappedSocket(socket.url, socket.protocol);
+  static fromSocket(socket: WebSocket): ConnectableSocket {
+    return new ConnectableSocket(socket.url, socket.protocol);
+  }
+
+  /**
+   * Open a new websocket connection from a specific url
+   * @param url The url to connect to
+   * @param protocols The protocols to use during the handshake
+   * @returns an instantiated WebSocket object
+   */
+  static openSocket(url: string, protocols?: string | string[]): WebSocket {
+    if (protocols && protocols !== '') {
+      return new WebSocket(url, protocols);
+    }
+    return new WebSocket(url);
+  }
+
+  connect(url: string, protocols?: string | string[]): void {
+    this.socket = ConnectableSocket.openSocket(url, protocols);
+    this.isConnected = true;
+    console.log(this.socket.readyState);
   }
 
   addEventListener<K extends keyof WebSocketEventMap>(
     type: keyof WebSocketEventMap,
-    listener: (evt: CloseEvent | Event | MessageEvent<K>) => any,
+    listener: (evt: any) => any,
     options?: boolean | AddEventListenerOptions,
   ): void {
     if (this.socket) {
@@ -88,6 +115,7 @@ export default class WrappedSocket {
   close(code?: number, reason?: string): void {
     if (this.socket) {
       this.socket.close(code, reason);
+      this.isConnected = false;
     }
   }
 

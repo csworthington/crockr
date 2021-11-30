@@ -18,7 +18,7 @@ export default defineComponent({
     const store = useStore(StoreKey);
     const socket = useGlobalWebSocket();
 
-    socket.addEventListener('connected', (evt) => {
+    socket.addEventListener('open', (evt) => {
       console.log('event fron within status indicator');
     });
 
@@ -41,7 +41,7 @@ export default defineComponent({
       statusText.value = CONNECTED_TEXT;
     });
 
-    socket.addEventListener('close', (evt: CloseEvent) => {
+    socket.addEventListener('close', (evt: CloseEvent): void => {
       statusIcon.value = DISCONNECTED_SYMBOL;
       statusText.value = DISCONNECTED_TEXT;
     });

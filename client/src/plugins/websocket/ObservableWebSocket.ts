@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/no-named-as-default
 import Emitter from './Emitter';
-import WrappedSocket from './WrappedSocket';
+import ConnectableSocket from './WrappedSocket';
 import { websocketOpts } from './types/websocketPluginTypes.d';
 
 export default class ObservableWebSocket {
@@ -26,9 +26,9 @@ export default class ObservableWebSocket {
 
   private readonly mutations: any; // Pass in the mutations in vuex when vuex is enabled
 
-  public socket: WrappedSocket;
+  public socket: ConnectableSocket;
 
-  constructor(url: string, opts: websocketOpts = { format: '' }) {
+  constructor(url?: string, opts: websocketOpts = { format: '' }) {
     // Get the format from the options paramater and convert it to lower case
     this.format = opts.format && opts.format.toLowerCase();
 
@@ -52,40 +52,24 @@ export default class ObservableWebSocket {
     if (this.opts.connectManually === false) {
       this.socket = ObservableWebSocket.establishConnection(formattedUrl, opts);
     } else {
-      this.socket = new WrappedSocket();
+      this.socket = new ConnectableSocket();
     }
   }
 
-  static establishConnection(formattedUrl: string, opts: websocketOpts): WrappedSocket {
+  static establishConnection(formattedUrl: string, opts: websocketOpts): ConnectableSocket {
     // Get the protocol passed in the configuration parameter
     const protocol = opts.protocol || '';
-    let sock: WrappedSocket;
+    let sock: ConnectableSocket;
 
     if (opts.WebSocket) {
-      sock = WrappedSocket.fromSocket(opts.WebSocket);
+      sock = ConnectableSocket.fromSocket(opts.WebSocket);
     } else {
       // If no protocol is passed, establish a normal websocket connection, otherwise,
       // create a websocket connection with protocol
-      sock = new WrappedSocket(formattedUrl, protocol);
+      sock = new ConnectableSocket(formattedUrl, protocol);
     }
 
     return sock;
-
-    // // Enable json sending
-    // if (this.format === 'json') {
-    //   // If there is no send Obj in websocket, add this method object
-    //   if (!('sendObj' in (this.socket as WebSocket))) {
-    //     // Convert the sent message into a json string
-    // eslint-disable-next-line max-len
-    //     (this.socket as WebSocket).sendObj = (obj: JSON) => (this.socket as WebSocket).send(JSON.stringify(obj));
-    //   }
-    // }
-
-    // if (this.socket === undefined) {
-    //   throw new Error('WebSocket object is undefined, cannot connect');
-    // } else {
-    //   return this.socket;
-    // }
   }
 
   /**
