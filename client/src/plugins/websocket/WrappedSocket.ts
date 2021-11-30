@@ -5,14 +5,20 @@ export default class WrappedSocket {
 
   public protocol: string | null;
 
-  constructor(url: string, protocols?: string | string[]) {
-    if (protocols && protocols !== '') {
-      this.socket = new WebSocket(url, protocols);
+  constructor(url?: string, protocols?: string | string[]) {
+    if (url) {
+      if (protocols && protocols !== '') {
+        this.socket = new WebSocket(url, protocols);
+      } else {
+        this.socket = new WebSocket(url);
+      }
+      this.readyState = this.socket.readyState;
+      this.protocol = this.socket.protocol;
     } else {
-      this.socket = new WebSocket(url);
+      this.socket = null;
+      this.readyState = null;
+      this.protocol = null;
     }
-    this.readyState = this.socket.readyState;
-    this.protocol = this.socket.protocol;
   }
 
   /**
@@ -24,9 +30,9 @@ export default class WrappedSocket {
     return new WrappedSocket(socket.url, socket.protocol);
   }
 
-  addEventListener(
+  addEventListener<K extends keyof WebSocketEventMap>(
     type: keyof WebSocketEventMap,
-    listener: (evt: CloseEvent | Event | MessageEvent<any>) => any,
+    listener: (evt: CloseEvent | Event | MessageEvent<K>) => any,
     options?: boolean | AddEventListenerOptions,
   ): void {
     if (this.socket) {

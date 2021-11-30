@@ -51,6 +51,8 @@ export default class ObservableWebSocket {
 
     if (this.opts.connectManually === false) {
       this.socket = ObservableWebSocket.establishConnection(formattedUrl, opts);
+    } else {
+      this.socket = new WrappedSocket();
     }
   }
 
@@ -74,7 +76,7 @@ export default class ObservableWebSocket {
     //   // If there is no send Obj in websocket, add this method object
     //   if (!('sendObj' in (this.socket as WebSocket))) {
     //     // Convert the sent message into a json string
-    //     // eslint-disable-next-line max-len
+    // eslint-disable-next-line max-len
     //     (this.socket as WebSocket).sendObj = (obj: JSON) => (this.socket as WebSocket).send(JSON.stringify(obj));
     //   }
     // }
@@ -116,8 +118,10 @@ export default class ObservableWebSocket {
    * Event distribution for the socket
    */
   onEvent(): void {
-    ['onmessage', 'onclose', 'onerror', 'onopen'].forEach(
-      (eventType: string) => {
+    const socketEvents: Array<keyof WebSocketEventMap> = ['message', 'close', 'error', 'open'];
+    // ['onmessage', 'onclose', 'onerror', 'onopen'].forEach(
+    socketEvents.forEach(
+      (eventType: keyof WebSocketEventMap) => {
         this.socket.addEventListener(eventType, (event: Event) => {
           Emitter.emit(eventType, event);
 
@@ -127,7 +131,7 @@ export default class ObservableWebSocket {
           }
 
           // Execute when the event is onopen in the reconnect state
-          if (this.reconnection && eventType === 'onopen') {
+          if (this.reconnection && eventType === 'open') {
             // Setting example
             // eslint-disable-next-line no-unused-expressions
             this.opts.$setInstance
@@ -137,7 +141,7 @@ export default class ObservableWebSocket {
           }
 
           // If in the reconnect state and the event is onclose, call the reconnect method
-          if (this.reconnection && eventType === 'onclose') {
+          if (this.reconnection && eventType === 'close') {
             this.reconnect();
           }
         });
