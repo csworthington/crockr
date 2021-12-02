@@ -13,6 +13,7 @@
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -53,6 +54,7 @@ import {
   LineWithID,
 } from '@/utils/fabric-object-extender';
 import getUUID from '@/utils/id-generator';
+import { useAxios } from '@/utils/useAxios';
 
 enum ToolType {
   None = 'NONE',
@@ -70,6 +72,7 @@ export default defineComponent({
   },
   setup(props) {
     const store = useStore(StoreKey);
+    const axios = useAxios();
 
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
@@ -466,6 +469,10 @@ export default defineComponent({
       console.dir(canvasData.toObject());
     };
 
+    const sendCanvasToServer = () => {
+      axios.post('./api/canvas/addobj', canvasData.toObject());
+    };
+
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -477,6 +484,7 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
+      sendCanvasToServer,
     };
   },
 });
