@@ -9,9 +9,7 @@
 </template>
 
 <script lang="ts">
-import {
-  computed, defineComponent, vModelText, WritableComputedRef,
-} from 'vue';
+import { defineComponent } from 'vue';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 
 export default defineComponent({
