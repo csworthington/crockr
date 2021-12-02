@@ -26,7 +26,7 @@ export default defineComponent({
   methods: {
     save() {
       axios
-        .post('http://localhost:3000', this.name)
+        .post('./web', this.name)
         .then((response) => {
           console.log(response);
         })
