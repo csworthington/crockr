@@ -12,10 +12,12 @@
 import {
   computed, defineComponent, vModelText, WritableComputedRef,
 } from 'vue';
+import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 
 export default defineComponent({
   setup() {
-    const socket = new WebSocket('ws://localhost:3000');
+    // const socket = new WebSocket('ws://localhost:3000');
+    const socket = useGlobalWebSocket();
     function msgHandle() {
       let msgToSend : string;
       const msg = <HTMLInputElement>document.getElementById('msg');

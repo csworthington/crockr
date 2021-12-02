@@ -13,18 +13,29 @@ interface connectedClients extends ws.WebSocket{
 let  x = 1;
 const wsServer = new ws.Server({ noServer: true });
 wsServer.on("connection", (socket: connectedClients) => {
-  socket.send("Hey");//test
-  console.log("new connection?");
-  console.log(wsServer.clients.size);
+  console.log(`new connection created! Number of connected clients = ${wsServer.clients.size}`);
+
+  // Assign name and uuid to the new connection
   socket.id = uuidv4();
   socket.name = "user " + x;
   x++;
+
+  // Send a welcome message to the new user
+  socket.send("Server says: Welcome new user!");
+
+  // add new socket to the socket set
   activeConnections.add(socket);
+
+  // Handle incoming messages
   socket.on("message", (message: Buffer) => {
-    console.log(message);
+    // Create a message showing who sent what information
+    const incomingMsg = `${socket.name} says "${message.toString()}"`;
+    console.log(incomingMsg);
+
+    // Send that message to all other active connections
     activeConnections.forEach(function(sockets){
       if(socket.id !== sockets.id){
-        sockets.send(socket.name +" says "+message.toString());
+        sockets.send(incomingMsg);
       }
     });
 
