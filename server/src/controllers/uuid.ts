@@ -1,6 +1,7 @@
 "use strict";
 
 import { Response, Request } from "express";
+import { UUIDVersion } from "express-validator/src/options";
 import { v4 as uuidv4 } from "uuid";
 
 
@@ -11,3 +12,5 @@ import { v4 as uuidv4 } from "uuid";
 export const getUUID = (req: Request, res: Response) => {
     res.json({ id: uuidv4() });
 };
+
+
