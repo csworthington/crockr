@@ -32,5 +32,8 @@ app.locals.replaceCanvas = (newCanvas: Record<string, any>): void => {
  */
 app.get("/api/uuid", uuidController.getUUID);
 app.post("/api/canvas/addobj", canvasController.addObject);
+app.post("/api/web",  function (req, res) {
+    res.send("apple");
+    console.log( "got", ); });
 
 export default app;
