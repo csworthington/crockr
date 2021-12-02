@@ -27,6 +27,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'WebSocket Test',
     component: WebSockets,
   },
+  {
+    path: '/servertest',
+    name: 'ServerTest',
+    component: () => import('../views/ServerTest.vue'),
+  },
 ];
 
 const router = createRouter({
