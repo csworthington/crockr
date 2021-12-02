@@ -21,6 +21,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Canvas',
     component: Canvas,
   },
+  {
+    path: '/servertest',
+    name: 'ServerTest',
+    component: () => import('../views/ServerTest.vue'),
+  },
 ];
 
 const router = createRouter({
