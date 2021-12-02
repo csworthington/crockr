@@ -12,6 +12,7 @@
     <span><button @click="handleToolChange('SELECT')"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
+    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -44,8 +45,8 @@ import {
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
+import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
-
 import {
   RectWithID,
   CircleWithID,
@@ -68,7 +69,7 @@ export default defineComponent({
     ColourPicker,
   },
   setup(props) {
-    const store = useStore();
+    const store = useStore(StoreKey);
 
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
@@ -102,10 +103,10 @@ export default defineComponent({
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
       get(): string {
-        return store.state.primaryToolColour;
+        return store.state.colourPalette.primaryToolColour;
       },
       set(newValue: string): void {
-        store.commit('updatePrimaryToolColour', newValue);
+        store.commit('colourPalette/updatePrimaryToolColour', newValue);
       },
     });
 
@@ -127,7 +128,7 @@ export default defineComponent({
             origY,
           ],
           {
-            stroke: store.state.primaryToolColour,
+            stroke: store.state.colourPalette.primaryToolColour,
             strokeWidth: width,
             opacity: 0.5,
             strokeUniform: true,
@@ -157,9 +158,9 @@ export default defineComponent({
         width: x - origX,
         height: y - origY,
         angle: 0,
-        fill: store.state.primaryToolColour,
+        fill: store.state.colourPalette.primaryToolColour,
         strokeWidth: 2,
-        stroke: store.state.primaryToolColour,
+        stroke: store.state.colourPalette.primaryToolColour,
         transparentCorners: false,
       });
       canvasData.add(rect);
@@ -175,8 +176,8 @@ export default defineComponent({
         top: y,
         radius: 1,
         strokeWidth: 2,
-        stroke: store.state.primaryToolColour,
-        fill: store.state.primaryToolColour,
+        stroke: store.state.colourPalette.primaryToolColour,
+        fill: store.state.colourPalette.primaryToolColour,
         originX: 'center',
         originY: 'center',
       });
@@ -376,7 +377,7 @@ export default defineComponent({
     /**
      * Delete a specific object when the user presses the delete button
      */
-    const deleteSelected = async () => {
+    const deleteSelected = () => {
       const objectList = canvasData.getActiveObjects();
       objectList.forEach((object) => { canvasData.remove(object); });
       const elem = document.getElementById('deleteBtn');
@@ -388,7 +389,7 @@ export default defineComponent({
     /**
      * Clear the canvas of all objects when the user selects the clear button
      */
-    const clearBoard = async () => {
+    const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
       }
@@ -397,7 +398,7 @@ export default defineComponent({
     /**
      * Initialize the Fabric.js canvas
      */
-    const initFabricCanvas = async () => {
+    const initFabricCanvas = () => {
       // Get width for new canvas from wrapper div and set it when creating new canvas
       // Note: this is not responsive and will not resize canvas element when page is resized
       const canvasDiv: HTMLDivElement = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
@@ -410,14 +411,14 @@ export default defineComponent({
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
-      canvasData.on('selection:created', async () => {
+      canvasData.on('selection:created', () => {
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
         deleteBtn.id = 'deleteBtn';
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
       });
-      canvasData.on('selection:cleared', async () => {
+      canvasData.on('selection:cleared', () => {
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
@@ -434,6 +435,9 @@ export default defineComponent({
           evt.target.id = getUUID();
         }
       });
+
+      console.dir(canvasData);
+      console.log(canvasData.toObject());
     };
 
     /**
@@ -458,6 +462,10 @@ export default defineComponent({
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
 
+    const printCanvasToConsole = () => {
+      console.dir(canvasData.toObject());
+    };
+
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -468,6 +476,7 @@ export default defineComponent({
       handleToolChange,
       lineThickness,
       thicknessOptions,
+      printCanvasToConsole,
     };
   },
 });

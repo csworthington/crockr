@@ -27,7 +27,7 @@ wsServer.on("connection", (socket: connectedClients) => {
         sockets.send(socket.name +" says "+message.toString());
       }
     });
-    
+
   });
 });
 

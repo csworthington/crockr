@@ -6,6 +6,7 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "test:unit": "vue-cli-service test:unit",
+    "test:unit:debug": "node --inspect-brk node_modules/.bin/vue-cli-service test:unit --runInBand --watchAll",
     "test:e2e": "vue-cli-service test:e2e",
     "lint": "vue-cli-service lint"
   },
@@ -16,6 +17,7 @@
     "uuid": "^8.3.2",
     "vue": "^3.2.21",
     "vue-axios": "^3.4.0",
+    "vue-native-websocket-vue3": "^3.1.4",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.0-0"
   },
@@ -40,6 +42,7 @@
     "eslint": "^6.7.2",
     "eslint-plugin-import": "^2.25.3",
     "eslint-plugin-vue": "^7.0.0",
+    "mock-socket": "^9.0.8",
     "sass": "^1.43.4",
     "sass-loader": "^8.0.2",
     "typescript": "~4.1.5",

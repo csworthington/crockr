@@ -31,6 +31,7 @@ const server = app.listen(app.get("port"), () => {
  * Set up websockets server
  */
 server.on("upgrade", (request: IncomingMessage, socket: Socket, head: Buffer) => {
+  console.log("upgrade request received");
   wsServer.handleUpgrade(request, socket, head, (socket: WebSocket) => {
     wsServer.emit("connection", socket, request);
   });
