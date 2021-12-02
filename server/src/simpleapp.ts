@@ -22,5 +22,6 @@ app.use(lusca.xssProtection(true));
  * Set up Primary App Routes
  */
 app.get("/api/uuid", uuidController.getUUID);
+app.get("/web",  function (req, res) { console.log( "got", ); });
 
 export default app;
