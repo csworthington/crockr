@@ -40,6 +40,18 @@ wsServer.on("connection", (socket: connectedClients) => {
     });
 
   });
+  socket.on("close", () =>{
+      console.log(socket.name  + " disconnected");
+      activeConnections.forEach(function(sockets){
+        if(socket.id === sockets.id){
+          activeConnections.delete(sockets);
+        }
+        else{
+          sockets.send(socket.name  + " disconnected");
+        }
+      });
+      
+  });
 });
 
 export default wsServer;
