@@ -22,7 +22,7 @@ app.use(lusca.xssProtection(true));
  * Set up Primary App Routes
  */
 app.get("/api/uuid", uuidController.getUUID);
-app.post("/web",  function (req, res) { 
+app.post("/api/web",  function (req, res) {
     res.send("apple");
     console.log( "got", ); });
 
