@@ -54,7 +54,6 @@ import {
   CircleWithID,
   LineWithID,
 } from '@/utils/fabric-object-extender';
-import { RectWithID } from '@/utils/RectWithIDjs';
 import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 
@@ -155,7 +154,7 @@ export default defineComponent({
      * the mouse:down event has been fired by the canvas
      */
     function rectangleDown(x : number, y : number) {
-      rect = new RectWithID({
+      rect = new fabric.RectWithID({
         left: origX,
         top: origY,
         originX: 'left',

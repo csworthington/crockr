@@ -2,7 +2,7 @@
   "version": "4.6.0",
   "objects": [
       {
-          "type": "RectWithID",
+          "type": "rectWithID",
           "version": "4.6.0",
           "originX": "left",
           "originY": "top",

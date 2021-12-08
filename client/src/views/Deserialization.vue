@@ -50,16 +50,13 @@ export default defineComponent({
         toString() {
           return `${this.callSuper('toString')} (id: ${this.id})`;
         },
-        // eslint-disable-next-line no-underscore-dangle
-        // _render(ctx: any) {
-        //   this.callSuper('_render', ctx);
-        // },
       });
 
       // eslint-disable-next-line @typescript-eslint/ban-types
       fabric.RectWithID.fromObject = function (object: any, callback: any) {
         // eslint-disable-next-line no-underscore-dangle
         return fabric.Object._fromObject('RectWithID', object, callback);
+        // WHY DOES RECT WITH ID HAVE TO BE CAPS?
       };
     };
 
