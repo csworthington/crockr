@@ -38,6 +38,11 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Websocket',
     component: Web,
   },
+  {
+    path: '/deserialization',
+    name: 'Deserialization',
+    component: () => import('../views/Deserialization.vue'),
+  },
 ];
 
 const router = createRouter({

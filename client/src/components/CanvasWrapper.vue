@@ -14,6 +14,7 @@
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
     <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -49,10 +50,11 @@ import { fabric } from 'fabric';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import {
-  RectWithID,
+  // RectWithID,
   CircleWithID,
   LineWithID,
 } from '@/utils/fabric-object-extender';
+import { RectWithID } from '@/utils/RectWithIDjs';
 import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 
@@ -473,6 +475,13 @@ export default defineComponent({
       axios.post('./api/canvas/addobj', canvasData.toObject());
     };
 
+    const getDogFromServer = () => {
+      axios.get('./api/canvas/getdog').then((value) => {
+        console.log('got dog');
+        canvasData.loadFromJSON(JSON.stringify(value.data), canvasData.renderAll.bind(canvasData));
+      });
+    };
+
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -485,6 +494,7 @@ export default defineComponent({
       thicknessOptions,
       printCanvasToConsole,
       sendCanvasToServer,
+      getDogFromServer,
     };
   },
 });

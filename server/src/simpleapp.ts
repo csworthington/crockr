@@ -36,4 +36,6 @@ app.post("/api/web",  function (req, res) {
     res.send("apple");
     console.log( "got", ); });
 
+
+app.get("/api/canvas/getdog", canvasController.getDog);
 export default app;
