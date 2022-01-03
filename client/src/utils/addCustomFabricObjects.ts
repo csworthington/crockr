@@ -82,7 +82,6 @@ function createCircleWithID(): void {
   });
 
   fabric.CircleWithID.fromObject = function (object: any, callback: any) {
-    debugger;
     // eslint-disable-next-line no-underscore-dangle
     return fabric.Object._fromObject('CircleWithID', object, callback);
   };
