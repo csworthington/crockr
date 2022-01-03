@@ -57,8 +57,9 @@ wsServer.on("connection", (socket: connectedClients) => {
         console.log("recieved Selection update ");
         deselectedIds.forEach( (id: string) => {
           if(lockedObjects[1].includes(id)){
-            lockedObjects[0].splice(socket.id);
-            lockedObjects[1].splice(id);
+            const x = lockedObjects[1].indexOf(id);
+            lockedObjects[0].splice(x,1);
+            lockedObjects[1].splice(x,1);
   
           }
           
@@ -70,7 +71,7 @@ wsServer.on("connection", (socket: connectedClients) => {
         canvas.push(JSON.parse(msg.msg));
         activeConnections.forEach(function(sockets){
           if(socket.id !== sockets.id){
-            sockets.send(JSON.stringify(msg));
+            //sockets.send(JSON.stringify(msg));
           }
         });
 
