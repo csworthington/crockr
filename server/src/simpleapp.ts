@@ -38,4 +38,7 @@ app.post("/api/web",  function (req, res) {
 
 
 app.get("/api/canvas/getdog", canvasController.getDog);
+app.get("/api/canvas/getline", canvasController.getLine);
+app.get("/api/canvas/getrect", canvasController.getRect);
+app.get("/api/canvas/getcircle", canvasController.getCircle);
 export default app;

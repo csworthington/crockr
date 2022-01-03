@@ -15,6 +15,9 @@
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
     <span><button @click="sendCanvasToServer">Send Canvas</button></span>
     <span><button @click="getDogFromServer">Get Dog🐶</button></span>
+    <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getRectFromServer">Get Rect</button></span>
+    <span><button @click="getCircleFromServer">Get circle</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -481,6 +484,25 @@ export default defineComponent({
       });
     };
 
+    const getLineFromServer = () => {
+      axios.get('./api/canvas/getline').then((value) => {
+        debugger;
+        canvasData.loadFromJSON(JSON.stringify(value.data), canvasData.renderAll.bind(canvasData));
+      });
+    };
+
+    const getRectFromServer = () => {
+      axios.get('./api/canvas/getrect').then((value) => {
+        canvasData.loadFromJSON(JSON.stringify(value.data), canvasData.renderAll.bind(canvasData));
+      });
+    };
+
+    const getCircleFromServer = () => {
+      axios.get('./api/canvas/getcircle').then((value) => {
+        canvasData.loadFromJSON(JSON.stringify(value.data), canvasData.renderAll.bind(canvasData));
+      });
+    };
+
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -494,6 +516,9 @@ export default defineComponent({
       printCanvasToConsole,
       sendCanvasToServer,
       getDogFromServer,
+      getLineFromServer,
+      getRectFromServer,
+      getCircleFromServer,
     };
   },
 });

@@ -1,25 +1,32 @@
 <template>
-hello all
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
-  </div>
-  <div>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
   </div>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, reactive } from 'vue';
+/* eslint-disable no-shadow */
+import {
+  defineComponent,
+  onMounted,
+  reactive,
+  Ref,
+  ref,
+} from 'vue';
+
 import { fabric } from 'fabric';
-import { useAxios } from '@/utils/useAxios';
-import { ShapesWithID } from '@/utils/fabric-object-extender';
-import getUUID from '@/utils/id-generator';
 
 export default defineComponent({
-  setup() {
-    const axios = useAxios();
+  name: 'CanvasWrapper',
+  setup(props) {
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
+    const canvasWidth = 640;
 
+    const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
+
+    /**
+     * Initialize the Fabric.js canvas
+     */
     const initFabricCanvas = () => {
       // Get width for new canvas from wrapper div and set it when creating new canvas
       // Note: this is not responsive and will not resize canvas element when page is resized
@@ -27,26 +34,27 @@ export default defineComponent({
 
       canvasData = new fabric.Canvas('main-canvas', {
         width: canvasDiv.clientWidth,
-        height: canvasDiv.clientWidth * 0.6,
+        height: canvasDiv.clientWidth / canvasRatio,
         perPixelTargetFind: true,
         targetFindTolerance: 5,
       });
+      // Set Drawing mode
+      canvasData.isDrawingMode = false;
     };
 
     onMounted(initFabricCanvas);
 
-    const getDogFromServer = () => {
-      axios.get('./api/canvas/getdog').then((value) => {
-        console.log('got dog');
-        // eslint-disable-next-line @typescript-eslint/no-empty-function
-        canvasData.loadFromJSON(value.data, canvasData.renderAll.bind(canvasData));
-        console.log(canvasData.toJSON());
-      });
-    };
-
     return {
-      getDogFromServer,
+      canvasData,
+      initFabricCanvas,
     };
   },
 });
+
 </script>
+
+<style>
+.canvas-border {
+  border: 1px solid black;
+}
+</style>
