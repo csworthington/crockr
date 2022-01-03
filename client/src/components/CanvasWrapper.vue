@@ -13,6 +13,11 @@
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
+    <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getRectFromServer">Get Rect</button></span>
+    <span><button @click="getCircleFromServer">Get circle</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -49,7 +54,7 @@ import { fabric } from 'fabric';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import {
-  RectWithID,
+  // RectWithID,
   CircleWithID,
   LineWithID,
   ObjectWithID,
@@ -158,7 +163,7 @@ export default defineComponent({
      * the mouse:down event has been fired by the canvas
      */
     function rectangleDown(x : number, y : number) {
-      rect = new RectWithID({
+      rect = new fabric.RectWithID({
         left: origX,
         top: origY,
         originX: 'left',
@@ -531,8 +536,8 @@ export default defineComponent({
       const msg = JSON.parse(message.data);
       console.log(msg.msgType);
       console.log(msg.msg);
-      const objectToAdd : typeof RectWithID = JSON.parse(msg.msg);
-      canvasData.add(objectToAdd);
+      const objectToAdd : typeof fabric.RectWithID = JSON.parse(msg.msg);
+      // canvasData.add(objectToAdd);
       // canvasData.add(objectToAdd);
     });
 
@@ -555,7 +560,6 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
-
     };
   },
 });

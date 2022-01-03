@@ -1,11 +1,14 @@
 /* eslint-disable no-shadow */
 import { fabric } from 'fabric';
-
 import getUUID from './id-generator';
 
 export type IObjectOptionsWithID = fabric.IObjectOptions & {
   id?: string;
 }
+
+// export interface IRectWithIDOptions extends fabric.IRectOptions {
+//   id: string;
+// }
 
 export type ILineOptionsWithID = IObjectOptionsWithID & fabric.ILineOptions;
 export type IRectOptionsWithID = IObjectOptionsWithID & fabric.IRectOptions;
@@ -85,23 +88,6 @@ export const CircleWithID = fabric.util.createClass(fabric.Circle, {
 /**
  * Create a subclass for a fabric Rectangle with a pregenerated UUID
  */
-export const RectWithID = fabric.util.createClass(fabric.Rect, {
-  type: ShapesWithID.rect,
-  initialize(options: IRectOptionsWithID) {
-    this.callSuper('initialize', options);
-    // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
-    // generate one at random.
-    this.set('id', options.id || getUUID());
-  },
-  toObject() {
-    return fabric.util.object.extend(this.callSuper('toObject'), {
-      id: this.get('id'),
-    });
-  },
-  toString() {
-    return `${this.callSuper('toString')} (id: ${this.id})`;
-  },
-});
 
 /**
  * Create a subclass for a fabric Rectangle with a pregenerated UUID
