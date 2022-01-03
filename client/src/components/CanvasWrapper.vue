@@ -45,6 +45,7 @@ import {
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
+// import { Object } from 'fabric/fabric-impl';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import {
@@ -88,9 +89,9 @@ export default defineComponent({
     const tool = ref(ToolType.None);
     let radius: number;
     let strokeWidth: any;
-    let shapeInProgress = false;
     let isObjectMoving = false;
     let isObjectScaling = false;
+    let isObjectBeingAdded = false;
     let isPenDown = false;
     // comparison array for comparing when deselected.
     const selectedCheck: (fabric.Object)[] = [];
@@ -150,7 +151,6 @@ export default defineComponent({
       line.set({ x2: origX, y2: origY, opacity: 1 });
       line.setCoords();
       canvasData.renderAll();
-      shapeInProgress = true;
     }
 
     /**
@@ -172,7 +172,6 @@ export default defineComponent({
         transparentCorners: false,
       });
       canvasData.add(rect);
-      shapeInProgress = true;
     }
 
     /**
@@ -192,7 +191,6 @@ export default defineComponent({
       });
       strokeWidth = circ.strokeWidth;
       canvasData.add(circ);
-      shapeInProgress = true;
     }
 
     /**
@@ -248,6 +246,9 @@ export default defineComponent({
      * Primary event handler for fabric.js canvas mouse:down event
      * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
      */
+    const updateServer = (msg : updateMsg) => {
+      socket.send(JSON.stringify(msg));
+    };
     function handleMouseDownEvent(evt: fabric.IEvent<Event>) {
       isDown = true;
       const pointer = canvasData.getPointer(evt.e);
@@ -273,10 +274,6 @@ export default defineComponent({
      */
     function handleMouseMoveEvent(evt: fabric.IEvent<Event>) {
       if (!isDown) {
-        if (shapeInProgress === true) {
-          console.log('send added update');
-          shapeInProgress = false;
-        }
         return;
       }
 
@@ -310,6 +307,12 @@ export default defineComponent({
       if (isPenDown) {
         isPenDown = false;
         console.log('send pen event');
+      }
+      if (isObjectBeingAdded) {
+        isObjectBeingAdded = false;
+        console.log('send real add  event');
+        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify(canvasData.getObjects()[canvasData.getObjects().length - 1]) };
+        updateServer(addMsg);
       }
     }
 
@@ -425,9 +428,6 @@ export default defineComponent({
         console.log('send  clear update.');
       }
     };
-    const updateServer = (msg : updateMsg) => {
-      socket.send(JSON.stringify(msg));
-    };
 
     /**
      * Initialize the Fabric.js canvas
@@ -496,6 +496,7 @@ export default defineComponent({
           // eslint-disable-next-line no-param-reassign
           evt.target.id = getUUID();
         }
+        isObjectBeingAdded = true;
       });
       canvasData.on('object:moving', (event) => {
         isObjectMoving = true;
@@ -514,7 +515,6 @@ export default defineComponent({
      */
     const resizeCanvas = () => {
       const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
-
       const containerWidth = outerCanvasContainer.clientWidth;
       const scale = containerWidth / canvasData.getWidth();
       const zoom = canvasData.getZoom() * scale;
@@ -526,6 +526,15 @@ export default defineComponent({
 
       canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     };
+    socket.addEventListener('message', (message) => {
+      // const msg = JSON.parse(message.data.ToString());
+      const msg = JSON.parse(message.data);
+      console.log(msg.msgType);
+      console.log(msg.msg);
+      const objectToAdd : typeof RectWithID = JSON.parse(msg.msg);
+      canvasData.add(objectToAdd);
+      // canvasData.add(objectToAdd);
+    });
 
     // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));

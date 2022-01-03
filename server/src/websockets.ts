@@ -8,11 +8,12 @@ const activeConnections = new  Set<connectedClients>();
 //const lockedObjects = new Set<lockedObjects>();
 const lockedObjects: string | any[]  = [[],[]];
 
+const canvas : any [] = [];
+
 interface connectedClients extends ws.WebSocket{
   name : string;
   id: string;
 }
-
 
 let  x = 1;
 const wsServer = new ws.Server({ noServer: true });
@@ -25,7 +26,7 @@ wsServer.on("connection", (socket: connectedClients) => {
   x++;
 
   // Send a welcome message to the new user
-  socket.send("Server says: Welcome new user!");
+  //socket.send("Server says: Welcome new user!");
 
   // add new socket to the socket set
   activeConnections.add(socket);
@@ -65,6 +66,16 @@ wsServer.on("connection", (socket: connectedClients) => {
         console.log(lockedObjects);
         break;
       }
+      case "Addition":{
+        canvas.push(JSON.parse(msg.msg));
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+
+        break;
+      }
       default: {
         console.log("Recieved Unknown update");
       }
@@ -78,7 +89,7 @@ wsServer.on("connection", (socket: connectedClients) => {
     // Send that message to all other active connections
     activeConnections.forEach(function(sockets){
       if(socket.id !== sockets.id){
-        sockets.send(incomingMsg);
+        //sockets.send(incomingMsg);
       }
     });
 
@@ -90,7 +101,7 @@ wsServer.on("connection", (socket: connectedClients) => {
           activeConnections.delete(sockets);
         }
         else{
-          sockets.send(socket.name  + " disconnected");
+          //sockets.send(socket.name  + " disconnected");
         }
       });
       
