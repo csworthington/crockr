@@ -5,10 +5,14 @@ import { getUUID} from "./controllers/uuid";
 import { v4 as uuidv4 } from "uuid";
 
 const activeConnections = new  Set<connectedClients>();
+//const lockedObjects = new Set<lockedObjects>();
+const lockedObjects: string | any[]  = [[],[]];
+
 interface connectedClients extends ws.WebSocket{
   name : string;
   id: string;
 }
+
 
 let  x = 1;
 const wsServer = new ws.Server({ noServer: true });
@@ -29,6 +33,45 @@ wsServer.on("connection", (socket: connectedClients) => {
   // Handle incoming messages
   socket.on("message", (message: Buffer) => {
     // Create a message showing who sent what information
+    
+    const msg = JSON.parse(message.toString());
+    switch(msg.msgType){
+
+      case "Selection":{
+        const selectedIds = JSON.parse(msg.msg);
+        console.log("recieved Selection update ");
+        selectedIds.forEach( (id: string) => {
+          if(lockedObjects[1].includes(id) === false){
+            lockedObjects[0].push(socket.id);
+            lockedObjects[1].push(id);
+  
+          }
+        });
+        console.log(lockedObjects);
+        break;
+      }
+      case "Deselection":{
+        console.log("recieved Deselection update ");
+        const deselectedIds = JSON.parse(msg.msg);
+        console.log("recieved Selection update ");
+        deselectedIds.forEach( (id: string) => {
+          if(lockedObjects[1].includes(id)){
+            lockedObjects[0].splice(socket.id);
+            lockedObjects[1].splice(id);
+  
+          }
+          
+        });
+        console.log(lockedObjects);
+        break;
+      }
+      default: {
+        console.log("Recieved Unknown update");
+      }
+
+    }
+    
+    
     const incomingMsg = `${socket.name} says "${message.toString()}"`;
     console.log(incomingMsg);
 

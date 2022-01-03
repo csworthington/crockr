@@ -19,6 +19,13 @@ export default defineComponent({
     function msgHandle() {
       let msgToSend : string;
       const msg = <HTMLInputElement>document.getElementById('msg');
+      const tag = document.createElement('p');
+      const text = document.createTextNode(`You said ${msg.value}`);
+      tag.appendChild(text);
+      const log = document.getElementById('log');
+      if (log !== null) {
+        log.appendChild(tag);
+      }
       if (msg !== null) {
         msgToSend = msg.value;
         msg.value = '';

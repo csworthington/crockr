@@ -51,8 +51,10 @@ import {
   RectWithID,
   CircleWithID,
   LineWithID,
+  ObjectWithID,
 } from '@/utils/fabric-object-extender';
 import getUUID from '@/utils/id-generator';
+import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 
 enum ToolType {
   None = 'NONE',
@@ -74,8 +76,6 @@ export default defineComponent({
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
-    // When line tool is active it determines if first click has occured
-    let lTfirstCoordPlaced = false;
     // line object that is modified after first coord is placed.
     let line : fabric.Line;
     // stores the first coord when line tool is active
@@ -88,6 +88,17 @@ export default defineComponent({
     const tool = ref(ToolType.None);
     let radius: number;
     let strokeWidth: any;
+    let shapeInProgress = false;
+    let isObjectMoving = false;
+    let isObjectScaling = false;
+    let isPenDown = false;
+    // comparison array for comparing when deselected.
+    const selectedCheck: (fabric.Object)[] = [];
+    const socket = useGlobalWebSocket();
+    interface updateMsg{
+      msgType : string;
+      msg : string;
+    }
 
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
@@ -115,34 +126,31 @@ export default defineComponent({
      * mouse:down event has been fired by the canvas
      */
     function lineMouseDown() {
-      if (lTfirstCoordPlaced === false) {
-        lineToollTFirstCoordPlaced = [origX, origY];
-        lTfirstCoordPlaced = true;
-        const width = lineThickness.value;
+      lineToollTFirstCoordPlaced = [origX, origY];
+      const width = lineThickness.value;
 
-        line = new LineWithID(
-          [
-            lineToollTFirstCoordPlaced[0],
-            lineToollTFirstCoordPlaced[1],
-            origX,
-            origY,
-          ],
-          {
-            stroke: store.state.colourPalette.primaryToolColour,
-            strokeWidth: width,
-            opacity: 0.5,
-            strokeUniform: true,
-            padding: 5,
-          },
-        );
-        canvasData.add(line);
-        // first coord already place so finalize line
-      } else {
-        line.set({ x2: origX, y2: origY, opacity: 1 });
-        line.setCoords();
-        canvasData.renderAll();
-        lTfirstCoordPlaced = false;
-      }
+      line = new LineWithID(
+        [
+          lineToollTFirstCoordPlaced[0],
+          lineToollTFirstCoordPlaced[1],
+          origX,
+          origY,
+        ],
+        {
+          stroke: store.state.colourPalette.primaryToolColour,
+          strokeWidth: width,
+          opacity: 0.5,
+          strokeUniform: true,
+          padding: 5,
+        },
+      );
+      canvasData.add(line);
+      // first coord already place so finalize line
+
+      line.set({ x2: origX, y2: origY, opacity: 1 });
+      line.setCoords();
+      canvasData.renderAll();
+      shapeInProgress = true;
     }
 
     /**
@@ -164,6 +172,7 @@ export default defineComponent({
         transparentCorners: false,
       });
       canvasData.add(rect);
+      shapeInProgress = true;
     }
 
     /**
@@ -183,6 +192,7 @@ export default defineComponent({
       });
       strokeWidth = circ.strokeWidth;
       canvasData.add(circ);
+      shapeInProgress = true;
     }
 
     /**
@@ -190,10 +200,9 @@ export default defineComponent({
      * the mouse:move event has been fired by the canvas
      */
     function lineMove(x : number, y : number) {
-      if (lTfirstCoordPlaced === true) {
-        line.set({ x2: x, y2: y });
-        canvasData.renderAll();
-      }
+      line.set({ x2: x, y2: y });
+      canvasData.renderAll();
+      line.setCoords();
     }
 
     /**
@@ -253,6 +262,8 @@ export default defineComponent({
       } else if (tool.value === ToolType.Line) {
         // if first coord not placed, set it and start drawing line to mouse
         lineMouseDown();
+      } else if (tool.value === ToolType.Pen) {
+        isPenDown = true;
       }
     }
 
@@ -261,7 +272,13 @@ export default defineComponent({
      * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
      */
     function handleMouseMoveEvent(evt: fabric.IEvent<Event>) {
-      if (!isDown && tool.value !== ToolType.Line) return;
+      if (!isDown) {
+        if (shapeInProgress === true) {
+          console.log('send added update');
+          shapeInProgress = false;
+        }
+        return;
+      }
 
       const pointer = canvasData.getPointer(evt.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
@@ -282,6 +299,18 @@ export default defineComponent({
      */
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
+      if (isObjectMoving) {
+        isObjectMoving = false;
+        console.log('Send move update');
+      }
+      if (isObjectScaling) {
+        isObjectScaling = false;
+        console.log('Send scaling event');
+      }
+      if (isPenDown) {
+        isPenDown = false;
+        console.log('send pen event');
+      }
     }
 
     /**
@@ -384,6 +413,7 @@ export default defineComponent({
       if (elem != null) {
         elem.remove();
       }
+      console.log('send delete update');
     };
 
     /**
@@ -392,7 +422,11 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
+        console.log('send  clear update.');
       }
+    };
+    const updateServer = (msg : updateMsg) => {
+      socket.send(JSON.stringify(msg));
     };
 
     /**
@@ -411,14 +445,42 @@ export default defineComponent({
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
+
       canvasData.on('selection:created', () => {
+        console.log('send selection update');
+
+        canvasData.getActiveObjects().forEach((active) => {
+          if (selectedCheck.indexOf(active) === -1) {
+            selectedCheck.push(active);
+          }
+        });
+
+        const selectedIds:(string)[] = [];
+        canvasData.getActiveObjects().forEach((element : typeof ObjectWithID) => {
+          selectedIds.push(element.get('id'));
+        });
+        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+        updateServer(selectionUpdate);
+        console.log(selectedCheck.length);
+
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
         deleteBtn.id = 'deleteBtn';
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
       });
+
       canvasData.on('selection:cleared', () => {
+        const deselectedId : string[] = [];
+        selectedCheck.forEach((selected : typeof ObjectWithID) => {
+          if (canvasData.getActiveObjects().indexOf(selected) === -1) {
+            deselectedId.push(selected.get('id'));
+            selectedCheck.splice(selectedCheck.indexOf(selected));
+          }
+        });
+        console.log('send selection cleared update');
+        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        updateServer(deselectMsg);
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
@@ -434,6 +496,13 @@ export default defineComponent({
           // eslint-disable-next-line no-param-reassign
           evt.target.id = getUUID();
         }
+      });
+      canvasData.on('object:moving', (event) => {
+        isObjectMoving = true;
+      });
+
+      canvasData.on('object:scaling', () => {
+        isObjectScaling = true;
       });
 
       console.dir(canvasData);
@@ -477,6 +546,7 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
+
     };
   },
 });
