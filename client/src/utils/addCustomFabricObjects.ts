@@ -53,9 +53,24 @@ function createLineWithID(): void {
     },
   });
 
-  fabric.LineWithID.fromObject = function (object: any, callback: any) {
-  // eslint-disable-next-line no-underscore-dangle
-    return <fabric.LineWithID>fabric.Object._fromObject('LineWithID', object, callback);
+  fabric.LineWithID.fromObject = function (object: fabric.LineWithID, callback: any) {
+    /**
+     * For fabric to correctly initialize a Line, the extra constructor parameter
+     * "points" (number[]) must be created from the coordinate pair describing the
+     * line and then added to the canvas.
+     */
+    const reformattedLine: any = {
+      points: [object.x1, object.y1, object.x2, object.y2],
+      ...object,
+    };
+
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.LineWithID>fabric.Object._fromObject(
+      'LineWithID',
+      reformattedLine,
+      callback,
+      'points',
+    );
   };
 }
 

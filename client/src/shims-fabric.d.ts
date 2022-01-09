@@ -23,8 +23,22 @@ declare global {
 
     // Line with ID Types
     export interface ILineWithIDOptions extends IObjectWithIDOptions {
-      points?: number[]
-      id?: string
+      /**
+       * x value or first line edge
+       */
+      x1?: number | undefined;
+      /**
+       * x value or second line edge
+       */
+      x2?: number | undefined;
+      /**
+       * y value or first line edge
+       */
+      y1?: number | undefined;
+      /**
+       * y value or second line edge
+       */
+      y2?: number | undefined;
     }
 
     export interface LineWithID extends Object, ILineWithIDOptions { }
