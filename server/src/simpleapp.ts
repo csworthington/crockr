@@ -41,4 +41,6 @@ app.get("/api/canvas/getdog", canvasController.getDog);
 app.get("/api/canvas/getline", canvasController.getLine);
 app.get("/api/canvas/getrect", canvasController.getRect);
 app.get("/api/canvas/getcircle", canvasController.getCircle);
+app.get("/api/canvas/getpen", canvasController.getPen);
+
 export default app;

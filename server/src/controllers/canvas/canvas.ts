@@ -41,6 +41,11 @@ export const getCircle = (req: Request, res: Response) => {
   return serveFile(req, res, "../client/circle.json");
 };
 
+export const getPen = (req: Request, res: Response) => {
+  console.log("sending pen");
+  return serveFile(req, res, "../client/pen.json");
+};
+
 export const getDog = (req: Request, res: Response) => {
   const dogCanvas = readFile("../client/dog.json", (err, data) => {
     if (!err) {

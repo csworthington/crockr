@@ -16,6 +16,7 @@
     <span><button @click="sendCanvasToServer">Send Canvas</button></span>
     <span><button @click="getDogFromServer">Get Dog🐶</button></span>
     <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getPenFromServer">Get Pen</button></span>
     <span><button @click="getRectFromServer">Get Rect</button></span>
     <span><button @click="getCircleFromServer">Get circle</button></span>
     <span>
@@ -52,11 +53,6 @@ import { fabric } from 'fabric';
 
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
-import {
-  // RectWithID,
-  CircleWithID,
-  LineWithID,
-} from '@/utils/fabric-object-extender';
 import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 
@@ -84,11 +80,11 @@ export default defineComponent({
     // When line tool is active it determines if first click has occured
     let lTfirstCoordPlaced = false;
     // line object that is modified after first coord is placed.
-    let line : fabric.Line;
+    let line : fabric.LineWithID;
     // stores the first coord when line tool is active
     let lineToollTFirstCoordPlaced:number[];
-    let rect: fabric.Object;
-    let circ: fabric.Circle;
+    let rect: fabric.RectWithID;
+    let circ: fabric.CircleWithID;
     let isDown: boolean;
     let origX: number;
     let origY: number;
@@ -127,7 +123,7 @@ export default defineComponent({
         lTfirstCoordPlaced = true;
         const width = lineThickness.value;
 
-        line = new LineWithID(
+        line = new fabric.LineWithID(
           [
             lineToollTFirstCoordPlaced[0],
             lineToollTFirstCoordPlaced[1],
@@ -178,7 +174,7 @@ export default defineComponent({
      * the mouse:down event has been fired by the canvas
      */
     function circleDown(x : number, y : number) {
-      circ = new CircleWithID({
+      circ = new fabric.CircleWithID({
         left: x,
         top: y,
         radius: 1,
@@ -418,6 +414,10 @@ export default defineComponent({
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
+
+      // Set the brush to be the brush with the ID attached
+      canvasData.freeDrawingBrush = new fabric.PencilBrushWithID(canvasData);
+
       canvasData.on('selection:created', () => {
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
@@ -503,6 +503,12 @@ export default defineComponent({
       });
     };
 
+    const getPenFromServer = () => {
+      axios.get('./api/canvas/getpen').then((value) => {
+        canvasData.loadFromJSON(JSON.stringify(value.data), canvasData.renderAll.bind(canvasData));
+      });
+    };
+
     onMounted(initFabricCanvas);
     return {
       resizeCanvas,
@@ -519,6 +525,7 @@ export default defineComponent({
       getLineFromServer,
       getRectFromServer,
       getCircleFromServer,
+      getPenFromServer,
     };
   },
 });

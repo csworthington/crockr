@@ -1,5 +1,14 @@
 import { Object, BaseBrush } from "fabric/fabric-impl";
 
+export enum ShapesWithID {
+  object = 'objectWithID',
+  line = 'lineWithID',
+  circle = 'circleWithID',
+  rect = 'rectWithID',
+  path = 'pathWithID',
+  pencilBrush = 'pencilBrushWithID'
+}
+
 declare global {
   namespace fabric {
     export interface IObjectWithIDOptions extends IObjectOptions {
@@ -7,13 +16,12 @@ declare global {
     }
 
     // Rectangle With ID Types
-    export interface IRectWithIDOptions extends IObjectWithIDOptions { }
+    export interface IRectWithIDOptions extends IRectOptions, IObjectWithIDOptions { }
 
     export interface RectWithID extends IRectWithIDOptions { }
-    export class RectWithID extends Object {
-      constructor(options?: IRectWithIDOptions);
 
-      static ATTRIBUTE_NAMES: string[];
+    export class RectWithID extends Rect {
+      constructor(options?: IRectWithIDOptions);
 
       static fromElement(element: SVGElement, options?: IRectWithIDOptions): RectWithID;
 
@@ -22,27 +30,11 @@ declare global {
 
 
     // Line with ID Types
-    export interface ILineWithIDOptions extends IObjectWithIDOptions {
-      /**
-       * x value or first line edge
-       */
-      x1?: number | undefined;
-      /**
-       * x value or second line edge
-       */
-      x2?: number | undefined;
-      /**
-       * y value or first line edge
-       */
-      y1?: number | undefined;
-      /**
-       * y value or second line edge
-       */
-      y2?: number | undefined;
-    }
+    export interface ILineWithIDOptions extends ILineOptions, IObjectWithIDOptions { }
 
     export interface LineWithID extends Object, ILineWithIDOptions { }
-    export class LineWithID extends Object {
+
+    export class LineWithID extends Line {
       /**
        * Constructor
        * @param [points] Array of points
@@ -51,14 +43,7 @@ declare global {
       constructor(points?: number[], objObjects?: ILineWithIDOptions);
 
       /**
-       * Returns svg representation of an instance
-       * @return {Array} an array of strings with the specific svg representation
-       * of the instance
-       */
-      _toSVG(): string;
-
-      /**
-       * Returns fabric.Line instance from an SVG element
+       * Returns fabric.LineWithID instance from an SVG element
        * @static
        * @memberOf fabric.Line
        * @param {SVGElement} element Element to parse
@@ -68,40 +53,56 @@ declare global {
       static fromElement(element: SVGElement, callback?: Function, options?: ILineWithIDOptions): LineWithID;
 
       /**
-       * Returns fabric.Line instance from an object representation
+       * Returns fabric.LineWithID instance from an object representation
        * @param object Object to create an instance from
        */
       static fromObject(object: any, callback: any): LineWithID;
-      static ATTRIBUTE_NAMES: string[];
-
-      /**
-       * Produces a function that calculates distance from canvas edge to Line origin.
-       */
-      makeEdgeToOriginGetter(
-        propertyNames: { origin: number; axis1: any; axis2: any; dimension: any },
-        originValues: { nearest: any; center: any; farthest: any },
-      ): Function;
-
-      /**
-       * Recalculates line points given width and height
-       * @private
-       */
-      calcLinePoints(): { x1: number; x2: number; y1: number; y2: number };
     }
 
 
     // Circle with ID Types
-    export interface ICircleWithIDOptions extends IObjectWithIDOptions { }
+    export interface ICircleWithIDOptions extends ICircleOptions, IObjectWithIDOptions { }
 
     export interface CircleWithID extends ICircleWithIDOptions { }
-    export class CircleWithID extends Object {
-      constructor(options?: ICircleWithIDOptions);
 
-      static ATTRIBUTE_NAMES: string[];
+    export class CircleWithID extends Circle {
+      constructor(options?: ICircleWithIDOptions);
 
       static fromElement(element: SVGElement, options?: ICircleWithIDOptions): CircleWithID;
 
       static fromObject(object: any, callback: any): CircleWithID;
+    }
+
+
+    // Path with ID types
+    export interface IPathWithIDOptions extends IPathOptions, IObjectWithIDOptions { }
+
+    export interface PathWithID extends Object, IPathWithIDOptions { }
+
+    export class PathWithID {
+      /**
+       * Constructor
+       * @param path Path data (sequence of coordinates and corresponding "command" tokens)
+       * @param [options] Options object
+       */
+      constructor(path?: string | Point[], options?: IPathWithIDOptions);
+
+      /**
+       * Creates an instance of fabric.Path from an SVG <path> element
+       * @param element to parse
+       * @param callback Callback to invoke when an fabric.Path instance is created
+       * @param [options] Options object
+       */
+      static fromElement(element: SVGElement, callback: Function, options?: IPathWithIDOptions): PathWithID;
+      /**
+       * Creates an instance of fabric.Path from an object
+       * @param callback Callback to invoke when an fabric.Path instance is created
+       */
+
+      static fromObject(object: any, callback: Function): PathWithID;
+      /**
+       * List of attribute names to account for when parsing SVG element (used by `fabric.Polygon.fromElement`)
+       */
     }
 
 
@@ -131,7 +132,7 @@ declare global {
        * Creates fabric.Path object to add on canvas
        * @param pathData Path data
        */
-      createPath(pathData: string): Path;
+      createPath(pathData: string): PathWithID;
     }
   }
 }
