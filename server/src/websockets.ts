@@ -95,26 +95,7 @@ wsServer.on("connection", (socket: connectedClients) => {
         });
         break;
       }
-      case "Moving":{
-        const movedObjects = JSON.parse(msg.msg);
-        console.log(movedObjects[0].length);
-        for(let i = 0; i < movedObjects[0].length; i++){
-          if(canvas[0].includes(movedObjects[0][i])){
-            const x = canvas[0].indexOf(movedObjects[0][i]);
-            canvas[1][x] = movedObjects[1][i];
-          }
-          else{
-            console.log("Object does not exist");
-          }
-        }
-        activeConnections.forEach(function(sockets){
-          if(socket.id !== sockets.id){
-            sockets.send(JSON.stringify(msg));
-          }
-        });
-        break;
-      }
-      case "Scaling":{
+      case "Modified":{
         const scaledObjects = JSON.parse(msg.msg);
         console.log(scaledObjects[0].length);
         for(let i = 0; i < scaledObjects[0].length; i++){

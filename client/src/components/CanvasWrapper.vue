@@ -95,8 +95,7 @@ export default defineComponent({
     const tool = ref(ToolType.None);
     let radius: number;
     let strokeWidth: any;
-    let isObjectMoving = false;
-    let isObjectScaling = false;
+    let isObjectModified = false;
     let isObjectBeingAdded = false;
     let isPenDown = false;
     // comparison array for comparing when deselected.
@@ -305,38 +304,8 @@ export default defineComponent({
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
       let movingMsg :updateMsg;
-      if (isObjectMoving) {
-        isObjectMoving = false;
-        const movedObjects: string[]|any[] = [[], []];
-        if (canvasData.getActiveObjects().length === 1) {
-          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-            movedObjects[0].push(element.get('id'));
-            movedObjects[1].push(JSON.stringify(element));
-            console.log(element);
-            movingMsg = { msgType: 'Moving', msg: JSON.stringify(movedObjects) };
-            updateServer(movingMsg);
-          });
-        } else {
-          console.log('Send move update');
-          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-            // eslint-disable-next-line max-len
-            const mainLeft = element.group!.left! + element.left! * element.group!.scaleX! + ((element.group!.width! / 2));
-            // eslint-disable-next-line max-len
-            const mainTop = element.group!.top! + element.top! * element.group!.scaleY! + ((element.group!.height! / 2));
-            const tempObject = new fabric.ObjectWithID(element);
-            tempObject.set({
-              left: mainLeft,
-              top: mainTop,
-            });
-            movedObjects[0].push(element.get('id'));
-            movedObjects[1].push(JSON.stringify(tempObject));
-            console.log(element);
-            movingMsg = { msgType: 'Moving', msg: JSON.stringify(movedObjects) };
-            updateServer(movingMsg);
-          });
-        }
-      } else if (isObjectScaling) {
-        isObjectScaling = false;
+      if (isObjectModified) {
+        isObjectModified = false;
         const scaledObjects: string[]|any[] = [[], []];
         if (canvasData.getActiveObjects().length === 1) {
           canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
@@ -344,7 +313,7 @@ export default defineComponent({
             scaledObjects[1].push(JSON.stringify(element));
             console.log(element);
           });
-          const scalingMsg :updateMsg = { msgType: 'Scaling', msg: JSON.stringify(scaledObjects) };
+          const scalingMsg :updateMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
           updateServer(scalingMsg);
           console.log('Send scaling event');
         } else {
@@ -367,24 +336,7 @@ export default defineComponent({
           const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
           canvasData.setActiveObject(selectionGroup);
           canvasData.renderAll();
-          /* canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-           */// eslint-disable-next-line max-len
-          /* const mainLeft = element.group!.left! + element.left! * element.group!.scaleX! + ((element.group!.width! / 2.0));
-         */ // eslint-disable-next-line max-len
-          /* const mainTop = element.group!.top! + element.top! * element.group!.scaleX! + ((element.group!.height! / 2.0));
-            const tempObject = new fabric.ObjectWithID(element);
-            tempObject.set({
-              left: mainLeft,
-              top: mainTop,
-              scaleX: element.group!.scaleX!,
-              scaleY: element.group!.scaleY!,
-            });
-            scaledObjects[0].push(element.get('id'));
-            scaledObjects[1].push(JSON.stringify(tempObject));
-            console.log('element');
-            console.log(element);
-          }); */
-          movingMsg = { msgType: 'Scaling', msg: JSON.stringify(scaledObjects) };
+          movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
           updateServer(movingMsg);
         }
       } else if (isPenDown) {
@@ -616,12 +568,14 @@ export default defineComponent({
         }
       });
       canvasData.on('object:moving', () => {
-        console.log('Object moving set to true');
-        isObjectMoving = true;
+        isObjectModified = true;
+      });
+      canvasData.on('object:rotating', () => {
+        isObjectModified = true;
       });
 
       canvasData.on('object:scaling', () => {
-        isObjectScaling = true;
+        isObjectModified = true;
       });
 
       console.dir(canvasData);
@@ -696,27 +650,7 @@ export default defineComponent({
           canvasData.clear();
           break;
         }
-        case 'Moving': {
-          console.log(parsedMsg);
-          parsedMsg[1].forEach((element : any) => {
-            const movedCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
-            console.log('Moved Object:');
-            console.log(movedCanvasObject);
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === movedCanvasObject.get('id')) {
-                console.log(movedCanvasObject.get('left'));
-                canvasObject.set({
-                  left: movedCanvasObject.get('left'),
-                  top: movedCanvasObject.get('top'),
-                });
-                canvasObject.setCoords();
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Scaling': {
+        case 'Modified': {
           console.log(parsedMsg);
           parsedMsg[1].forEach((element : any) => {
             const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
@@ -729,6 +663,7 @@ export default defineComponent({
                   scaleY: scaledCanvasObject.get('scaleY'),
                   top: scaledCanvasObject.get('top'),
                   left: scaledCanvasObject.get('left'),
+                  angle: scaledCanvasObject.get('angle'),
                 });
                 canvasObject.setCoords();
               }
@@ -772,7 +707,7 @@ export default defineComponent({
           canvasData.renderAll();
           break;
         }
-        /* case 'Loading': {
+        case 'Loading': {
           parsedMsg.forEach((element : string) => {
             const object : fabric.ObjectWithID = new ObjectWithID(JSON.parse(element));
             switch (object.get('type')) {
@@ -794,7 +729,7 @@ export default defineComponent({
             }
           });
           break;
-        } */
+        }
         default: {
           console.log('unknown message');
         }
