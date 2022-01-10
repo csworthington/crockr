@@ -2,6 +2,31 @@ import { fabric } from 'fabric';
 import { ShapesWithID } from './fabric-object-extender';
 import getUUID from './id-generator';
 
+function createObjectWithId(): void{
+  fabric.ObjectWithID = fabric.util.createClass(fabric.Object, {
+    type: ShapesWithID.object,
+    initialize(options: fabric.IObjectWithIDOptions) {
+      this.callSuper('initialize', options);
+      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
+      // generate one at random.
+      this.set('id', options.id || getUUID());
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), {
+        id: this.get('id'),
+      });
+    },
+    toString() {
+      return `${this.callSuper('toString')} (id: ${this.id})`;
+    },
+  });
+
+  fabric.RectWithID.fromObject = function (object: any, callback: any) {
+  // eslint-disable-next-line no-underscore-dangle
+    return fabric.Object._fromObject('ObjectWithID', object, callback);
+  // WHY DOES RECT WITH ID HAVE TO BE CAPS?
+  };
+}
 /**
  * Add the RectWithID class to the global fabric object
  */
@@ -120,4 +145,5 @@ export default function addCustomFabricObjects(): void {
   createLineWithID();
   createCircleWithID();
   createPencilBrushWithID();
+  createObjectWithId();
 }

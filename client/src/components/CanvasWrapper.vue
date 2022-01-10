@@ -61,6 +61,7 @@ import {
 } from '@/utils/fabric-object-extender';
 import getUUID from '@/utils/id-generator';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
+// import { Group } from 'fabric/fabric-impl';
 
 enum ToolType {
   None = 'NONE',
@@ -99,13 +100,15 @@ export default defineComponent({
     let isObjectBeingAdded = false;
     let isPenDown = false;
     // comparison array for comparing when deselected.
-    const selectedCheck: (fabric.Object)[] = [];
+    const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
     interface updateMsg{
       msgType : string;
       msg : string;
     }
-
+    const updateServer = (msg : updateMsg) => {
+      socket.send(JSON.stringify(msg));
+    };
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
     const thicknessOptions = [
@@ -114,7 +117,6 @@ export default defineComponent({
       { text: '8px', value: 8 },
       { text: '20px', value: 20 },
     ];
-
     const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
     // Primary tool colour. Stored in Vuex Store
@@ -251,9 +253,6 @@ export default defineComponent({
      * Primary event handler for fabric.js canvas mouse:down event
      * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
      */
-    const updateServer = (msg : updateMsg) => {
-      socket.send(JSON.stringify(msg));
-    };
     function handleMouseDownEvent(evt: fabric.IEvent<Event>) {
       isDown = true;
       const pointer = canvasData.getPointer(evt.e);
@@ -261,14 +260,18 @@ export default defineComponent({
       origY = pointer.y;
 
       if (tool.value === ToolType.Rectangle) {
+        isObjectBeingAdded = true;
         rectangleDown(pointer.x, pointer.y);
       } else if (tool.value === ToolType.Circle) {
+        isObjectBeingAdded = true;
         circleDown(pointer.x, pointer.y);
         // case line tool is selected
       } else if (tool.value === ToolType.Line) {
+        isObjectBeingAdded = true;
         // if first coord not placed, set it and start drawing line to mouse
         lineMouseDown();
       } else if (tool.value === ToolType.Pen) {
+        isObjectBeingAdded = true;
         isPenDown = true;
       }
     }
@@ -301,22 +304,99 @@ export default defineComponent({
      */
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
+      let movingMsg :updateMsg;
       if (isObjectMoving) {
         isObjectMoving = false;
-        console.log('Send move update');
-      }
-      if (isObjectScaling) {
+        const movedObjects: string[]|any[] = [[], []];
+        if (canvasData.getActiveObjects().length === 1) {
+          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+            movedObjects[0].push(element.get('id'));
+            movedObjects[1].push(JSON.stringify(element));
+            console.log(element);
+            movingMsg = { msgType: 'Moving', msg: JSON.stringify(movedObjects) };
+            updateServer(movingMsg);
+          });
+        } else {
+          console.log('Send move update');
+          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+            // eslint-disable-next-line max-len
+            const mainLeft = element.group!.left! + element.left! * element.group!.scaleX! + ((element.group!.width! / 2));
+            // eslint-disable-next-line max-len
+            const mainTop = element.group!.top! + element.top! * element.group!.scaleY! + ((element.group!.height! / 2));
+            const tempObject = new fabric.ObjectWithID(element);
+            tempObject.set({
+              left: mainLeft,
+              top: mainTop,
+            });
+            movedObjects[0].push(element.get('id'));
+            movedObjects[1].push(JSON.stringify(tempObject));
+            console.log(element);
+            movingMsg = { msgType: 'Moving', msg: JSON.stringify(movedObjects) };
+            updateServer(movingMsg);
+          });
+        }
+      } else if (isObjectScaling) {
         isObjectScaling = false;
-        console.log('Send scaling event');
-      }
-      if (isPenDown) {
+        const scaledObjects: string[]|any[] = [[], []];
+        if (canvasData.getActiveObjects().length === 1) {
+          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+            scaledObjects[0].push(element.get('id'));
+            scaledObjects[1].push(JSON.stringify(element));
+            console.log(element);
+          });
+          const scalingMsg :updateMsg = { msgType: 'Scaling', msg: JSON.stringify(scaledObjects) };
+          updateServer(scalingMsg);
+          console.log('Send scaling event');
+        } else {
+          const scaledIds : string[] = [];
+          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+            scaledIds.push(element.get('id')!);
+          });
+          const objectArray : fabric.ObjectWithID[] = [];
+          canvasData.discardActiveObject().renderAll();
+          scaledIds.forEach((id : string) => {
+            canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
+              if (element.get('id') === id) {
+                scaledObjects[0].push(id);
+                scaledObjects[1].push(JSON.stringify(element));
+                objectArray.push(element);
+              }
+            });
+          });
+          // eslint-disable-next-line max-len
+          const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
+          canvasData.setActiveObject(selectionGroup);
+          canvasData.renderAll();
+          /* canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+           */// eslint-disable-next-line max-len
+          /* const mainLeft = element.group!.left! + element.left! * element.group!.scaleX! + ((element.group!.width! / 2.0));
+         */ // eslint-disable-next-line max-len
+          /* const mainTop = element.group!.top! + element.top! * element.group!.scaleX! + ((element.group!.height! / 2.0));
+            const tempObject = new fabric.ObjectWithID(element);
+            tempObject.set({
+              left: mainLeft,
+              top: mainTop,
+              scaleX: element.group!.scaleX!,
+              scaleY: element.group!.scaleY!,
+            });
+            scaledObjects[0].push(element.get('id'));
+            scaledObjects[1].push(JSON.stringify(tempObject));
+            console.log('element');
+            console.log(element);
+          }); */
+          movingMsg = { msgType: 'Scaling', msg: JSON.stringify(scaledObjects) };
+          updateServer(movingMsg);
+        }
+      } else if (isPenDown) {
         isPenDown = false;
         console.log('send pen event');
-      }
-      if (isObjectBeingAdded) {
+      } else if (isObjectBeingAdded) {
         isObjectBeingAdded = false;
         console.log('send real add  event');
-        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify(canvasData.getObjects()[canvasData.getObjects().length - 1]) };
+        // eslint-disable-next-line max-len
+        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+        const addedId = addedObject.get('id');
+        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
         updateServer(addMsg);
       }
     }
@@ -415,12 +495,18 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
-      const objectList = canvasData.getActiveObjects();
-      objectList.forEach((object) => { canvasData.remove(object); });
+      const deletionIDs :string[] = [];
+      const objectList : typeof ObjectWithID = canvasData.getActiveObjects();
+      objectList.forEach((object : typeof ObjectWithID) => {
+        deletionIDs.push(object.get('id'));
+        canvasData.remove(object);
+      });
       const elem = document.getElementById('deleteBtn');
       if (elem != null) {
         elem.remove();
       }
+      const deleteMsg :updateMsg = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
+      updateServer(deleteMsg);
       console.log('send delete update');
     };
 
@@ -430,6 +516,8 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
+        const clearMsg :updateMsg = { msgType: 'Clearing', msg: JSON.stringify('') };
+        updateServer(clearMsg);
         console.log('send  clear update.');
       }
     };
@@ -450,13 +538,12 @@ export default defineComponent({
       });
       // Set Drawing mode
       canvasData.isDrawingMode = false;
-
       canvasData.on('selection:created', () => {
         console.log('send selection update');
 
-        canvasData.getActiveObjects().forEach((active) => {
-          if (selectedCheck.indexOf(active) === -1) {
-            selectedCheck.push(active);
+        canvasData.getActiveObjects().forEach((active: any) => {
+          if (selectedCheck.indexOf(active.get('id')) === -1) {
+            selectedCheck.push(active.get('id'));
           }
         });
 
@@ -474,17 +561,43 @@ export default defineComponent({
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
       });
-
-      canvasData.on('selection:cleared', () => {
-        const deselectedId : string[] = [];
-        selectedCheck.forEach((selected : typeof ObjectWithID) => {
-          if (canvasData.getActiveObjects().indexOf(selected) === -1) {
-            deselectedId.push(selected.get('id'));
-            selectedCheck.splice(selectedCheck.indexOf(selected));
+      canvasData.on('selection:updated', () => {
+        console.log('updated');
+        canvasData.getActiveObjects().forEach((active: any) => {
+          if (selectedCheck.indexOf(active.get('id')) === -1) {
+            selectedCheck.push(active.get('id'));
           }
         });
+
+        const selectedIds:(string)[] = [];
+        canvasData.getActiveObjects().forEach((element : typeof ObjectWithID) => {
+          selectedIds.push(element.get('id'));
+        });
+        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+        updateServer(selectionUpdate);
+        const activeObjectIDS : string[] = [];
+        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
+          activeObjectIDS.push(active.get('id')!);
+        });
+        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
         console.log('send selection cleared update');
         const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        console.log(canvasData.getActiveObjects());
+        console.log(deselectMsg);
+        updateServer(deselectMsg);
+      });
+      canvasData.on('selection:cleared', () => {
+        console.log('selectedCheck');
+        console.dir(selectedCheck);
+        const activeObjectIDS : string[] = [];
+        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
+          activeObjectIDS.push(active.get('id')!);
+        });
+        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
+        console.log('send selection cleared update');
+        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        console.log(canvasData.getActiveObjects());
+        console.log(deselectMsg);
         updateServer(deselectMsg);
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
@@ -501,9 +614,9 @@ export default defineComponent({
           // eslint-disable-next-line no-param-reassign
           evt.target.id = getUUID();
         }
-        isObjectBeingAdded = true;
       });
-      canvasData.on('object:moving', (event) => {
+      canvasData.on('object:moving', () => {
+        console.log('Object moving set to true');
         isObjectMoving = true;
       });
 
@@ -513,6 +626,7 @@ export default defineComponent({
 
       console.dir(canvasData);
       console.log(canvasData.toObject());
+      // loadCanvas();
     };
 
     /**
@@ -534,13 +648,159 @@ export default defineComponent({
     socket.addEventListener('message', (message) => {
       // const msg = JSON.parse(message.data.ToString());
       const msg = JSON.parse(message.data);
-      console.log(msg.msgType);
-      console.log(msg.msg);
-      const objectToAdd : typeof fabric.RectWithID = JSON.parse(msg.msg);
-      // canvasData.add(objectToAdd);
-      // canvasData.add(objectToAdd);
-    });
+      console.log(msg);
+      // console.log(msg.msgType);
+      console.dir(msg);
+      console.dir(msg.msg[1]);
+      let objct : fabric.Object;
+      const parsedMsg = JSON.parse(msg.msg);
+      switch (msg.msgType) {
+        case 'Addition': {
+          const parsedObject = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
+          console.log(parsedObject.get('type'));
+          switch (parsedObject.get('type')) {
+            case 'rectWithID': {
+              objct = new fabric.RectWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
+            case 'circleWithID': {
+              objct = new fabric.CircleWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
+            case 'lineWithID': {
+              objct = new fabric.LineWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
+            default: {
+              objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
+            }
+          }
+          canvasData.add(objct);
+          console.log(canvasData.getObjects());
+          objct.setCoords();
+          canvasData.renderAll();
+          break;
+        }
+        case 'Deletion': {
+          const deletionIDs = parsedMsg;
+          deletionIDs.forEach((ID : string) => {
+            canvasData.getObjects().forEach((object : fabric.ObjectWithID) => {
+              if (object.get('id') === ID) {
+                canvasData.remove(object);
+              }
+            });
+          });
+          break;
+        }
+        case 'Clearing': {
+          canvasData.clear();
+          break;
+        }
+        case 'Moving': {
+          console.log(parsedMsg);
+          parsedMsg[1].forEach((element : any) => {
+            const movedCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
+            console.log('Moved Object:');
+            console.log(movedCanvasObject);
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === movedCanvasObject.get('id')) {
+                console.log(movedCanvasObject.get('left'));
+                canvasObject.set({
+                  left: movedCanvasObject.get('left'),
+                  top: movedCanvasObject.get('top'),
+                });
+                canvasObject.setCoords();
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        case 'Scaling': {
+          console.log(parsedMsg);
+          parsedMsg[1].forEach((element : any) => {
+            const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
+            console.log('Scaled Object:');
+            console.log(scaledCanvasObject);
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
+                canvasObject.set({
+                  scaleX: scaledCanvasObject.get('scaleX'),
+                  scaleY: scaledCanvasObject.get('scaleY'),
+                  top: scaledCanvasObject.get('top'),
+                  left: scaledCanvasObject.get('left'),
+                });
+                canvasObject.setCoords();
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        case 'Selection': {
+          console.log(parsedMsg);
+          parsedMsg.forEach((id : any) => {
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === id) {
+                canvasObject.set({
+                  selectable: false,
+                  evented: false,
+                  opacity: 0.5,
 
+                });
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        case 'Deselection': {
+          console.log('Got Here');
+          console.log(parsedMsg);
+          parsedMsg.forEach((id : any) => {
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === id) {
+                canvasObject.set({
+                  selectable: true,
+                  evented: true,
+                  opacity: 1,
+
+                });
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        /* case 'Loading': {
+          parsedMsg.forEach((element : string) => {
+            const object : fabric.ObjectWithID = new ObjectWithID(JSON.parse(element));
+            switch (object.get('type')) {
+              case 'rectWithID': {
+                canvasData.add(new fabric.RectWithID(JSON.parse(element)));
+                break;
+              }
+              case 'circleWithID': {
+                canvasData.add(new fabric.CircleWithID(object));
+                break;
+              }
+              case 'lineWithID': {
+                // canvasData.add(new fabric.LineWithID(object));
+                break;
+              }
+              default: {
+                console.log('Unknown type');
+              }
+            }
+          });
+          break;
+        } */
+        default: {
+          console.log('unknown message');
+        }
+      }
+      canvasData.renderAll();
+    });
     // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
@@ -560,6 +820,8 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
+      updateServer,
+      // loadCanvas,
     };
   },
 });

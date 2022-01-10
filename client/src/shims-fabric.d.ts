@@ -5,7 +5,8 @@ declare global {
     export interface IObjectWithIDOptions extends IObjectOptions {
       id?: string;
     }
-
+    export interface ObjectWithID extends IObservable<Object>, IObjectWithIDOptions, IObjectAnimation<Object> {}
+    export class ObjectWithID extends Object{}
     // Rectangle With ID Types
     export interface IRectWithIDOptions extends IObjectWithIDOptions { }
 

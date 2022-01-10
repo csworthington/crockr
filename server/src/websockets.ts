@@ -8,13 +8,16 @@ const activeConnections = new  Set<connectedClients>();
 //const lockedObjects = new Set<lockedObjects>();
 const lockedObjects: string | any[]  = [[],[]];
 
-const canvas : any [] = [];
+const canvas: string[][] = [[],[]];
 
 interface connectedClients extends ws.WebSocket{
   name : string;
   id: string;
 }
-
+interface updateMsg{
+  msgType : string;
+  msg : string;
+}
 let  x = 1;
 const wsServer = new ws.Server({ noServer: true });
 wsServer.on("connection", (socket: connectedClients) => {
@@ -30,6 +33,8 @@ wsServer.on("connection", (socket: connectedClients) => {
 
   // add new socket to the socket set
   activeConnections.add(socket);
+  const loadMsg : updateMsg = {msgType: "Loading", msg: JSON.stringify(canvas[1])};
+  socket.send(JSON.stringify(loadMsg));
 
   // Handle incoming messages
   socket.on("message", (message: Buffer) => {
@@ -47,6 +52,12 @@ wsServer.on("connection", (socket: connectedClients) => {
             lockedObjects[1].push(id);
   
           }
+          
+        });
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
         });
         console.log(lockedObjects);
         break;
@@ -54,7 +65,6 @@ wsServer.on("connection", (socket: connectedClients) => {
       case "Deselection":{
         console.log("recieved Deselection update ");
         const deselectedIds = JSON.parse(msg.msg);
-        console.log("recieved Selection update ");
         deselectedIds.forEach( (id: string) => {
           if(lockedObjects[1].includes(id)){
             const x = lockedObjects[1].indexOf(id);
@@ -62,21 +72,102 @@ wsServer.on("connection", (socket: connectedClients) => {
             lockedObjects[1].splice(x,1);
   
           }
+          activeConnections.forEach(function(sockets){
+            if(socket.id !== sockets.id){
+              sockets.send(JSON.stringify(msg));
+            }
+          });
           
         });
         console.log(lockedObjects);
         break;
       }
       case "Addition":{
-        canvas.push(JSON.parse(msg.msg));
+        
+        const  parsedMsg : string = JSON.parse(msg.msg);
+        canvas[0].push(parsedMsg[0]);
+        canvas[1].push(parsedMsg[1]);
+        console.log(canvas);
         activeConnections.forEach(function(sockets){
           if(socket.id !== sockets.id){
-            //sockets.send(JSON.stringify(msg));
+            sockets.send(JSON.stringify(msg));
           }
         });
-
         break;
       }
+      case "Moving":{
+        const movedObjects = JSON.parse(msg.msg);
+        console.log(movedObjects[0].length);
+        for(let i = 0; i < movedObjects[0].length; i++){
+          if(canvas[0].includes(movedObjects[0][i])){
+            const x = canvas[0].indexOf(movedObjects[0][i]);
+            canvas[1][x] = movedObjects[1][i];
+          }
+          else{
+            console.log("Object does not exist");
+          }
+        }
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+        break;
+      }
+      case "Scaling":{
+        const scaledObjects = JSON.parse(msg.msg);
+        console.log(scaledObjects[0].length);
+        for(let i = 0; i < scaledObjects[0].length; i++){
+          if(canvas[0].includes(scaledObjects[0][i])){
+            const x = canvas[0].indexOf(scaledObjects[0][i]);
+            canvas[1][x] = scaledObjects[1][i];
+          }
+          else{
+            console.log("Object does not exist");
+          }
+        }
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+        break;
+      }
+      case "Deletion":{
+        const deletionIDs = JSON.parse(msg.msg);
+        deletionIDs.forEach( (id: string) => {
+          if(canvas[0].includes(id)){
+            const x = canvas[0].indexOf(id);
+            canvas[0].splice(x,1);
+            canvas[1].splice(x,1);
+          }
+          
+        });
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+        break;
+      }
+      case "Clearing":{    
+           
+        canvas[1] = [];
+        canvas[0] = [];
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+        break;
+      }
+      case "Loading":{
+        console.log("got here");
+        msg.msg = JSON.stringify(canvas[1]);
+        socket.send(JSON.stringify(msg));
+        break;
+      }
+      
       default: {
         console.log("Recieved Unknown update");
       }
@@ -85,7 +176,7 @@ wsServer.on("connection", (socket: connectedClients) => {
     
     
     const incomingMsg = `${socket.name} says "${message.toString()}"`;
-    console.log(incomingMsg);
+    // console.log(incomingMsg);
 
     // Send that message to all other active connections
     activeConnections.forEach(function(sockets){
