@@ -115,13 +115,17 @@ function createPencilBrushWithID(): void {
     type: ShapesWithID.path,
     initialize(path: string | fabric.Point[], options: fabric.IPathWithIDOptions) {
       this.callSuper('initialize', path, options);
+
+      // To prevent paths being filled with a black background by default, set fill to null
+      // unless otherwise specified
+      if (!options.fill) {
+        this.set('fill', null);
+      }
+
       /**
        * Set path ID after calling superclass. If ID parameter is not given in IPathWithIDOptions,
        * generate one at random
        */
-      if (!options.fill) {
-        this.set('fill', null);
-      }
       this.set('id', options.id || getUUID());
     },
     toObject() {
@@ -168,11 +172,6 @@ function createPencilBrushWithID(): void {
       return path;
     },
   });
-
-  // fabric.PencilBrushWithID.fromObject = function (object: any, callback: any) {
-  // // eslint-disable-next-line no-underscore-dangle
-  //   return fabric.Object._fromObject('PencilBrushWithID', object, callback);
-  // };
 }
 
 /**
