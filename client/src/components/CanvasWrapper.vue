@@ -588,13 +588,11 @@ export default defineComponent({
 
       canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     };
+    // Event Handler for every type of message recieved
     socket.addEventListener('message', (message) => {
       // const msg = JSON.parse(message.data.ToString());
       const msg = JSON.parse(message.data);
-      console.log(msg);
       // console.log(msg.msgType);
-      console.dir(msg);
-      console.dir(msg.msg[1]);
       let objct : fabric.Object;
       const parsedMsg = JSON.parse(msg.msg);
       switch (msg.msgType) {
