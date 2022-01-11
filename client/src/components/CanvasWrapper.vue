@@ -13,6 +13,11 @@
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
+    <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getRectFromServer">Get Rect</button></span>
+    <span><button @click="getCircleFromServer">Get circle</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -45,14 +50,18 @@ import {
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
 
+// import { Object } from 'fabric/fabric-impl';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import {
-  RectWithID,
+  // RectWithID,
   CircleWithID,
   LineWithID,
+  ObjectWithID,
 } from '@/utils/fabric-object-extender';
 import getUUID from '@/utils/id-generator';
+import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
+// import { Group } from 'fabric/fabric-impl';
 
 enum ToolType {
   None = 'NONE',
@@ -74,8 +83,6 @@ export default defineComponent({
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
-    // When line tool is active it determines if first click has occured
-    let lTfirstCoordPlaced = false;
     // line object that is modified after first coord is placed.
     let line : fabric.Line;
     // stores the first coord when line tool is active
@@ -88,7 +95,19 @@ export default defineComponent({
     const tool = ref(ToolType.None);
     let radius: number;
     let strokeWidth: any;
-
+    let isObjectModified = false;
+    let isObjectBeingAdded = false;
+    let isPenDown = false;
+    // comparison array for comparing when deselected.
+    const selectedCheck: (string)[] = [];
+    const socket = useGlobalWebSocket();
+    interface updateMsg{
+      msgType : string;
+      msg : string;
+    }
+    const updateServer = (msg : updateMsg) => {
+      socket.send(JSON.stringify(msg));
+    };
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
     const thicknessOptions = [
@@ -97,7 +116,6 @@ export default defineComponent({
       { text: '8px', value: 8 },
       { text: '20px', value: 20 },
     ];
-
     const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
     // Primary tool colour. Stored in Vuex Store
@@ -115,34 +133,30 @@ export default defineComponent({
      * mouse:down event has been fired by the canvas
      */
     function lineMouseDown() {
-      if (lTfirstCoordPlaced === false) {
-        lineToollTFirstCoordPlaced = [origX, origY];
-        lTfirstCoordPlaced = true;
-        const width = lineThickness.value;
+      lineToollTFirstCoordPlaced = [origX, origY];
+      const width = lineThickness.value;
 
-        line = new LineWithID(
-          [
-            lineToollTFirstCoordPlaced[0],
-            lineToollTFirstCoordPlaced[1],
-            origX,
-            origY,
-          ],
-          {
-            stroke: store.state.colourPalette.primaryToolColour,
-            strokeWidth: width,
-            opacity: 0.5,
-            strokeUniform: true,
-            padding: 5,
-          },
-        );
-        canvasData.add(line);
-        // first coord already place so finalize line
-      } else {
-        line.set({ x2: origX, y2: origY, opacity: 1 });
-        line.setCoords();
-        canvasData.renderAll();
-        lTfirstCoordPlaced = false;
-      }
+      line = new LineWithID(
+        [
+          lineToollTFirstCoordPlaced[0],
+          lineToollTFirstCoordPlaced[1],
+          origX,
+          origY,
+        ],
+        {
+          stroke: store.state.colourPalette.primaryToolColour,
+          strokeWidth: width,
+          opacity: 0.5,
+          strokeUniform: true,
+          padding: 5,
+        },
+      );
+      canvasData.add(line);
+      // first coord already place so finalize line
+
+      line.set({ x2: origX, y2: origY, opacity: 1 });
+      line.setCoords();
+      canvasData.renderAll();
     }
 
     /**
@@ -150,7 +164,7 @@ export default defineComponent({
      * the mouse:down event has been fired by the canvas
      */
     function rectangleDown(x : number, y : number) {
-      rect = new RectWithID({
+      rect = new fabric.RectWithID({
         left: origX,
         top: origY,
         originX: 'left',
@@ -190,10 +204,9 @@ export default defineComponent({
      * the mouse:move event has been fired by the canvas
      */
     function lineMove(x : number, y : number) {
-      if (lTfirstCoordPlaced === true) {
-        line.set({ x2: x, y2: y });
-        canvasData.renderAll();
-      }
+      line.set({ x2: x, y2: y });
+      canvasData.renderAll();
+      line.setCoords();
     }
 
     /**
@@ -246,13 +259,19 @@ export default defineComponent({
       origY = pointer.y;
 
       if (tool.value === ToolType.Rectangle) {
+        isObjectBeingAdded = true;
         rectangleDown(pointer.x, pointer.y);
       } else if (tool.value === ToolType.Circle) {
+        isObjectBeingAdded = true;
         circleDown(pointer.x, pointer.y);
         // case line tool is selected
       } else if (tool.value === ToolType.Line) {
+        isObjectBeingAdded = true;
         // if first coord not placed, set it and start drawing line to mouse
         lineMouseDown();
+      } else if (tool.value === ToolType.Pen) {
+        isObjectBeingAdded = true;
+        isPenDown = true;
       }
     }
 
@@ -261,7 +280,9 @@ export default defineComponent({
      * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
      */
     function handleMouseMoveEvent(evt: fabric.IEvent<Event>) {
-      if (!isDown && tool.value !== ToolType.Line) return;
+      if (!isDown) {
+        return;
+      }
 
       const pointer = canvasData.getPointer(evt.e);
       radius = Math.max(Math.abs(origY - pointer.y), Math.abs(origX - pointer.x)) / 2;
@@ -282,6 +303,43 @@ export default defineComponent({
      */
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
+      let movingMsg :updateMsg;
+      if (isObjectModified) {
+        isObjectModified = false;
+        const scaledObjects: string[]|any[] = [[], []];
+        const scaledIds : string[] = [];
+        canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+          scaledIds.push(element.get('id')!);
+        });
+        const objectArray : fabric.ObjectWithID[] = [];
+        canvasData.discardActiveObject().renderAll();
+        scaledIds.forEach((id : string) => {
+          canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
+            if (element.get('id') === id) {
+              scaledObjects[0].push(id);
+              scaledObjects[1].push(JSON.stringify(element));
+              objectArray.push(element);
+            }
+          });
+        });
+        // eslint-disable-next-line max-len
+        const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
+        canvasData.setActiveObject(selectionGroup);
+        canvasData.renderAll();
+        movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
+        updateServer(movingMsg);
+      } else if (isPenDown) {
+        isPenDown = false;
+        console.log('send pen event');
+      } else if (isObjectBeingAdded) {
+        isObjectBeingAdded = false;
+        console.log('send real add  event');
+        // eslint-disable-next-line max-len
+        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+        const addedId = addedObject.get('id');
+        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        updateServer(addMsg);
+      }
     }
 
     /**
@@ -378,12 +436,19 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
-      const objectList = canvasData.getActiveObjects();
-      objectList.forEach((object) => { canvasData.remove(object); });
+      const deletionIDs :string[] = [];
+      const objectList : typeof ObjectWithID = canvasData.getActiveObjects();
+      objectList.forEach((object : typeof ObjectWithID) => {
+        deletionIDs.push(object.get('id'));
+        canvasData.remove(object);
+      });
       const elem = document.getElementById('deleteBtn');
       if (elem != null) {
         elem.remove();
       }
+      const deleteMsg :updateMsg = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
+      updateServer(deleteMsg);
+      console.log('send delete update');
     };
 
     /**
@@ -392,6 +457,9 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
+        const clearMsg :updateMsg = { msgType: 'Clearing', msg: JSON.stringify('') };
+        updateServer(clearMsg);
+        console.log('send  clear update.');
       }
     };
 
@@ -412,13 +480,66 @@ export default defineComponent({
       // Set Drawing mode
       canvasData.isDrawingMode = false;
       canvasData.on('selection:created', () => {
+        console.log('send selection update');
+
+        canvasData.getActiveObjects().forEach((active: any) => {
+          if (selectedCheck.indexOf(active.get('id')) === -1) {
+            selectedCheck.push(active.get('id'));
+          }
+        });
+
+        const selectedIds:(string)[] = [];
+        canvasData.getActiveObjects().forEach((element : typeof ObjectWithID) => {
+          selectedIds.push(element.get('id'));
+        });
+        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+        updateServer(selectionUpdate);
+        console.log(selectedCheck.length);
+
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
         deleteBtn.id = 'deleteBtn';
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
       });
+      canvasData.on('selection:updated', () => {
+        console.log('updated');
+        canvasData.getActiveObjects().forEach((active: any) => {
+          if (selectedCheck.indexOf(active.get('id')) === -1) {
+            selectedCheck.push(active.get('id'));
+          }
+        });
+
+        const selectedIds:(string)[] = [];
+        canvasData.getActiveObjects().forEach((element : typeof ObjectWithID) => {
+          selectedIds.push(element.get('id'));
+        });
+        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+        updateServer(selectionUpdate);
+        const activeObjectIDS : string[] = [];
+        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
+          activeObjectIDS.push(active.get('id')!);
+        });
+        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
+        console.log('send selection cleared update');
+        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        console.log(canvasData.getActiveObjects());
+        console.log(deselectMsg);
+        updateServer(deselectMsg);
+      });
       canvasData.on('selection:cleared', () => {
+        console.log('selectedCheck');
+        console.dir(selectedCheck);
+        const activeObjectIDS : string[] = [];
+        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
+          activeObjectIDS.push(active.get('id')!);
+        });
+        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
+        console.log('send selection cleared update');
+        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        console.log(canvasData.getActiveObjects());
+        console.log(deselectMsg);
+        updateServer(deselectMsg);
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
@@ -435,9 +556,20 @@ export default defineComponent({
           evt.target.id = getUUID();
         }
       });
+      canvasData.on('object:moving', () => {
+        isObjectModified = true;
+      });
+      canvasData.on('object:rotating', () => {
+        isObjectModified = true;
+      });
+
+      canvasData.on('object:scaling', () => {
+        isObjectModified = true;
+      });
 
       console.dir(canvasData);
       console.log(canvasData.toObject());
+      // loadCanvas();
     };
 
     /**
@@ -445,7 +577,6 @@ export default defineComponent({
      */
     const resizeCanvas = () => {
       const outerCanvasContainer = (<HTMLDivElement> document.getElementById('canvas-wrapper-div'));
-
       const containerWidth = outerCanvasContainer.clientWidth;
       const scale = containerWidth / canvasData.getWidth();
       const zoom = canvasData.getZoom() * scale;
@@ -457,7 +588,143 @@ export default defineComponent({
 
       canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     };
+    // Event Handler for every type of message recieved
+    socket.addEventListener('message', (message) => {
+      // const msg = JSON.parse(message.data.ToString());
+      const msg = JSON.parse(message.data);
+      // console.log(msg.msgType);
+      let objct : fabric.Object;
+      const parsedMsg = JSON.parse(msg.msg);
+      switch (msg.msgType) {
+        case 'Addition': {
+          const parsedObject = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
+          console.log(parsedObject.get('type'));
+          switch (parsedObject.get('type')) {
+            case 'rectWithID': {
+              objct = new fabric.RectWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
+            case 'circleWithID': {
+              objct = new fabric.CircleWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
+            case 'lineWithID': {
+              objct = new fabric.LineWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
+            default: {
+              objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
+            }
+          }
+          canvasData.add(objct);
+          console.log(canvasData.getObjects());
+          objct.setCoords();
+          canvasData.renderAll();
+          break;
+        }
+        case 'Deletion': {
+          const deletionIDs = parsedMsg;
+          deletionIDs.forEach((ID : string) => {
+            canvasData.getObjects().forEach((object : fabric.ObjectWithID) => {
+              if (object.get('id') === ID) {
+                canvasData.remove(object);
+              }
+            });
+          });
+          break;
+        }
+        case 'Clearing': {
+          canvasData.clear();
+          break;
+        }
+        case 'Modified': {
+          console.log(parsedMsg);
+          parsedMsg[1].forEach((element : any) => {
+            const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
+            console.log('Scaled Object:');
+            console.log(scaledCanvasObject);
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
+                canvasObject.set({
+                  scaleX: scaledCanvasObject.get('scaleX'),
+                  scaleY: scaledCanvasObject.get('scaleY'),
+                  top: scaledCanvasObject.get('top'),
+                  left: scaledCanvasObject.get('left'),
+                  angle: scaledCanvasObject.get('angle'),
+                  skewX: scaledCanvasObject.get('skewX'),
+                  skewY: scaledCanvasObject.get('skewY'),
+                });
+                canvasObject.setCoords();
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        case 'Selection': {
+          console.log(parsedMsg);
+          parsedMsg.forEach((id : any) => {
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === id) {
+                canvasObject.set({
+                  selectable: false,
+                  evented: false,
+                  opacity: 0.5,
 
+                });
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        case 'Deselection': {
+          console.log('Got Here');
+          console.log(parsedMsg);
+          parsedMsg.forEach((id : any) => {
+            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
+              if (canvasObject.get('id') === id) {
+                canvasObject.set({
+                  selectable: true,
+                  evented: true,
+                  opacity: 1,
+
+                });
+              }
+            });
+          });
+          canvasData.renderAll();
+          break;
+        }
+        case 'Loading': {
+          parsedMsg.forEach((element : string) => {
+            const object : fabric.ObjectWithID = new ObjectWithID(JSON.parse(element));
+            switch (object.get('type')) {
+              case 'rectWithID': {
+                canvasData.add(new fabric.RectWithID(JSON.parse(element)));
+                break;
+              }
+              case 'circleWithID': {
+                canvasData.add(new fabric.CircleWithID(JSON.parse(element)));
+                break;
+              }
+              case 'lineWithID': {
+                // canvasData.add(new fabric.LineWithID(object));
+                break;
+              }
+              default: {
+                console.log('Unknown type');
+              }
+            }
+          });
+          break;
+        }
+        default: {
+          console.log('unknown message');
+        }
+      }
+      canvasData.renderAll();
+    });
     // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
@@ -477,6 +744,8 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
+      updateServer,
+      // loadCanvas,
     };
   },
 });

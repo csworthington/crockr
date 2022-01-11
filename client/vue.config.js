@@ -12,6 +12,12 @@ module.exports = {
     disableHostCheck: true,
     port: 8080,
     public: '0.0.0.0:8080',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+      },
+    },
   },
   publicPath: '/',
 };
