@@ -1,6 +1,14 @@
 import { fabric } from 'fabric';
-import { ShapesWithID } from './fabric-object-extender';
 import getUUID from './id-generator';
+
+export enum ShapesWithID {
+  object = 'objectWithID',
+  line = 'lineWithID',
+  circle = 'circleWithID',
+  rect = 'rectWithID',
+  path = 'pathWithID',
+  pencilBrush = 'pencilBrushWithID'
+}
 
 function createObjectWithId(): void{
   fabric.ObjectWithID = fabric.util.createClass(fabric.Object, {
@@ -21,12 +29,13 @@ function createObjectWithId(): void{
     },
   });
 
-  fabric.RectWithID.fromObject = function (object: any, callback: any) {
-  // eslint-disable-next-line no-underscore-dangle
-    return fabric.Object._fromObject('ObjectWithID', object, callback);
-  // WHY DOES RECT WITH ID HAVE TO BE CAPS?
-  };
+  // fabric.ObjectWithID.fromObject = function (object: any, callback: any) {
+  // // eslint-disable-next-line no-underscore-dangle
+  //   return fabric.Object._fromObject('ObjectWithID', object, callback);
+  // // WHY DOES RECT WITH ID HAVE TO BE CAPS?
+  // };
 }
+
 /**
  * Add the RectWithID class to the global fabric object
  */
@@ -78,9 +87,24 @@ function createLineWithID(): void {
     },
   });
 
-  fabric.LineWithID.fromObject = function (object: any, callback: any) {
-  // eslint-disable-next-line no-underscore-dangle
-    return <fabric.LineWithID>fabric.Object._fromObject('LineWithID', object, callback);
+  fabric.LineWithID.fromObject = function (object: fabric.LineWithID, callback: any) {
+    /**
+     * For fabric to correctly initialize a Line, the extra constructor parameter
+     * "points" (number[]) must be created from the coordinate pair describing the
+     * line and then added to the canvas.
+     */
+    const reformattedLine: any = {
+      points: [object.x1, object.y1, object.x2, object.y2],
+      ...object,
+    };
+
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.LineWithID>fabric.Object._fromObject(
+      'LineWithID',
+      reformattedLine,
+      callback,
+      'points',
+    );
   };
 }
 
@@ -108,18 +132,27 @@ function createCircleWithID(): void {
 
   fabric.CircleWithID.fromObject = function (object: any, callback: any) {
     // eslint-disable-next-line no-underscore-dangle
-    return fabric.Object._fromObject('CircleWithID', object, callback);
+    return <fabric.CircleWithID>fabric.Object._fromObject('CircleWithID', object, callback);
   };
 }
 
 function createPencilBrushWithID(): void {
-  fabric.PencilBrushWithID = fabric.util.createClass(fabric.PencilBrush, {
-    type: ShapesWithID.pencilBrush,
-    initialize(canvas: fabric.Canvas, id?: string) {
-      this.callSuper('initialize', canvas);
-      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
-      // generate one at random.
-      this.set('id', id || getUUID());
+  fabric.PathWithID = fabric.util.createClass(fabric.Path, {
+    type: ShapesWithID.path,
+    initialize(path: string | fabric.Point[], options: fabric.IPathWithIDOptions) {
+      this.callSuper('initialize', path, options);
+
+      // To prevent paths being filled with a black background by default, set fill to null
+      // unless otherwise specified
+      if (!options.fill) {
+        this.set('fill', null);
+      }
+
+      /**
+       * Set path ID after calling superclass. If ID parameter is not given in IPathWithIDOptions,
+       * generate one at random
+       */
+      this.set('id', options.id || getUUID());
     },
     toObject() {
       return fabric.util.object.extend(this.callSuper('toObject'), {
@@ -131,10 +164,40 @@ function createPencilBrushWithID(): void {
     },
   });
 
-  // fabric.PencilBrushWithID.fromObject = function (object: any, callback: any) {
-  // // eslint-disable-next-line no-underscore-dangle
-  //   return fabric.Object._fromObject('PencilBrushWithID', object, callback);
-  // };
+  fabric.PathWithID.fromObject = function (object: fabric.PathWithID, callback: any) {
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.PathWithID>fabric.Object._fromObject('PathWithID', object, callback, 'path');
+  };
+
+  fabric.PencilBrushWithID = fabric.util.createClass(fabric.PencilBrush, {
+    type: ShapesWithID.pencilBrush,
+    initialize(canvas: fabric.Canvas) {
+      this.callSuper('initialize', canvas);
+    },
+    /**
+     * Create a fabric.PathWithID object to add to the canvas
+     * @param pathData Path data from brush used to create the path
+     * @returns {fabric.PathWithID} The path to be added to the canvas
+     */
+    createPath(pathData: string | fabric.Point[]): fabric.PathWithID {
+      const path = new fabric.PathWithID(pathData, {
+        fill: undefined,
+        stroke: this.color,
+        strokeWidth: this.width,
+        strokeLineCap: this.strokeLineCap,
+        strokeMiterLimit: this.strokeMiterLimit,
+        strokeLineJoin: this.strokeLineJoin,
+        strokeDashArray: this.strokeDashArray,
+      });
+
+      if (this.shadow) {
+        this.shadow.affectStroke = true;
+        path.shadow = new fabric.Shadow(this.shadow);
+      }
+
+      return path;
+    },
+  });
 }
 
 /**
