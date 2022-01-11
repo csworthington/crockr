@@ -307,38 +307,27 @@ export default defineComponent({
       if (isObjectModified) {
         isObjectModified = false;
         const scaledObjects: string[]|any[] = [[], []];
-        if (canvasData.getActiveObjects().length === 1) {
-          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-            scaledObjects[0].push(element.get('id'));
-            scaledObjects[1].push(JSON.stringify(element));
-            console.log(element);
+        const scaledIds : string[] = [];
+        canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+          scaledIds.push(element.get('id')!);
+        });
+        const objectArray : fabric.ObjectWithID[] = [];
+        canvasData.discardActiveObject().renderAll();
+        scaledIds.forEach((id : string) => {
+          canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
+            if (element.get('id') === id) {
+              scaledObjects[0].push(id);
+              scaledObjects[1].push(JSON.stringify(element));
+              objectArray.push(element);
+            }
           });
-          const scalingMsg :updateMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
-          updateServer(scalingMsg);
-          console.log('Send scaling event');
-        } else {
-          const scaledIds : string[] = [];
-          canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-            scaledIds.push(element.get('id')!);
-          });
-          const objectArray : fabric.ObjectWithID[] = [];
-          canvasData.discardActiveObject().renderAll();
-          scaledIds.forEach((id : string) => {
-            canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-              if (element.get('id') === id) {
-                scaledObjects[0].push(id);
-                scaledObjects[1].push(JSON.stringify(element));
-                objectArray.push(element);
-              }
-            });
-          });
-          // eslint-disable-next-line max-len
-          const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
-          canvasData.setActiveObject(selectionGroup);
-          canvasData.renderAll();
-          movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
-          updateServer(movingMsg);
-        }
+        });
+        // eslint-disable-next-line max-len
+        const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
+        canvasData.setActiveObject(selectionGroup);
+        canvasData.renderAll();
+        movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
+        updateServer(movingMsg);
       } else if (isPenDown) {
         isPenDown = false;
         console.log('send pen event');
@@ -664,6 +653,8 @@ export default defineComponent({
                   top: scaledCanvasObject.get('top'),
                   left: scaledCanvasObject.get('left'),
                   angle: scaledCanvasObject.get('angle'),
+                  skewX: scaledCanvasObject.get('skewX'),
+                  skewY: scaledCanvasObject.get('skewY'),
                 });
                 canvasObject.setCoords();
               }
@@ -716,7 +707,7 @@ export default defineComponent({
                 break;
               }
               case 'circleWithID': {
-                canvasData.add(new fabric.CircleWithID(object));
+                canvasData.add(new fabric.CircleWithID(JSON.parse(element)));
                 break;
               }
               case 'lineWithID': {

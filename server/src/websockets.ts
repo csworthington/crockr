@@ -115,8 +115,15 @@ wsServer.on("connection", (socket: connectedClients) => {
         break;
       }
       case "Deletion":{
+        
         const deletionIDs = JSON.parse(msg.msg);
         deletionIDs.forEach( (id: string) => {
+          if(lockedObjects[1].includes(id)){
+            const x = lockedObjects[1].indexOf(id);
+            lockedObjects[0].splice(x,1);
+            lockedObjects[1].splice(x,1);
+  
+          }
           if(canvas[0].includes(id)){
             const x = canvas[0].indexOf(id);
             canvas[0].splice(x,1);
