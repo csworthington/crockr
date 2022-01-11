@@ -442,9 +442,6 @@ export default defineComponent({
           evt.target.id = getUUID();
         }
       });
-
-      console.dir(canvasData);
-      console.log(canvasData.toObject());
     };
 
     /**
