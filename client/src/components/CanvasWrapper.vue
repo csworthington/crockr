@@ -157,7 +157,7 @@ export default defineComponent({
         width: x - origX,
         height: y - origY,
         angle: 0,
-        fill: store.state.primaryToolColour,
+        fill: store.state.secondaryToolColour,
         strokeWidth: 2,
         stroke: store.state.primaryToolColour,
         transparentCorners: false,

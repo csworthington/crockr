@@ -3,7 +3,7 @@ import { createStore } from 'vuex';
 export default createStore({
   state: {
     primaryToolColour: '#0000ff',
-    secondaryToolColour: '#00ff00',
+    secondaryToolColour: '#ffffff',
   },
   mutations: {
     /**
