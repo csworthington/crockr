@@ -15,6 +15,9 @@ declare global {
       id?: string;
     }
 
+    export interface ObjectWithID extends IObservable<Object>, IObjectWithIDOptions, IObjectAnimation<Object> {}
+    export class ObjectWithID extends Object{}
+
     // Rectangle With ID Types
     export interface IRectWithIDOptions extends IRectOptions, IObjectWithIDOptions { }
 
@@ -22,6 +25,8 @@ declare global {
 
     export class RectWithID extends Rect {
       constructor(options?: IRectWithIDOptions);
+
+      static ATTRIBUTE_NAMES: string[];
 
       static fromElement(element: SVGElement, options?: IRectWithIDOptions): RectWithID;
 
