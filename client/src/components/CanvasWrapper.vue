@@ -747,7 +747,6 @@ export default defineComponent({
 
     const getLineFromServer = () => {
       axios.get('./api/canvas/getline').then((value) => {
-        debugger;
         canvasData.loadFromJSON(JSON.stringify(value.data), canvasData.renderAll.bind(canvasData));
       });
     };
