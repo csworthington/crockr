@@ -615,13 +615,14 @@ export default defineComponent({
               break;
             }
             case 'lineWithID': {
-              objct = new fabric.LineWithID(JSON.parse(parsedMsg[1]));
+              const tempObject = JSON.parse(parsedMsg[1]);
+              const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
+              objct = new fabric.LineWithID(points, JSON.parse(parsedMsg[1]));
               break;
             }
             case 'pathWithID': {
               const tempObject = JSON.parse(parsedMsg[1]);
-              const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
-              objct = new fabric.PathWithID(points, tempObject);
+              objct = new fabric.PathWithID(tempObject.path, tempObject);
               break;
             }
             default: {
@@ -709,6 +710,7 @@ export default defineComponent({
           break;
         }
         case 'Loading': {
+          debugger;
           parsedMsg.forEach((element : string) => {
             const object = new fabric.ObjectWithID(JSON.parse(element));
             switch (object.get('type')) {
@@ -721,11 +723,14 @@ export default defineComponent({
                 break;
               }
               case 'lineWithID': {
-                // canvasData.add(new fabric.LineWithID(object));
+                const tempObject = JSON.parse(element);
+                const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
+                canvasData.add(new fabric.LineWithID(points, tempObject));
                 break;
               }
               case 'pathWithID': {
-                canvasData.add(new fabric.PathWithID(JSON.parse(element)));
+                const tempObject = JSON.parse(element);
+                canvasData.add(new fabric.PathWithID(tempObject.path, tempObject));
                 break;
               }
               default: {
