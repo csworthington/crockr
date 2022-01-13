@@ -327,6 +327,11 @@ export default defineComponent({
         updateServer(movingMsg);
       } else if (isPenDown) {
         isPenDown = false;
+        // eslint-disable-next-line max-len
+        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+        const addedId = addedObject.get('id');
+        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        updateServer(addMsg);
         console.log('send pen event');
       } else if (isObjectBeingAdded) {
         isObjectBeingAdded = false;
@@ -613,6 +618,12 @@ export default defineComponent({
               objct = new fabric.LineWithID(JSON.parse(parsedMsg[1]));
               break;
             }
+            case 'pathWithID': {
+              const tempObject = JSON.parse(parsedMsg[1]);
+              const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
+              objct = new fabric.PathWithID(points, tempObject);
+              break;
+            }
             default: {
               objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
             }
@@ -711,6 +722,10 @@ export default defineComponent({
               }
               case 'lineWithID': {
                 // canvasData.add(new fabric.LineWithID(object));
+                break;
+              }
+              case 'pathWithID': {
+                canvasData.add(new fabric.PathWithID(JSON.parse(element)));
                 break;
               }
               default: {
