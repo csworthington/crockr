@@ -12,13 +12,6 @@
     <span><button @click="handleToolChange('SELECT')"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
-    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
-    <span><button @click="getLineFromServer">Get Line</button></span>
-    <span><button @click="getPenFromServer">Get Pen</button></span>
-    <span><button @click="getRectFromServer">Get Rect</button></span>
-    <span><button @click="getCircleFromServer">Get circle</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -28,6 +21,18 @@
         </option>
       </select>
     </span>
+    </div>
+  <div>
+    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
+    <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getPenFromServer">Get Pen</button></span>
+    <span><button @click="getRectFromServer">Get Rect</button></span>
+    <span><button @click="getCircleFromServer">Get circle</button></span>
+    <input type="file" onclick="openFile()" id="imageFile" accept="image/*" >
+    <span><button @click="openFile()">  Select Image file</button></span>
+    <input type="button" @click="openFile()" value="Select a File" />
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -125,6 +130,29 @@ export default defineComponent({
       },
     });
 
+    function openFile() {
+      const img = document.getElementById('imageFile');
+    img!.onchange = function handle(e) {
+      const target = e.target as HTMLInputElement;
+      const file: File = (target.files as FileList)[0];
+      const reader = new FileReader();
+      reader.onload = (loadEvent) => {
+        const imgObj = new Image();
+        imgObj.src = reader.result as string;
+        imgObj.onload = function handleImage() {
+          const image = new fabric.Image(imgObj);
+          image.set({
+            left: 100,
+            top: 60,
+          });
+          image.scaleToWidth(200);
+          canvasData.add(image).renderAll();
+          canvasData.setActiveObject(image);
+        };
+      };
+      reader.readAsDataURL(file);
+    };
+    }
     /**
      * Start drawing a line on the canvas when the line tool is selected and the
      * mouse:down event has been fired by the canvas
@@ -787,6 +815,7 @@ export default defineComponent({
       getCircleFromServer,
       getPenFromServer,
       updateServer,
+      openFile,
     };
   },
 });
