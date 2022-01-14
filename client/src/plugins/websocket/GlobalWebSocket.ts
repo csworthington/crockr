@@ -1,5 +1,6 @@
 /* eslint-disable no-param-reassign */
 import { App } from 'vue';
+import { store } from '@/store/index';
 import { GlobalWSSocketSymbol } from '@/plugins/websocket/useGlobalWebSocket';
 
 export default {
@@ -14,6 +15,20 @@ export default {
     }
 
     const socket = new WebSocket(connectionUrl, protocol);
+
+    // Add event listeners for socket opening, closing and errors
+    socket.addEventListener('open', (ev: Event) => {
+      store.commit('socket/SOCKET_ONOPEN', ev);
+    });
+
+    socket.addEventListener('error', (ev: Event) => {
+      store.commit('socket/SOCKET_ONERROR', ev);
+    });
+
+    socket.addEventListener('close', (ev: CloseEvent) => {
+      store.commit('socket/SOCKET_ONCLOSE', ev);
+    });
+
     app.config.globalProperties.$socket = socket;
     app.provide(GlobalWSSocketSymbol, socket);
   },
