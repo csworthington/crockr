@@ -32,6 +32,9 @@
   <div>
     <span>current tool = {{ tool }}</span>
   </div>
+  <div>
+    <WebSocketStatusIndicator />
+  </div>
 </template>
 
 <script lang="ts">
@@ -50,14 +53,12 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
-
-// import { Object } from 'fabric/fabric-impl';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
-// import { Group } from 'fabric/fabric-impl';
+import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
 
 enum ToolType {
   None = 'NONE',
@@ -72,6 +73,7 @@ export default defineComponent({
   name: 'CanvasWrapper',
   components: {
     ColourPicker,
+    WebSocketStatusIndicator,
   },
   setup(props) {
     const store = useStore(StoreKey);
@@ -466,6 +468,14 @@ export default defineComponent({
     };
 
     /**
+     * Send a load message to the server to get the current state of the canvas
+     */
+    const loadCanvas = () => {
+      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
+      updateServer(loadMsg);
+    };
+
+    /**
      * Initialize the Fabric.js canvas
      */
     const initFabricCanvas = () => {
@@ -575,7 +585,10 @@ export default defineComponent({
 
       console.dir(canvasData);
       console.log(canvasData.toObject());
-      // loadCanvas();
+
+      if (store.state.socket.isConnected) {
+        loadCanvas();
+      }
     };
 
     /**
@@ -710,7 +723,6 @@ export default defineComponent({
           break;
         }
         case 'Loading': {
-          debugger;
           parsedMsg.forEach((element : string) => {
             const object = new fabric.ObjectWithID(JSON.parse(element));
             switch (object.get('type')) {
