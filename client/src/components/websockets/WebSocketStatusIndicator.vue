@@ -1,53 +1,84 @@
 <template>
   <div>
-    <span>{{ statusIcon }}</span>
-    <span>{{ statusText }}</span>
+    <span>{{ statusIcon }}</span>&nbsp;<span>{{ statusText }}</span>
   </div>
 </template>
 
 <script lang="ts">
 import {
-  defineComponent, onMounted, ref, watch,
+  defineComponent, onMounted, onUnmounted, ref, watch,
 } from 'vue';
 import { useStore } from 'vuex';
 import { StoreKey } from '@/symbols';
-import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
+
+interface Status {
+  icon: string;
+  text: string;
+}
 
 export default defineComponent({
   setup() {
     const store = useStore(StoreKey);
-    const socket = useGlobalWebSocket();
 
-    socket.addEventListener('open', (evt) => {
-      console.log('event fron within status indicator');
+    const CONNECTED: Status = {
+      icon: '✔️',
+      text: 'Connected',
+    };
+
+    const DISCONNECTED: Status = {
+      icon: 'X',
+      text: 'Disconnected',
+    };
+
+    const CONNECTING: Status = {
+      icon: '',
+      text: 'Connecting...',
+    };
+
+    const ERROR: Status = {
+      icon: '!',
+      text: 'Error',
+    };
+
+    const statusIcon = ref(DISCONNECTED.icon);
+    const statusText = ref(DISCONNECTED.text);
+
+    const setStatus = (status: Status) => {
+      statusIcon.value = status.icon;
+      statusText.value = status.text;
+    };
+
+    const initStatus = () => {
+      if (store.state.socket.isCreated) {
+        store.state.socket.isConnected ? setStatus(CONNECTED) : setStatus(CONNECTING);
+      } else {
+        setStatus(DISCONNECTED);
+      }
+    };
+
+    const unsubscribe = store.subscribe((mutation, state) => {
+      if (mutation.type === 'socket/SOCKET_ONCREATED') {
+        setStatus(CONNECTING);
+      } else if (mutation.type === 'socket/SOCKET_ONOPEN') {
+        setStatus(CONNECTED);
+      } else if (mutation.type === 'socket/SOCKET_ONCLOSE') {
+        setStatus(DISCONNECTED);
+      } else if (mutation.type === 'socket/SOCKET_ONERROR') {
+        setStatus(ERROR);
+      }
     });
 
-    // UTF-8 Checkmark character. (✔️) Placeholder until better character can be found
-    const CONNECTED_SYMBOL = '✔️';
-    const DISCONNECTED_SYMBOL = 'X';
-    const CONNECTING_SYMBOL = '';
-    const ERROR_SYMBOL = '!';
-
-    const CONNECTED_TEXT = 'Connected';
-    const DISCONNECTED_TEXT = 'Disconnected';
-    const CONNECTING_TEXT = 'Connecting...';
-    const ERROR_TEXT = 'Error';
-
-    const statusIcon = ref(DISCONNECTED_SYMBOL);
-    const statusText = ref(DISCONNECTED_TEXT);
-
-    socket.addEventListener('open', (evt: Event) => {
-      statusIcon.value = CONNECTED_SYMBOL;
-      statusText.value = CONNECTED_TEXT;
+    // On component mount, initialize the status indicator
+    onMounted(() => {
+      initStatus();
     });
 
-    socket.addEventListener('close', (evt: CloseEvent): void => {
-      statusIcon.value = DISCONNECTED_SYMBOL;
-      statusText.value = DISCONNECTED_TEXT;
+    // On component unmount, unsubscribe this component from the store
+    onUnmounted(() => {
+      unsubscribe();
     });
 
     return {
-      socket,
       statusIcon,
       statusText,
     };

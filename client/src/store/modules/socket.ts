@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-shadow */
 export interface SocketState {
+  isCreated: boolean;
   isConnected: boolean;
   message: string;
   reconnectError: boolean;
@@ -22,15 +23,20 @@ const state = {
 };
 
 const mutations = {
+
+  SOCKET_ONCREATED(socketState: SocketState): void {
+    socketState.isConnected = false;
+    socketState.isCreated = true;
+  },
+
   /**
    * Handle the onopen event emitted by the socket
    * @param {SocketState} socketState The current state of the socket
    * @param {Event} event The onopen event emitted by the socket
    */
   SOCKET_ONOPEN(socketState: SocketState, event: Event): void {
+    socketState.isCreated = true;
     socketState.isConnected = true;
-    console.log('connected to socket');
-    console.dir(event.currentTarget);
     // When the connection is successful, start sending heartbeat messages regularly to avoid
     // being disconnected by the server
     // state.socket.heartBeatTimer = setInterval(() => {
@@ -49,12 +55,13 @@ const mutations = {
    * @param {CloseEvent} event The WebSocket CloseEvent
    */
   SOCKET_ONCLOSE(socketState: SocketState, event: CloseEvent): void {
+    socketState.isCreated = false;
     socketState.isConnected = false;
     // Stop the heartbeat message when the connection is closed
     clearInterval(state.heartBeatTimer);
     // socketState.heartBeatTimer = 0;
-    console.log(`Websocket closed at: ${new Date()}`);
-    console.log(event);
+    // console.log(`Websocket closed at: ${new Date()}`);
+    // console.log(event);
   },
 
   /**

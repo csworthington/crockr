@@ -16,6 +16,9 @@ export default {
 
     const socket = new WebSocket(connectionUrl, protocol);
 
+    // On creation of socket, commit SOCKET_ONCREATED event
+    store.commit('socket/SOCKET_ONCREATED');
+
     // Add event listeners for socket opening, closing and errors
     socket.addEventListener('open', (ev: Event) => {
       store.commit('socket/SOCKET_ONOPEN', ev);
