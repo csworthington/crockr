@@ -35,6 +35,9 @@ wsServer.on("connection", (socket: connectedClients) => {
   activeConnections.add(socket);
   const loadMsg : updateMsg = {msgType: "Loading", msg: JSON.stringify(canvas[1])};
   socket.send(JSON.stringify(loadMsg));
+  loadMsg.msgType = "Selection";
+  loadMsg.msg = JSON.stringify(lockedObjects[1]);
+  socket.send(JSON.stringify(loadMsg));
 
   // Handle incoming messages
   socket.on("message", (message: Buffer) => {
@@ -146,6 +149,9 @@ wsServer.on("connection", (socket: connectedClients) => {
       case "Loading":{
         console.log("got here");
         msg.msg = JSON.stringify(canvas[1]);
+        socket.send(JSON.stringify(msg));
+        msg.msgType = "Selection";
+        msg.msg = JSON.stringify(lockedObjects[1]);
         socket.send(JSON.stringify(msg));
         break;
       }
