@@ -149,6 +149,20 @@ wsServer.on("connection", (socket: connectedClients) => {
         socket.send(JSON.stringify(msg));
         break;
       }
+      case "localLoad":{
+        const loadedObjects = JSON.parse(msg.msg);
+        canvas[0]  = loadedObjects[0];
+        canvas[1] = loadedObjects[1];
+        msg.msg = JSON.stringify(canvas[1]);
+        msg.msgType = "Loading";
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+         break;
+
+      }
       
       default: {
         console.log("Recieved Unknown update");
