@@ -850,6 +850,9 @@ export default defineComponent({
     };
 
     onMounted(initFabricCanvas);
+    onMounted(() => {
+      handleToolChange(ToolType.Select);
+    });
     return {
       resizeCanvas,
       tool,
