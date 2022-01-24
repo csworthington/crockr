@@ -30,9 +30,10 @@
     <span><button @click="getPenFromServer">Get Pen</button></span>
     <span><button @click="getRectFromServer">Get Rect</button></span>
     <span><button @click="getCircleFromServer">Get circle</button></span>
-    <input type="file" onclick="openFile()" id="imageFile" accept="image/*" >
-    <span><button @click="openFile()">  Select Image file</button></span>
-    <input type="button" @click="openFile()" value="Select a File" />
+<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
+    <span><button @click="openFile()">
+      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+       </button></span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -132,26 +133,26 @@ export default defineComponent({
 
     function openFile() {
       const img = document.getElementById('imageFile');
-    img!.onchange = function handle(e) {
-      const target = e.target as HTMLInputElement;
-      const file: File = (target.files as FileList)[0];
-      const reader = new FileReader();
-      reader.onload = (loadEvent) => {
-        const imgObj = new Image();
-        imgObj.src = reader.result as string;
-        imgObj.onload = function handleImage() {
-          const image = new fabric.Image(imgObj);
-          image.set({
-            left: 100,
-            top: 60,
-          });
-          image.scaleToWidth(200);
-          canvasData.add(image).renderAll();
-          canvasData.setActiveObject(image);
+      img!.onchange = function handle(e) {
+        const target = e.target as HTMLInputElement;
+        const file: File = (target.files as FileList)[0];
+        const reader = new FileReader();
+        reader.onload = (loadEvent) => {
+          const imgObj = new Image();
+          imgObj.src = reader.result as string;
+          imgObj.onload = function handleImage() {
+            const image = new fabric.Image(imgObj);
+            image.set({
+              left: 100,
+              top: 60,
+            });
+            image.scaleToWidth(200);
+            canvasData.add(image).renderAll();
+            canvasData.setActiveObject(image);
+          };
         };
+        reader.readAsDataURL(file);
       };
-      reader.readAsDataURL(file);
-    };
     }
     /**
      * Start drawing a line on the canvas when the line tool is selected and the
@@ -367,6 +368,19 @@ export default defineComponent({
       }
     }
 
+    /* zoom control */
+    // eslint-disable-next-line max-len
+    function handleMouseWheelEvent(opt: { e: { deltaY: any; preventDefault: () => void; stopPropagation: () => void; }; }) {
+      const delta = opt.e.deltaY;
+      let zoom = canvasData.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      canvasData.setZoom(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    }
+
     /**
      * Disable all custom event handlers for the fabric.js canvas
      */
@@ -383,6 +397,7 @@ export default defineComponent({
       canvasData.on('mouse:down', handleMouseDownEvent);
       canvasData.on('mouse:move', handleMouseMoveEvent);
       canvasData.on('mouse:up', handleMouseUpEvent);
+      canvasData.on('mouse:wheel', handleMouseWheelEvent);
     }
 
     /**
