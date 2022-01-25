@@ -24,6 +24,7 @@
     <span><button @click="getPenFromServer">Get Pen</button></span>
     <span><button @click="getRectFromServer">Get Rect</button></span>
     <span><button @click="getCircleFromServer">Get circle</button></span>
+    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -849,6 +850,28 @@ export default defineComponent({
       });
     };
 
+    /**
+     * Export the canvas as an svg file to the new window
+     */
+    const exportCanvasToSVG = () => {
+      const svgAsBlob = new Blob([canvasData.toSVG()], { type: 'image/svg+xml' });
+      const svgUrl = URL.createObjectURL(svgAsBlob);
+      const link = document.createElement('a');
+      link.href = svgUrl;
+      link.id = 'whiteboard-download-link';
+      link.download = 'whiteboard.svg';
+      link.innerHTML = 'Click here to download file';
+
+      document.body.appendChild(link);
+      const queriedLink : HTMLLinkElement | null = document.querySelector('#whiteboard-download-link');
+      if (queriedLink) {
+        queriedLink.click();
+        queriedLink.remove();
+      }
+      // Garbage collect the blob after window open
+      URL.revokeObjectURL(svgUrl);
+    };
+
     onMounted(initFabricCanvas);
     onMounted(() => {
       handleToolChange(ToolType.Select);
@@ -873,6 +896,7 @@ export default defineComponent({
       getPenFromServer,
       loadCanvas,
       updateServer,
+      exportCanvasToSVG,
     };
   },
 });
