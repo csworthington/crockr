@@ -5,13 +5,13 @@ export interface roomState {
 const state: roomState = {
   ID: '-1',
 };
-const mutation = {
-  updateID(currentRoomState : roomState, newRoomID : string) {
+const mutations = {
+  updateID(currentRoomState : roomState, newRoomID : string): void {
     state.ID = newRoomID;
   },
 };
 export const roomID = {
   namespaced: true,
   state,
-  mutation,
+  mutations,
 };
