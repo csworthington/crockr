@@ -64,6 +64,8 @@ import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
+import { roomID } from '@/store/modules/roomID';
+import router from '@/router';
 
 enum ToolType {
   None = 'NONE',
@@ -83,7 +85,6 @@ export default defineComponent({
   setup(props) {
     const store = useStore(StoreKey);
     const axios = useAxios();
-
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
@@ -105,6 +106,9 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
+    if (store.state.roomID.ID === '-1') {
+      router.push('/roomSelection');
+    }
     interface updateMsg{
       msgType : string;
       msg : string;
