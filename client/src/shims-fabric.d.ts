@@ -110,6 +110,22 @@ declare global {
        */
     }
 
+    // Image with ID 
+    export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions { }
+    export interface ImageWithID extends IImageWithIDOptions { }
+    export class ImageWithID extends Image {
+      
+    constructor(element?: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
+    setElement(element: HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions): ImageWithID;
+
+    setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): ImageWithID;
+    applyFilters(filters?: IBaseFilter[]): Image;
+    static fromURL(url: string, callback?: (image: Image) => void, imgOptions?: IImageWithIDOptions): ImageWithID;
+
+    static fromElement(element: SVGElement, callback: Function, options?: IImageWithIDOptions): ImageWithID;
+    static fromObject(object: any, callback: any): ImageWithID;
+  }
+
 
     // PencilBrush with ID Types
     export class PencilBrushWithID extends BaseBrush {

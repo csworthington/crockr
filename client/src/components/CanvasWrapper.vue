@@ -137,11 +137,11 @@ export default defineComponent({
         const target = e.target as HTMLInputElement;
         const file: File = (target.files as FileList)[0];
         const reader = new FileReader();
-        reader.onload = (loadEvent) => {
+        reader.onload = () => {
           const imgObj = new Image();
           imgObj.src = reader.result as string;
           imgObj.onload = function handleImage() {
-            const image = new fabric.Image(imgObj);
+            const image = new fabric.ImageWithID(imgObj);
             image.set({
               left: 100,
               top: 60,

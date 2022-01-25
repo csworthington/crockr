@@ -7,7 +7,8 @@ export enum ShapesWithID {
   circle = 'circleWithID',
   rect = 'rectWithID',
   path = 'pathWithID',
-  pencilBrush = 'pencilBrushWithID'
+  pencilBrush = 'pencilBrushWithID',
+  image = 'imageWithID'
 }
 
 function createObjectWithId(): void{
@@ -136,6 +137,30 @@ function createCircleWithID(): void {
   };
 }
 
+function createImageWithID(): void {
+  fabric.ImageWithID = fabric.util.createClass(fabric.Image, {
+    type: ShapesWithID.image,
+    initialize(options: any) {
+      this.callSuper('initialize', options);
+      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
+      // generate one at random.
+      this.set('id', options.id || getUUID());
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), {
+        id: this.get('id'),
+      });
+    },
+    toString() {
+      return `${this.callSuper('toString')} (id: ${this.id})`;
+    },
+  });
+
+  fabric.ImageWithID.fromObject = function (object: any, callback: any) {
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.ImageWithID>fabric.Object._fromObject('ImageWithID', object, callback);
+  };
+}
 function createPencilBrushWithID(): void {
   fabric.PathWithID = fabric.util.createClass(fabric.Path, {
     type: ShapesWithID.path,
@@ -209,4 +234,5 @@ export default function addCustomFabricObjects(): void {
   createCircleWithID();
   createPencilBrushWithID();
   createObjectWithId();
+  createImageWithID();
 }
