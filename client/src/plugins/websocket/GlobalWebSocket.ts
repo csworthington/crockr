@@ -16,6 +16,9 @@ export default {
 
     const socket = new WebSocket(connectionUrl, protocol);
 
+    // Add WebSocket to the store
+    store.commit('socket/SOCKET_ADD', socket);
+
     // On creation of socket, commit SOCKET_ONCREATED event
     store.commit('socket/SOCKET_ONCREATED');
 

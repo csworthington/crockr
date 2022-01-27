@@ -66,6 +66,11 @@ import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
 
+import { UpdateMessage } from '@/services/synchronization/typings.d';
+import { updateServer } from '@/services/synchronization/outgoingMessageHandler';
+import * as outgoingMessageHandler from '@/services/synchronization/outgoingMessageHandler';
+import * as handleIncomingMessage from '@/services/synchronization/incomingMessageHandler';
+
 enum ToolType {
   None = 'NONE',
   Select = 'SELECT',
@@ -106,13 +111,13 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
-    interface updateMsg{
-      msgType : string;
-      msg : string;
-    }
-    const updateServer = (msg : updateMsg) => {
-      socket.send(JSON.stringify(msg));
-    };
+    // interface updateMsg{
+    //   msgType : string;
+    //   msg : string;
+    // }
+    // const updateServer = (msg : updateMsg) => {
+    //   socket.send(JSON.stringify(msg));
+    // };
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
     const thicknessOptions = [
@@ -308,7 +313,7 @@ export default defineComponent({
      */
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
-      let movingMsg :updateMsg;
+      let movingMsg : UpdateMessage;
       if (isObjectModified) {
         isObjectModified = false;
         const scaledObjects: string[]|any[] = [[], []];
@@ -338,7 +343,7 @@ export default defineComponent({
         // eslint-disable-next-line max-len
         const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
         const addedId = addedObject.get('id');
-        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        const addMsg :UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
         updateServer(addMsg);
         console.log('send pen event');
       } else if (isObjectBeingAdded) {
@@ -347,7 +352,7 @@ export default defineComponent({
         // eslint-disable-next-line max-len
         const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
         const addedId = addedObject.get('id');
-        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        const addMsg :UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
         updateServer(addMsg);
       }
     }
@@ -456,7 +461,7 @@ export default defineComponent({
       if (elem != null) {
         elem.remove();
       }
-      const deleteMsg :updateMsg = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
+      const deleteMsg : UpdateMessage = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
       updateServer(deleteMsg);
       console.log('send delete update');
     };
@@ -465,7 +470,7 @@ export default defineComponent({
      * Clear the canvas of all objects when the user selects the clear button
      */
     /* const loadCanvas = () => {
-      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
+      const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
       updateServer(loadMsg);
     }; */
     const saveBoard = () => {
@@ -495,7 +500,7 @@ export default defineComponent({
               loadedObjects[0].push(element.get('id'));
               loadedObjects[1].push(JSON.stringify(element));
             });
-            const loadMsg : updateMsg = { msgType: 'localLoad', msg: JSON.stringify(loadedObjects) };
+            const loadMsg : UpdateMessage = { msgType: 'LocalLoad', msg: JSON.stringify(loadedObjects) };
             updateServer(loadMsg);
           } catch (error) {
             console.error(error);
@@ -509,7 +514,7 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
-        const clearMsg :updateMsg = { msgType: 'Clearing', msg: JSON.stringify('') };
+        const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
         updateServer(clearMsg);
         console.log('send  clear update.');
       }
@@ -519,7 +524,7 @@ export default defineComponent({
      * Send a load message to the server to get the current state of the canvas
      */
     const loadCanvas = () => {
-      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
+      const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
       updateServer(loadMsg);
     };
 
@@ -544,66 +549,97 @@ export default defineComponent({
       canvasData.freeDrawingBrush = new fabric.PencilBrushWithID(canvasData);
 
       canvasData.on('selection:created', () => {
-        console.log('send selection update');
+        // Send selection update to the server
+        outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
+        // console.log('send selection update');
 
-        canvasData.getActiveObjects().forEach((active: any) => {
-          if (selectedCheck.indexOf(active.get('id')) === -1) {
-            selectedCheck.push(active.get('id'));
-          }
-        });
+        // canvasData.getActiveObjects().forEach((active: any) => {
+        //   if (selectedCheck.indexOf(active.get('id')) === -1) {
+        //     selectedCheck.push(active.get('id'));
+        //   }
+        // });
 
-        const selectedIds:(string)[] = [];
-        canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
-          selectedIds.push(<string>element.get('id'));
-        });
-        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
-        updateServer(selectionUpdate);
-        console.log(selectedCheck.length);
+        // const selectedIds:(string)[] = [];
+        // canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
+        //   selectedIds.push(<string>element.get('id'));
+        // });
+        // const selectionUpdate : UpdateMessage = {
+        //   msgType: 'Selection',
+        //   msg: JSON.stringify(selectedIds),
+        // };
+        // updateServer(selectionUpdate);
+        // console.log(selectedCheck.length);
 
+        // Create a delete button on object selection
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
         deleteBtn.id = 'deleteBtn';
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
       });
-      canvasData.on('selection:updated', () => {
-        console.log('updated');
-        canvasData.getActiveObjects().forEach((active: any) => {
-          if (selectedCheck.indexOf(active.get('id')) === -1) {
-            selectedCheck.push(active.get('id'));
-          }
-        });
 
-        const selectedIds:(string)[] = [];
-        canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
-          selectedIds.push(<string>element.get('id'));
-        });
-        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
-        updateServer(selectionUpdate);
-        const activeObjectIDS : string[] = [];
-        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
-          activeObjectIDS.push(active.get('id')!);
-        });
-        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
-        console.log('send selection cleared update');
-        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
-        console.log(canvasData.getActiveObjects());
-        console.log(deselectMsg);
-        updateServer(deselectMsg);
+      canvasData.on('selection:updated', () => {
+        outgoingMessageHandler.sendObjectSelectionUpdated(
+          canvasData,
+          selectedCheck,
+        );
+        // // Send selection updated synchronization message to the server
+        // console.log('updated');
+        // canvasData.getActiveObjects().forEach((active: any) => {
+        //   if (selectedCheck.indexOf(active.get('id')) === -1) {
+        //     selectedCheck.push(active.get('id'));
+        //   }
+        // });
+
+        // const selectedIds:(string)[] = [];
+        // canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
+        //   selectedIds.push(<string>element.get('id'));
+        // });
+        // const selectionUpdate : UpdateMessage = {
+        //   msgType: 'Selection',
+        //   msg: JSON.stringify(selectedIds),
+        // };
+        // updateServer(selectionUpdate);
+        // const activeObjectIDS : string[] = [];
+        // canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
+        //   activeObjectIDS.push(active.get('id')!);
+        // });
+
+        // // Send selection cleared message
+        // const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
+        // console.log('send selection cleared update');
+        // const deselectMsg : UpdateMessage = {
+        //   msgType: 'Deselection',
+        //   msg: JSON.stringify(deselectedId),
+        // };
+        // console.log(canvasData.getActiveObjects());
+        // console.log(deselectMsg);
+        // updateServer(deselectMsg);
       });
+
       canvasData.on('selection:cleared', () => {
-        console.log('selectedCheck');
-        console.dir(selectedCheck);
-        const activeObjectIDS : string[] = [];
-        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
-          activeObjectIDS.push(active.get('id')!);
-        });
-        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
-        console.log('send selection cleared update');
-        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
-        console.log(canvasData.getActiveObjects());
-        console.log(deselectMsg);
-        updateServer(deselectMsg);
+        outgoingMessageHandler.sendObjectSelectionCleared(
+          canvasData,
+          selectedCheck,
+        );
+        // // Send selection cleared message
+        // console.log('selectedCheck');
+        // console.dir(selectedCheck);
+        // const activeObjectIDS : string[] = [];
+        // canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
+        //   activeObjectIDS.push(active.get('id')!);
+        // });
+        // const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
+        // console.log('send selection cleared update');
+        // const deselectMsg : UpdateMessage = {
+        //   msgType: 'Deselection',
+        //   msg: JSON.stringify(deselectedId),
+        // };
+        // console.log(canvasData.getActiveObjects());
+        // console.log(deselectMsg);
+        // updateServer(deselectMsg);
+
+        // Remove delete button when object is deselected
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
@@ -655,158 +691,14 @@ export default defineComponent({
 
       canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     };
+
     // Event Handler for every type of message recieved
     socket.addEventListener('message', (message) => {
-      // const msg = JSON.parse(message.data.ToString());
-      const msg = JSON.parse(message.data);
-      // console.log(msg.msgType);
-      let objct : fabric.Object;
-      const parsedMsg = JSON.parse(msg.msg);
-      switch (msg.msgType) {
-        case 'Addition': {
-          const parsedObject = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
-          console.log(parsedObject.get('type'));
-          switch (parsedObject.get('type')) {
-            case 'rectWithID': {
-              objct = new fabric.RectWithID(JSON.parse(parsedMsg[1]));
-              break;
-            }
-            case 'circleWithID': {
-              objct = new fabric.CircleWithID(JSON.parse(parsedMsg[1]));
-              break;
-            }
-            case 'lineWithID': {
-              const tempObject = JSON.parse(parsedMsg[1]);
-              const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
-              objct = new fabric.LineWithID(points, JSON.parse(parsedMsg[1]));
-              break;
-            }
-            case 'pathWithID': {
-              const tempObject = JSON.parse(parsedMsg[1]);
-              objct = new fabric.PathWithID(tempObject.path, tempObject);
-              break;
-            }
-            default: {
-              objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
-            }
-          }
-          canvasData.add(objct);
-          console.log(canvasData.getObjects());
-          objct.setCoords();
-          canvasData.renderAll();
-          break;
-        }
-        case 'Deletion': {
-          const deletionIDs = parsedMsg;
-          deletionIDs.forEach((ID : string) => {
-            canvasData.getObjects().forEach((object : fabric.ObjectWithID) => {
-              if (object.get('id') === ID) {
-                canvasData.remove(object);
-              }
-            });
-          });
-          break;
-        }
-        case 'Clearing': {
-          canvasData.clear();
-          break;
-        }
-        case 'Modified': {
-          console.log(parsedMsg);
-          parsedMsg[1].forEach((element : any) => {
-            const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
-            console.log('Scaled Object:');
-            console.log(scaledCanvasObject);
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
-                canvasObject.set({
-                  scaleX: scaledCanvasObject.get('scaleX'),
-                  scaleY: scaledCanvasObject.get('scaleY'),
-                  top: scaledCanvasObject.get('top'),
-                  left: scaledCanvasObject.get('left'),
-                  angle: scaledCanvasObject.get('angle'),
-                  skewX: scaledCanvasObject.get('skewX'),
-                  skewY: scaledCanvasObject.get('skewY'),
-                });
-                canvasObject.setCoords();
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Selection': {
-          console.log(parsedMsg);
-          parsedMsg.forEach((id : any) => {
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === id) {
-                canvasObject.set({
-                  selectable: false,
-                  evented: false,
-                  opacity: 0.5,
-
-                });
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Deselection': {
-          console.log('Got Here');
-          console.log(parsedMsg);
-          parsedMsg.forEach((id : any) => {
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === id) {
-                canvasObject.set({
-                  selectable: true,
-                  evented: true,
-                  opacity: 1,
-
-                });
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Loading': {
-          canvasData.clear();
-          parsedMsg.forEach((element : string) => {
-            const object = new fabric.ObjectWithID(JSON.parse(element));
-            switch (object.get('type')) {
-              case 'rectWithID': {
-                canvasData.add(new fabric.RectWithID(JSON.parse(element)));
-                break;
-              }
-              case 'circleWithID': {
-                canvasData.add(new fabric.CircleWithID(JSON.parse(element)));
-                break;
-              }
-              case 'lineWithID': {
-                const tempObject = JSON.parse(element);
-                const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
-                canvasData.add(new fabric.LineWithID(points, tempObject));
-                break;
-              }
-              case 'pathWithID': {
-                const tempObject = JSON.parse(element);
-                canvasData.add(new fabric.PathWithID(tempObject.path, tempObject));
-                break;
-              }
-              default: {
-                console.log('Unknown type');
-              }
-            }
-          });
-          break;
-        }
-        default: {
-          console.log('unknown message');
-        }
-      }
+      // TODO: Import needs to be changed? Don't like calling default
+      handleIncomingMessage.default(canvasData, message);
       canvasData.renderAll();
     });
+
     // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));

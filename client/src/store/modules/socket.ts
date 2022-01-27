@@ -1,6 +1,7 @@
 /* eslint-disable no-param-reassign */
 /* eslint-disable no-shadow */
 export interface SocketState {
+  socketInstance: WebSocket;
   isCreated: boolean;
   isConnected: boolean;
   message: string;
@@ -10,6 +11,8 @@ export interface SocketState {
 }
 
 const state = {
+  // WebSocket
+  socketInstance: undefined,
   // Connection Status
   isConnected: false,
   // Message content
@@ -23,6 +26,15 @@ const state = {
 };
 
 const mutations = {
+
+  /**
+   * Add an existing WebSocket to the store
+   * @param socketState The currest SocketState object
+   * @param socket The socket to be added
+   */
+  SOCKET_ADD(socketState: SocketState, socket: WebSocket): void {
+    socketState.socketInstance = socket;
+  },
 
   SOCKET_ONCREATED(socketState: SocketState): void {
     socketState.isConnected = false;
