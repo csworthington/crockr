@@ -6,7 +6,8 @@ export enum ShapesWithID {
   circle = 'circleWithID',
   rect = 'rectWithID',
   path = 'pathWithID',
-  pencilBrush = 'pencilBrushWithID'
+  pencilBrush = 'pencilBrushWithID',
+  image = 'imageWithID'
 }
 
 declare global {
@@ -115,7 +116,7 @@ declare global {
     export interface ImageWithID extends IImageWithIDOptions { }
     export class ImageWithID extends Image {
       
-    constructor(element?: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
+    initialize(element?: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
     setElement(element: HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions): ImageWithID;
 
     setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): ImageWithID;

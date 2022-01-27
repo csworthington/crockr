@@ -132,6 +132,8 @@ export default defineComponent({
     });
 
     function openFile() {
+      let movingMsg :updateMsg;
+      isObjectBeingAdded = true;
       const img = document.getElementById('imageFile');
       img!.onchange = function handle(e) {
         const target = e.target as HTMLInputElement;
@@ -147,8 +149,16 @@ export default defineComponent({
               top: 60,
             });
             image.scaleToWidth(200);
-            canvasData.add(image).renderAll();
-            canvasData.setActiveObject(image);
+            canvasData.add(image); // .renderAll();
+            // canvasData.setActiveObject(image);
+            // isObjectBeingAdded = false;
+            //console.log(canvasData.getObjects());
+            //console.log('send real add  event');
+            // eslint-disable-next-line max-len
+            const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+            const addedId = addedObject.get('id');
+            const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+            updateServer(addMsg);
           };
         };
         reader.readAsDataURL(file);
@@ -656,6 +666,10 @@ export default defineComponent({
               objct = new fabric.LineWithID(JSON.parse(parsedMsg[1]));
               break;
             }
+            case 'imageWithID': {
+              objct = new fabric.ImageWithID(JSON.parse(parsedMsg[1]));
+              break;
+            }
             default: {
               objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
             }
@@ -754,6 +768,10 @@ export default defineComponent({
               }
               case 'lineWithID': {
                 // canvasData.add(new fabric.LineWithID(object));
+                break;
+              }
+              case 'imageWithID': {
+                canvasData.add(new fabric.ImageWithID(JSON.parse(element)));
                 break;
               }
               default: {

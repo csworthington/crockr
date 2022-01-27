@@ -157,6 +157,7 @@ function createImageWithID(): void {
   });
 
   fabric.ImageWithID.fromObject = function (object: any, callback: any) {
+    console.dir(object);
     // eslint-disable-next-line no-underscore-dangle
     return <fabric.ImageWithID>fabric.Object._fromObject('ImageWithID', object, callback);
   };
