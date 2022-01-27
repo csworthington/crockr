@@ -11,6 +11,41 @@ export function updateServer(msg : UpdateMessage): void {
   socket.send(JSON.stringify(msg));
 }
 
+export function sendObjectModified(
+  canvas: fabric.Canvas,
+): void {
+  const scaledObjects: string[]| any[] = [[], []];
+  const scaledIds : string[] = [];
+  const objectArray : fabric.ObjectWithID[] = [];
+
+  canvas.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+    scaledIds.push(element.get('id')!);
+  });
+
+  canvas.discardActiveObject().renderAll();
+  scaledIds.forEach((id : string) => {
+    canvas.getObjects().forEach((element: fabric.ObjectWithID) => {
+      if (element.get('id') === id) {
+        scaledObjects[0].push(id);
+        scaledObjects[1].push(JSON.stringify(element));
+        objectArray.push(element);
+      }
+    });
+  });
+
+  // eslint-disable-next-line max-len
+  const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas });
+  canvas.setActiveObject(selectionGroup);
+  canvas.renderAll();
+
+  const movingMessage : UpdateMessage = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
+  updateServer(movingMessage);
+}
+
+export function sendObjectAdded(canvas: fabric.Canvas): void {
+
+}
+
 /**
  * Send a selection message to the server
  * @param canvas Fabric Canvas instance

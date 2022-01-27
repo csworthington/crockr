@@ -313,31 +313,34 @@ export default defineComponent({
      */
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
-      let movingMsg : UpdateMessage;
       if (isObjectModified) {
         isObjectModified = false;
-        const scaledObjects: string[]|any[] = [[], []];
-        const scaledIds : string[] = [];
-        canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-          scaledIds.push(element.get('id')!);
-        });
-        const objectArray : fabric.ObjectWithID[] = [];
-        canvasData.discardActiveObject().renderAll();
-        scaledIds.forEach((id : string) => {
-          canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-            if (element.get('id') === id) {
-              scaledObjects[0].push(id);
-              scaledObjects[1].push(JSON.stringify(element));
-              objectArray.push(element);
-            }
-          });
-        });
-        // eslint-disable-next-line max-len
-        const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
-        canvasData.setActiveObject(selectionGroup);
-        canvasData.renderAll();
-        movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
-        updateServer(movingMsg);
+        outgoingMessageHandler.sendObjectModified(canvasData);
+        // const scaledObjects: string[]|any[] = [[], []];
+        // const scaledIds : string[] = [];
+        // canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
+        //   scaledIds.push(element.get('id')!);
+        // });
+        // const objectArray : fabric.ObjectWithID[] = [];
+        // canvasData.discardActiveObject().renderAll();
+        // scaledIds.forEach((id : string) => {
+        //   canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
+        //     if (element.get('id') === id) {
+        //       scaledObjects[0].push(id);
+        //       scaledObjects[1].push(JSON.stringify(element));
+        //       objectArray.push(element);
+        //     }
+        //   });
+        // });
+        //
+        // const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(
+        //   objectArray,
+        //   { canvas: canvasData },
+        // );
+        // canvasData.setActiveObject(selectionGroup);
+        // canvasData.renderAll();
+        // movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
+        // updateServer(movingMsg);
       } else if (isPenDown) {
         isPenDown = false;
         // eslint-disable-next-line max-len
@@ -345,10 +348,8 @@ export default defineComponent({
         const addedId = addedObject.get('id');
         const addMsg :UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
         updateServer(addMsg);
-        console.log('send pen event');
       } else if (isObjectBeingAdded) {
         isObjectBeingAdded = false;
-        console.log('send real add  event');
         // eslint-disable-next-line max-len
         const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
         const addedId = addedObject.get('id');
@@ -451,6 +452,7 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
+      // send delete message to the server
       const deletionIDs :string[] = [];
       const objectList = canvasData.getActiveObjects();
       objectList.forEach((object : fabric.ObjectWithID) => {
@@ -485,6 +487,7 @@ export default defineComponent({
       downloadAnchorNode.remove();
     };
     function loadBoard() {
+      // Send load board message to the server
       const canvasFile = document.getElementById('file-input');
       canvasFile!.onchange = function handle(e) {
         const reader = new FileReader();
@@ -514,6 +517,7 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
+        // Send clear message to the server
         const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
         updateServer(clearMsg);
         console.log('send  clear update.');
@@ -524,6 +528,7 @@ export default defineComponent({
      * Send a load message to the server to get the current state of the canvas
      */
     const loadCanvas = () => {
+      // Send load message to the server
       const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
       updateServer(loadMsg);
     };
