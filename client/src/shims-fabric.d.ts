@@ -113,7 +113,7 @@ declare global {
 
     // Image with ID 
     export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions { }
-    export interface ImageWithID extends IImageWithIDOptions { }
+    export interface ImageWithID extends Object, IImageWithIDOptions { }
     export class ImageWithID extends Image {
       
     initialize(element?: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);

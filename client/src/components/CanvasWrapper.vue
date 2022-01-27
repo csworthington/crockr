@@ -859,7 +859,8 @@ export default defineComponent({
                 break;
               }
               case 'imageWithID': {
-                canvasData.add(new fabric.ImageWithID(JSON.parse(element)));
+                const tempObject = JSON.parse(element);
+                canvasData.add(new fabric.ImageWithID(tempObject.element, tempObject));
                 break;
               }
               default: {
