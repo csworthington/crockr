@@ -35,6 +35,9 @@ wsServer.on("connection", (socket: connectedClients) => {
   activeConnections.add(socket);
   const loadMsg : updateMsg = {msgType: "Loading", msg: JSON.stringify(canvas[1])};
   socket.send(JSON.stringify(loadMsg));
+  loadMsg.msgType = "Selection";
+  loadMsg.msg = JSON.stringify(lockedObjects[1]);
+  socket.send(JSON.stringify(loadMsg));
 
   // Handle incoming messages
   socket.on("message", (message: Buffer) => {
@@ -118,12 +121,6 @@ wsServer.on("connection", (socket: connectedClients) => {
         
         const deletionIDs = JSON.parse(msg.msg);
         deletionIDs.forEach( (id: string) => {
-          if(lockedObjects[1].includes(id)){
-            const x = lockedObjects[1].indexOf(id);
-            lockedObjects[0].splice(x,1);
-            lockedObjects[1].splice(x,1);
-  
-          }
           if(canvas[0].includes(id)){
             const x = canvas[0].indexOf(id);
             canvas[0].splice(x,1);
@@ -153,7 +150,24 @@ wsServer.on("connection", (socket: connectedClients) => {
         console.log("got here");
         msg.msg = JSON.stringify(canvas[1]);
         socket.send(JSON.stringify(msg));
+        msg.msgType = "Selection";
+        msg.msg = JSON.stringify(lockedObjects[1]);
+        socket.send(JSON.stringify(msg));
         break;
+      }
+      case "localLoad":{
+        const loadedObjects = JSON.parse(msg.msg);
+        canvas[0]  = loadedObjects[0];
+        canvas[1] = loadedObjects[1];
+        msg.msg = JSON.stringify(canvas[1]);
+        msg.msgType = "Loading";
+        activeConnections.forEach(function(sockets){
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+         break;
+
       }
       
       default: {

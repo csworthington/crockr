@@ -11,7 +11,20 @@
     <span><button @click="handleToolChange('CIRCLE')"> Circle </button></span>
     <span><button @click="handleToolChange('SELECT')"> select </button></span>
     <span><button @click="clearBoard"> Clear </button></span>
+    <span><button @click="saveBoard"> Save </button></span>
+    <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
+    <span>
+    <input @click="loadBoard" id="file-input" type="file" name="name" style="display:none;"/>
+    </span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
+    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
+    <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getPenFromServer">Get Pen</button></span>
+    <span><button @click="getRectFromServer">Get Rect</button></span>
+    <span><button @click="getCircleFromServer">Get circle</button></span>
+    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -38,6 +51,9 @@
   <div>
     <span>current tool = {{ tool }}</span>
   </div>
+  <div>
+    <WebSocketStatusIndicator />
+  </div>
 </template>
 
 <script lang="ts">
@@ -56,14 +72,12 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
-
-// import { Object } from 'fabric/fabric-impl';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
-// import { Group } from 'fabric/fabric-impl';
+import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
 
 enum ToolType {
   None = 'NONE',
@@ -78,6 +92,7 @@ export default defineComponent({
   name: 'CanvasWrapper',
   components: {
     ColourPicker,
+    WebSocketStatusIndicator,
   },
   setup(props) {
     const store = useStore(StoreKey);
@@ -152,8 +167,8 @@ export default defineComponent({
             canvasData.add(image); // .renderAll();
             // canvasData.setActiveObject(image);
             // isObjectBeingAdded = false;
-            //console.log(canvasData.getObjects());
-            //console.log('send real add  event');
+            // console.log(canvasData.getObjects());
+            // console.log('send real add  event');
             // eslint-disable-next-line max-len
             const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
             const addedId = addedObject.get('id');
@@ -366,6 +381,11 @@ export default defineComponent({
         updateServer(movingMsg);
       } else if (isPenDown) {
         isPenDown = false;
+        // eslint-disable-next-line max-len
+        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+        const addedId = addedObject.get('id');
+        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        updateServer(addMsg);
         console.log('send pen event');
       } else if (isObjectBeingAdded) {
         isObjectBeingAdded = false;
@@ -504,6 +524,48 @@ export default defineComponent({
     /**
      * Clear the canvas of all objects when the user selects the clear button
      */
+    /* const loadCanvas = () => {
+      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
+      updateServer(loadMsg);
+    }; */
+    const saveBoard = () => {
+      // eslint-disable-next-line prefer-template
+      const data = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(canvasData));
+      const downloadAnchorNode = document.createElement('a');
+      downloadAnchorNode.setAttribute('href', data);
+      // eslint-disable-next-line no-useless-concat
+      downloadAnchorNode.setAttribute('download', 'Canvas' + '.json');
+      document.body.appendChild(downloadAnchorNode);
+      downloadAnchorNode.click();
+      downloadAnchorNode.remove();
+    };
+    function loadBoard() {
+      const canvasFile = document.getElementById('file-input');
+      canvasFile!.onchange = function handle(e) {
+        const reader = new FileReader();
+        reader.addEventListener('load', (loadEvent) => {
+          try {
+            const json = JSON.parse(<string> reader.result);
+            // eslint-disable-next-line prefer-arrow-callback
+            canvasData.loadFromJSON(reader.result, function () {
+              canvasData.renderAll();
+            });
+            const loadedObjects: string[]|any[] = [[], []];
+            canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
+              loadedObjects[0].push(element.get('id'));
+              loadedObjects[1].push(JSON.stringify(element));
+            });
+            const loadMsg : updateMsg = { msgType: 'localLoad', msg: JSON.stringify(loadedObjects) };
+            updateServer(loadMsg);
+          } catch (error) {
+            console.error(error);
+          }
+        });
+        const target = e.target as HTMLInputElement;
+        const file : File = (target.files as FileList)[0];
+        console.log(reader.readAsText(file));
+      };
+    }
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
@@ -511,6 +573,14 @@ export default defineComponent({
         updateServer(clearMsg);
         console.log('send  clear update.');
       }
+    };
+
+    /**
+     * Send a load message to the server to get the current state of the canvas
+     */
+    const loadCanvas = () => {
+      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
+      updateServer(loadMsg);
     };
 
     /**
@@ -623,7 +693,10 @@ export default defineComponent({
 
       console.dir(canvasData);
       console.log(canvasData.toObject());
-      // loadCanvas();
+
+      if (store.state.socket.isConnected) {
+        loadCanvas();
+      }
     };
 
     /**
@@ -663,7 +736,14 @@ export default defineComponent({
               break;
             }
             case 'lineWithID': {
-              objct = new fabric.LineWithID(JSON.parse(parsedMsg[1]));
+              const tempObject = JSON.parse(parsedMsg[1]);
+              const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
+              objct = new fabric.LineWithID(points, JSON.parse(parsedMsg[1]));
+              break;
+            }
+            case 'pathWithID': {
+              const tempObject = JSON.parse(parsedMsg[1]);
+              objct = new fabric.PathWithID(tempObject.path, tempObject);
               break;
             }
             case 'imageWithID': {
@@ -755,6 +835,7 @@ export default defineComponent({
           break;
         }
         case 'Loading': {
+          canvasData.clear();
           parsedMsg.forEach((element : string) => {
             const object = new fabric.ObjectWithID(JSON.parse(element));
             switch (object.get('type')) {
@@ -767,7 +848,14 @@ export default defineComponent({
                 break;
               }
               case 'lineWithID': {
-                // canvasData.add(new fabric.LineWithID(object));
+                const tempObject = JSON.parse(element);
+                const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
+                canvasData.add(new fabric.LineWithID(points, tempObject));
+                break;
+              }
+              case 'pathWithID': {
+                const tempObject = JSON.parse(element);
+                canvasData.add(new fabric.PathWithID(tempObject.path, tempObject));
                 break;
               }
               case 'imageWithID': {
@@ -830,12 +918,39 @@ export default defineComponent({
       });
     };
 
+    /**
+     * Export the canvas as an svg file to the new window
+     */
+    const exportCanvasToSVG = () => {
+      const svgAsBlob = new Blob([canvasData.toSVG()], { type: 'image/svg+xml' });
+      const svgUrl = URL.createObjectURL(svgAsBlob);
+      const link = document.createElement('a');
+      link.href = svgUrl;
+      link.id = 'whiteboard-download-link';
+      link.download = 'whiteboard.svg';
+      link.innerHTML = 'Click here to download file';
+
+      document.body.appendChild(link);
+      const queriedLink : HTMLLinkElement | null = document.querySelector('#whiteboard-download-link');
+      if (queriedLink) {
+        queriedLink.click();
+        queriedLink.remove();
+      }
+      // Garbage collect the blob after window open
+      URL.revokeObjectURL(svgUrl);
+    };
+
     onMounted(initFabricCanvas);
+    onMounted(() => {
+      handleToolChange(ToolType.Select);
+    });
     return {
       resizeCanvas,
       tool,
       canvasData,
       clearBoard,
+      saveBoard,
+      loadBoard,
       initFabricCanvas,
       handleToolChange,
       lineThickness,
@@ -847,8 +962,10 @@ export default defineComponent({
       getRectFromServer,
       getCircleFromServer,
       getPenFromServer,
+      loadCanvas,
       updateServer,
       openFile,
+      exportCanvasToSVG,
     };
   },
 });

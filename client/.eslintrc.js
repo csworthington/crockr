@@ -21,6 +21,7 @@ module.exports = {
     'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
     'no-shadow': 'off',
     '@typescript-eslint/no-shadow': 'error',
+    'no-unused-expressions': ['error', {'allowTernary': true}]
   },
   overrides: [
     {
