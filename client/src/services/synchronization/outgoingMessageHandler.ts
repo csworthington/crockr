@@ -43,7 +43,13 @@ export function sendObjectModified(
 }
 
 export function sendObjectAdded(canvas: fabric.Canvas): void {
-
+  const addedObject: fabric.ObjectWithID = canvas.getObjects()[canvas.getObjects().length - 1];
+  const addedId = addedObject.get('id');
+  const addMsg : UpdateMessage = {
+    msgType: 'Addition',
+    msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
+  };
+  updateServer(addMsg);
 }
 
 /**
@@ -138,4 +144,42 @@ export function sendObjectSelectionCleared(
   console.log(canvas.getActiveObjects());
   console.log(deselectMsg);
   updateServer(deselectMsg);
+}
+
+export function sendObjectDeleted(
+  canvas: fabric.Canvas,
+): void {
+  const deletionIDs :string[] = [];
+  const objectList = canvas.getActiveObjects();
+  objectList.forEach((object : fabric.ObjectWithID) => {
+    deletionIDs.push(<string>object.get('id'));
+    canvas.remove(object);
+  });
+  const deleteMsg : UpdateMessage = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
+  updateServer(deleteMsg);
+  console.log('send delete update');
+}
+
+export function sendClearBoardMessage(canvas: fabric.Canvas): void {
+  canvas.clear();
+  // Send clear message to the server
+  const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
+  updateServer(clearMsg);
+  console.log('send  clear update.');
+}
+
+export function sendLoadCanvasMessage(): void {
+  // Send load message to the server
+  const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
+  updateServer(loadMsg);
+}
+
+export function sendLocalLoadMessage(canvas: fabric.Canvas): void {
+  const loadedObjects: string[]|any[] = [[], []];
+  canvas.getObjects().forEach((element: fabric.ObjectWithID) => {
+    loadedObjects[0].push(element.get('id'));
+    loadedObjects[1].push(JSON.stringify(element));
+  });
+  const loadMsg : UpdateMessage = { msgType: 'LocalLoad', msg: JSON.stringify(loadedObjects) };
+  updateServer(loadMsg);
 }

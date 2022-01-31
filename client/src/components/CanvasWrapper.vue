@@ -341,20 +341,13 @@ export default defineComponent({
         // canvasData.renderAll();
         // movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
         // updateServer(movingMsg);
-      } else if (isPenDown) {
-        isPenDown = false;
-        // eslint-disable-next-line max-len
-        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-        const addedId = addedObject.get('id');
-        const addMsg :UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
-        updateServer(addMsg);
-      } else if (isObjectBeingAdded) {
-        isObjectBeingAdded = false;
-        // eslint-disable-next-line max-len
-        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-        const addedId = addedObject.get('id');
-        const addMsg :UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
-        updateServer(addMsg);
+      } else {
+        if (isPenDown) {
+          isPenDown = false;
+        } else if (isObjectBeingAdded) {
+          isObjectBeingAdded = false;
+        }
+        outgoingMessageHandler.sendObjectAdded(canvasData);
       }
     }
 
@@ -452,20 +445,28 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
-      // send delete message to the server
-      const deletionIDs :string[] = [];
-      const objectList = canvasData.getActiveObjects();
-      objectList.forEach((object : fabric.ObjectWithID) => {
-        deletionIDs.push(<string>object.get('id'));
-        canvasData.remove(object);
-      });
       const elem = document.getElementById('deleteBtn');
-      if (elem != null) {
+      if (elem !== null) {
         elem.remove();
       }
-      const deleteMsg : UpdateMessage = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
-      updateServer(deleteMsg);
-      console.log('send delete update');
+      outgoingMessageHandler.sendObjectDeleted(canvasData);
+      // send delete message to the server
+      // const deletionIDs :string[] = [];
+      // const objectList = canvasData.getActiveObjects();
+      // objectList.forEach((object : fabric.ObjectWithID) => {
+      //   deletionIDs.push(<string>object.get('id'));
+      //   canvasData.remove(object);
+      // });
+      // const elem = document.getElementById('deleteBtn');
+      // if (elem != null) {
+      //   elem.remove();
+      // }
+      // const deleteMsg : UpdateMessage = {
+      //   msgType: 'Deletion',
+      //   msg: JSON.stringify(deletionIDs),
+      // };
+      // updateServer(deleteMsg);
+      // console.log('send delete update');
     };
 
     /**
@@ -498,13 +499,17 @@ export default defineComponent({
             canvasData.loadFromJSON(reader.result, function () {
               canvasData.renderAll();
             });
-            const loadedObjects: string[]|any[] = [[], []];
-            canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-              loadedObjects[0].push(element.get('id'));
-              loadedObjects[1].push(JSON.stringify(element));
-            });
-            const loadMsg : UpdateMessage = { msgType: 'LocalLoad', msg: JSON.stringify(loadedObjects) };
-            updateServer(loadMsg);
+            outgoingMessageHandler.sendLocalLoadMessage(canvasData);
+            // const loadedObjects: string[]|any[] = [[], []];
+            // canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
+            //   loadedObjects[0].push(element.get('id'));
+            //   loadedObjects[1].push(JSON.stringify(element));
+            // });
+            // const loadMsg : UpdateMessage = {
+            //   msgType: 'LocalLoad',
+            //   msg: JSON.stringify(loadedObjects),
+            // };
+            // updateServer(loadMsg);
           } catch (error) {
             console.error(error);
           }
@@ -516,11 +521,12 @@ export default defineComponent({
     }
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
-        canvasData.clear();
-        // Send clear message to the server
-        const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
-        updateServer(clearMsg);
-        console.log('send  clear update.');
+        outgoingMessageHandler.sendClearBoardMessage(canvasData);
+        // canvasData.clear();
+        // // Send clear message to the server
+        // const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
+        // updateServer(clearMsg);
+        // console.log('send  clear update.');
       }
     };
 
@@ -528,9 +534,10 @@ export default defineComponent({
      * Send a load message to the server to get the current state of the canvas
      */
     const loadCanvas = () => {
-      // Send load message to the server
-      const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
-      updateServer(loadMsg);
+      outgoingMessageHandler.sendLoadCanvasMessage();
+      // // Send load message to the server
+      // const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
+      // updateServer(loadMsg);
     };
 
     /**
