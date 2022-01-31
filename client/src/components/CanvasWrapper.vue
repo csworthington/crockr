@@ -65,6 +65,7 @@ import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
+import router from '@/router';
 
 import { UpdateMessage } from '@/services/synchronization/typings.d';
 import { updateServer } from '@/services/synchronization/outgoingMessageHandler';
@@ -89,7 +90,6 @@ export default defineComponent({
   setup(props) {
     const store = useStore(StoreKey);
     const axios = useAxios();
-
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
@@ -683,6 +683,7 @@ export default defineComponent({
       console.log(canvasData.toObject());
 
       if (store.state.socket.isConnected) {
+        console.log(store.state.roomID.ID);
         loadCanvas();
       }
     };
