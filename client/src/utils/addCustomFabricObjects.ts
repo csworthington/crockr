@@ -141,12 +141,14 @@ function createCircleWithID(): void {
 function createImageWithID(): void {
   fabric.ImageWithID = fabric.util.createClass(fabric.Image, {
     type: ShapesWithID.image,
-    // eslint-disable-next-line max-len
-    initialize(element: string | HTMLImageElement | HTMLVideoElement, options: fabric.IImageWithIDOptions) {
-      this.callSuper('initialize', options);
+    initialize(
+      element: string | HTMLImageElement | HTMLVideoElement,
+      options?: fabric.IImageWithIDOptions,
+    ) {
+      this.callSuper('initialize', element, (options || {}));
       // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
       // generate one at random.
-      this.set('id', options.id || getUUID());
+      this.set('id', options?.id || getUUID());
     },
     toObject() {
       return fabric.util.object.extend(this.callSuper('toObject'), {
@@ -158,10 +160,23 @@ function createImageWithID(): void {
     },
   });
 
+  fabric.ImageWithID.fromURL = function (
+    url: string,
+    callback?: (image: fabric.ImageWithID) => void,
+    imgOptions?: fabric.IImageWithIDOptions,
+  ): void {
+    fabric.util.loadImage(
+      url,
+      (img) => callback && callback(new fabric.ImageWithID(img, imgOptions)),
+      null,
+      imgOptions && imgOptions.crossOrigin,
+    );
+  };
+
   fabric.ImageWithID.fromObject = function (object: any, callback: any) {
     console.dir(object);
     // eslint-disable-next-line no-underscore-dangle
-    return <fabric.ImageWithID>fabric.Object._fromObject('ImageWithID', object, callback);
+    return <fabric.ImageWithID>fabric.Object._fromObject('ImageWithID', object, callback, '_element');
   };
 }
 
