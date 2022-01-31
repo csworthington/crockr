@@ -32,8 +32,8 @@ export default defineComponent({
       socket.send(JSON.stringify(passwordUpdate));
     }
     let roomData: string[][] = [[], []];
-    socket.addEventListener('message', (message) => {
-    // const msg = JSON.parse(message.data.ToString());
+
+    const listenForRoomMessages = (message: MessageEvent<any>) => {
       const msg : updateMsg = JSON.parse(message.data);
       const parsedMsg = JSON.parse(msg.msg);
       switch (msg.msgType) {
@@ -69,7 +69,9 @@ export default defineComponent({
           break;
         }
       }
-    });
+    };
+
+    socket.addEventListener('message', listenForRoomMessages);
     console.log('test');
   },
 });
