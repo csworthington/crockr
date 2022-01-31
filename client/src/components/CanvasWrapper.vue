@@ -316,31 +316,6 @@ export default defineComponent({
       if (isObjectModified) {
         isObjectModified = false;
         outgoingMessageHandler.sendObjectModified(canvasData);
-        // const scaledObjects: string[]|any[] = [[], []];
-        // const scaledIds : string[] = [];
-        // canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-        //   scaledIds.push(element.get('id')!);
-        // });
-        // const objectArray : fabric.ObjectWithID[] = [];
-        // canvasData.discardActiveObject().renderAll();
-        // scaledIds.forEach((id : string) => {
-        //   canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-        //     if (element.get('id') === id) {
-        //       scaledObjects[0].push(id);
-        //       scaledObjects[1].push(JSON.stringify(element));
-        //       objectArray.push(element);
-        //     }
-        //   });
-        // });
-        //
-        // const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(
-        //   objectArray,
-        //   { canvas: canvasData },
-        // );
-        // canvasData.setActiveObject(selectionGroup);
-        // canvasData.renderAll();
-        // movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
-        // updateServer(movingMsg);
       } else {
         if (isPenDown) {
           isPenDown = false;
@@ -450,23 +425,6 @@ export default defineComponent({
         elem.remove();
       }
       outgoingMessageHandler.sendObjectDeleted(canvasData);
-      // send delete message to the server
-      // const deletionIDs :string[] = [];
-      // const objectList = canvasData.getActiveObjects();
-      // objectList.forEach((object : fabric.ObjectWithID) => {
-      //   deletionIDs.push(<string>object.get('id'));
-      //   canvasData.remove(object);
-      // });
-      // const elem = document.getElementById('deleteBtn');
-      // if (elem != null) {
-      //   elem.remove();
-      // }
-      // const deleteMsg : UpdateMessage = {
-      //   msgType: 'Deletion',
-      //   msg: JSON.stringify(deletionIDs),
-      // };
-      // updateServer(deleteMsg);
-      // console.log('send delete update');
     };
 
     /**
@@ -500,16 +458,6 @@ export default defineComponent({
               canvasData.renderAll();
             });
             outgoingMessageHandler.sendLocalLoadMessage(canvasData);
-            // const loadedObjects: string[]|any[] = [[], []];
-            // canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-            //   loadedObjects[0].push(element.get('id'));
-            //   loadedObjects[1].push(JSON.stringify(element));
-            // });
-            // const loadMsg : UpdateMessage = {
-            //   msgType: 'LocalLoad',
-            //   msg: JSON.stringify(loadedObjects),
-            // };
-            // updateServer(loadMsg);
           } catch (error) {
             console.error(error);
           }
@@ -522,11 +470,6 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         outgoingMessageHandler.sendClearBoardMessage(canvasData);
-        // canvasData.clear();
-        // // Send clear message to the server
-        // const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
-        // updateServer(clearMsg);
-        // console.log('send  clear update.');
       }
     };
 
@@ -535,9 +478,6 @@ export default defineComponent({
      */
     const loadCanvas = () => {
       outgoingMessageHandler.sendLoadCanvasMessage();
-      // // Send load message to the server
-      // const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
-      // updateServer(loadMsg);
     };
 
     /**
@@ -563,24 +503,6 @@ export default defineComponent({
       canvasData.on('selection:created', () => {
         // Send selection update to the server
         outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
-        // console.log('send selection update');
-
-        // canvasData.getActiveObjects().forEach((active: any) => {
-        //   if (selectedCheck.indexOf(active.get('id')) === -1) {
-        //     selectedCheck.push(active.get('id'));
-        //   }
-        // });
-
-        // const selectedIds:(string)[] = [];
-        // canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
-        //   selectedIds.push(<string>element.get('id'));
-        // });
-        // const selectionUpdate : UpdateMessage = {
-        //   msgType: 'Selection',
-        //   msg: JSON.stringify(selectedIds),
-        // };
-        // updateServer(selectionUpdate);
-        // console.log(selectedCheck.length);
 
         // Create a delete button on object selection
         const deleteBtn = document.createElement('button');
@@ -595,38 +517,6 @@ export default defineComponent({
           canvasData,
           selectedCheck,
         );
-        // // Send selection updated synchronization message to the server
-        // console.log('updated');
-        // canvasData.getActiveObjects().forEach((active: any) => {
-        //   if (selectedCheck.indexOf(active.get('id')) === -1) {
-        //     selectedCheck.push(active.get('id'));
-        //   }
-        // });
-
-        // const selectedIds:(string)[] = [];
-        // canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
-        //   selectedIds.push(<string>element.get('id'));
-        // });
-        // const selectionUpdate : UpdateMessage = {
-        //   msgType: 'Selection',
-        //   msg: JSON.stringify(selectedIds),
-        // };
-        // updateServer(selectionUpdate);
-        // const activeObjectIDS : string[] = [];
-        // canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
-        //   activeObjectIDS.push(active.get('id')!);
-        // });
-
-        // // Send selection cleared message
-        // const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
-        // console.log('send selection cleared update');
-        // const deselectMsg : UpdateMessage = {
-        //   msgType: 'Deselection',
-        //   msg: JSON.stringify(deselectedId),
-        // };
-        // console.log(canvasData.getActiveObjects());
-        // console.log(deselectMsg);
-        // updateServer(deselectMsg);
       });
 
       canvasData.on('selection:cleared', () => {
@@ -634,22 +524,6 @@ export default defineComponent({
           canvasData,
           selectedCheck,
         );
-        // // Send selection cleared message
-        // console.log('selectedCheck');
-        // console.dir(selectedCheck);
-        // const activeObjectIDS : string[] = [];
-        // canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
-        //   activeObjectIDS.push(active.get('id')!);
-        // });
-        // const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
-        // console.log('send selection cleared update');
-        // const deselectMsg : UpdateMessage = {
-        //   msgType: 'Deselection',
-        //   msg: JSON.stringify(deselectedId),
-        // };
-        // console.log(canvasData.getActiveObjects());
-        // console.log(deselectMsg);
-        // updateServer(deselectMsg);
 
         // Remove delete button when object is deselected
         const elem = document.getElementById('deleteBtn');
@@ -800,7 +674,6 @@ export default defineComponent({
       getCircleFromServer,
       getPenFromServer,
       loadCanvas,
-      updateServer,
       exportCanvasToSVG,
     };
   },

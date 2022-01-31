@@ -19,7 +19,7 @@ export default defineComponent({
   setup() {
     const socket = useGlobalWebSocket();
     const store = useStore(StoreKey);
-    interface updateMsg{
+    interface updateMsg {
       msgType : string;
       msg : string;
     }
@@ -34,7 +34,7 @@ export default defineComponent({
     let roomData: string[][] = [[], []];
     socket.addEventListener('message', (message) => {
     // const msg = JSON.parse(message.data.ToString());
-      const msg = JSON.parse(message.data);
+      const msg : updateMsg = JSON.parse(message.data);
       const parsedMsg = JSON.parse(msg.msg);
       switch (msg.msgType) {
         case 'roomUpdate': {

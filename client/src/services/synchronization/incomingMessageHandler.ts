@@ -231,7 +231,7 @@ export default function receiveMessage(
       break;
     }
     default: {
-      console.log(`Unknown message type for incoming message, type = "${messageData.msgType}"`);
+      console.warn(`Unknown message type for incoming message, type = "${messageData.msgType}"`);
     }
   }
 }
