@@ -36,13 +36,7 @@
     </span>
     </div>
   <div>
-    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
-    <span><button @click="getLineFromServer">Get Line</button></span>
-    <span><button @click="getPenFromServer">Get Pen</button></span>
-    <span><button @click="getRectFromServer">Get Rect</button></span>
-    <span><button @click="getCircleFromServer">Get circle</button></span>
+    <span><button @click="addText()">Add Custom Text</button></span>
 <!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
     <span><button @click="openFile()">
       <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
@@ -146,6 +140,34 @@ export default defineComponent({
       },
     });
 
+    function addText() {
+      isObjectBeingAdded = true;
+      const oText = new fabric.ITextWithID('Text', {
+        left: 100,
+        top: 100,
+        fill: store.state.colourPalette.primaryToolColour,
+        editable: true,
+      });
+      /* oText.left = 100;
+      oText.top = 100;
+      oText.editable = true;
+      oText.fill = store.state.colourPalette.primaryToolColour;
+      */
+
+      canvasData.add(oText);
+      oText.bringToFront();
+      canvasData.setActiveObject(oText);
+      isObjectBeingAdded = false;
+      console.log('send real add  event');
+      console.log(JSON.stringify(oText));
+      // eslint-disable-next-line max-len
+      const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+      const addedId = addedObject.get('id');
+      const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, addedObject.toJSON]) };
+      updateServer(addMsg);
+    }
+
+    // adds image to the canvas
     function openFile() {
       let movingMsg :updateMsg;
       isObjectBeingAdded = true;
@@ -156,6 +178,7 @@ export default defineComponent({
         const reader = new FileReader();
         reader.onload = () => {
           const imgObj = new Image();
+
           imgObj.src = reader.result as string;
           imgObj.onload = function handleImage() {
             const image = new fabric.ImageWithID(imgObj);
@@ -164,16 +187,8 @@ export default defineComponent({
               top: 60,
             });
             image.scaleToWidth(200);
-            canvasData.add(image); // .renderAll();
+            // canvasData.add(image); // .renderAll();
             // canvasData.setActiveObject(image);
-            // isObjectBeingAdded = false;
-            // console.log(canvasData.getObjects());
-            // console.log('send real add  event');
-            // eslint-disable-next-line max-len
-            const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-            const addedId = addedObject.get('id');
-            const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
-            updateServer(addMsg);
           };
         };
         reader.readAsDataURL(file);
@@ -745,11 +760,14 @@ export default defineComponent({
               const tempObject = JSON.parse(parsedMsg[1]);
               objct = new fabric.PathWithID(tempObject.path, tempObject);
               break;
-            }
-            case 'imageWithID': {
-              objct = new fabric.ImageWithID(JSON.parse(parsedMsg[1]));
+            } case 'textWithID': {
+              objct = new fabric.ITextWithID(JSON.parse(parsedMsg[1]));
               break;
-            }
+            }/*
+            case 'imageWithID': {
+              // objct = new fabric.ImageWithID(JSON.parse(parsedMsg[1]));
+              break;
+            } */
             default: {
               objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
             }
@@ -857,12 +875,15 @@ export default defineComponent({
                 const tempObject = JSON.parse(element);
                 canvasData.add(new fabric.PathWithID(tempObject.path, tempObject));
                 break;
-              }
+              } case 'textWithID': {
+                canvasData.add(new fabric.ITextWithID(JSON.parse(element)));
+                break;
+              }/*
               case 'imageWithID': {
                 const tempObject = JSON.parse(element);
-                canvasData.add(new fabric.ImageWithID(tempObject.element, tempObject));
+                // canvasData.add(new fabric.ImageWithID(tempObject.element, tempObject));
                 break;
-              }
+              } */
               default: {
                 console.log('Unknown type');
               }
@@ -965,6 +986,7 @@ export default defineComponent({
       getPenFromServer,
       loadCanvas,
       updateServer,
+      addText,
       openFile,
       exportCanvasToSVG,
     };

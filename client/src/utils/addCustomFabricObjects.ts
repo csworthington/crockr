@@ -8,7 +8,8 @@ export enum ShapesWithID {
   rect = 'rectWithID',
   path = 'pathWithID',
   pencilBrush = 'pencilBrushWithID',
-  image = 'imageWithID'
+  image = 'imageWithID',
+  text = 'textWithID',
 }
 
 function createObjectWithId(): void{
@@ -140,7 +141,8 @@ function createCircleWithID(): void {
 function createImageWithID(): void {
   fabric.ImageWithID = fabric.util.createClass(fabric.Image, {
     type: ShapesWithID.image,
-    initialize(options: any) {
+    // eslint-disable-next-line max-len
+    initialize(element: string | HTMLImageElement | HTMLVideoElement, options: fabric.IImageWithIDOptions) {
       this.callSuper('initialize', options);
       // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
       // generate one at random.
@@ -162,6 +164,32 @@ function createImageWithID(): void {
     return <fabric.ImageWithID>fabric.Object._fromObject('ImageWithID', object, callback);
   };
 }
+
+function createITextWithID(): void {
+  fabric.ITextWithID = fabric.util.createClass(fabric.IText, {
+    type: ShapesWithID.text,
+    initialize(options: any) {
+      this.callSuper('initialize', options);
+      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
+      // generate one at random.
+      this.set('id', options.id || getUUID());
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), {
+        id: this.get('id'),
+      });
+    },
+    toString() {
+      return `${this.callSuper('toString')} (id: ${this.id})`;
+    },
+  });
+
+  fabric.ITextWithID.fromObject = function (object: any, callback: any) {
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.ITextWithID>fabric.Object._fromObject('ITextWithID', object, callback);
+  };
+}
+
 function createPencilBrushWithID(): void {
   fabric.PathWithID = fabric.util.createClass(fabric.Path, {
     type: ShapesWithID.path,
@@ -236,4 +264,5 @@ export default function addCustomFabricObjects(): void {
   createPencilBrushWithID();
   createObjectWithId();
   createImageWithID();
+  createITextWithID();
 }

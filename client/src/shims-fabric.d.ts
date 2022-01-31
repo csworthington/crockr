@@ -7,7 +7,8 @@ export enum ShapesWithID {
   rect = 'rectWithID',
   path = 'pathWithID',
   pencilBrush = 'pencilBrushWithID',
-  image = 'imageWithID'
+  image = 'imageWithID',
+  text = 'textWithID',
 }
 
 declare global {
@@ -110,6 +111,25 @@ declare global {
        * List of attribute names to account for when parsing SVG element (used by `fabric.Polygon.fromElement`)
        */
     }
+
+    //Text with ID
+    export interface ITextWithIDOptions extends ITextOptions, IObjectWithIDOptions { }
+    export interface ITextWithID extends Object, ITextWithIDOptions { }
+    export class ITextWithID extends IText {
+
+      constructor(text: string, options?: ITextWithIDOptions);
+      static fromObject(object: any, callback?: Function): ITextWithID;
+      selectAll(): ITextWithID;
+      selectLine(selectionStart: number): ITextWithID;
+    /**
+     * Enters editing state
+     * @return {fabric.IText} thisArg
+     * @chainable
+     */
+      enterEditing(e?: MouseEvent): ITextWithID;
+      exitEditing(): ITextWithID;
+    }
+
 
     // Image with ID 
     export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions { }
