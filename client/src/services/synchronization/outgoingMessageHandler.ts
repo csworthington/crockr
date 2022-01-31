@@ -38,7 +38,11 @@ export function sendObjectModified(
   canvas.setActiveObject(selectionGroup);
   canvas.renderAll();
 
-  const movingMessage : UpdateMessage = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
+  const movingMessage : UpdateMessage = {
+    msgType: 'Modified',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(scaledObjects),
+  };
   updateServer(movingMessage);
 }
 
@@ -47,6 +51,7 @@ export function sendObjectAdded(canvas: fabric.Canvas): void {
   const addedId = addedObject.get('id');
   const addMsg : UpdateMessage = {
     msgType: 'Addition',
+    roomID: store.state.roomID.ID,
     msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
   };
   updateServer(addMsg);
@@ -76,6 +81,7 @@ export function sendObjectSelected(
 
   updateServer({
     msgType: 'Selection',
+    roomID: store.state.roomID.ID,
     msg: JSON.stringify(selectedIds),
   });
 
@@ -103,7 +109,11 @@ export function sendObjectSelectionUpdated(
   canvas.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
     selectedObjects.push(<string>element.get('id'));
   });
-  const selectionUpdate : UpdateMessage = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+  const selectionUpdate : UpdateMessage = {
+    msgType: 'Selection',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(selectedIds),
+  };
   updateServer(selectionUpdate);
   const activeObjectIDS : string[] = [];
   canvas.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
@@ -113,7 +123,11 @@ export function sendObjectSelectionUpdated(
   // Send selection cleared message
   const deselectedId = selectedObjects.filter((x) => !activeObjectIDS.includes(x));
   console.log('send selection cleared update');
-  const deselectMsg :UpdateMessage = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+  const deselectMsg : UpdateMessage = {
+    msgType: 'Deselection',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(deselectedId),
+  };
   console.log(canvas.getActiveObjects());
   console.log(deselectMsg);
   updateServer(deselectMsg);
@@ -140,7 +154,11 @@ export function sendObjectSelectionCleared(
   const deselectedId = selectedObjects.filter((x) => !activeObjectIDS.includes(x));
   console.log('send selection cleared update');
 
-  const deselectMsg :UpdateMessage = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+  const deselectMsg : UpdateMessage = {
+    msgType: 'Deselection',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(deselectedId),
+  };
   console.log(canvas.getActiveObjects());
   console.log(deselectMsg);
   updateServer(deselectMsg);
@@ -155,7 +173,11 @@ export function sendObjectDeleted(
     deletionIDs.push(<string>object.get('id'));
     canvas.remove(object);
   });
-  const deleteMsg : UpdateMessage = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
+  const deleteMsg : UpdateMessage = {
+    msgType: 'Deletion',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(deletionIDs),
+  };
   updateServer(deleteMsg);
   console.log('send delete update');
 }
@@ -163,14 +185,22 @@ export function sendObjectDeleted(
 export function sendClearBoardMessage(canvas: fabric.Canvas): void {
   canvas.clear();
   // Send clear message to the server
-  const clearMsg : UpdateMessage = { msgType: 'Clearing', msg: JSON.stringify('') };
+  const clearMsg : UpdateMessage = {
+    msgType: 'Clearing',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(''),
+  };
   updateServer(clearMsg);
   console.log('send  clear update.');
 }
 
 export function sendLoadCanvasMessage(): void {
   // Send load message to the server
-  const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
+  const loadMsg : UpdateMessage = {
+    msgType: 'Loading',
+    roomID: store.state.roomID.ID,
+    msg: '',
+  };
   updateServer(loadMsg);
 }
 
@@ -180,6 +210,10 @@ export function sendLocalLoadMessage(canvas: fabric.Canvas): void {
     loadedObjects[0].push(element.get('id'));
     loadedObjects[1].push(JSON.stringify(element));
   });
-  const loadMsg : UpdateMessage = { msgType: 'LocalLoad', msg: JSON.stringify(loadedObjects) };
+  const loadMsg : UpdateMessage = {
+    msgType: 'LocalLoad',
+    roomID: store.state.roomID.ID,
+    msg: JSON.stringify(loadedObjects),
+  };
   updateServer(loadMsg);
 }
