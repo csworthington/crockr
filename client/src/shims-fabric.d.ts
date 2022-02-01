@@ -131,19 +131,28 @@ declare global {
     }
 
 
-    // Image with ID 
+    // Image with ID
     export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions { }
     export interface ImageWithID extends Object, IImageWithIDOptions { }
+    // Image with ID
+    export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions {
+      src?: string
+    }
+    export interface ImageWithID extends Image, IImageWithIDOptions { }
     export class ImageWithID extends Image {
-      
-    initialize(element?: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
+
+    constructor(element: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
+
     setElement(element: HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions): ImageWithID;
 
     setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): ImageWithID;
-    applyFilters(filters?: IBaseFilter[]): Image;
-    static fromURL(url: string, callback?: (image: Image) => void, imgOptions?: IImageWithIDOptions): ImageWithID;
+
+    applyFilters(filters?: IBaseFilter[]): ImageWithID;
+
+    static fromURL(url: string, callback?: (image: fabric.ImageWithID) => void, imgOptions?: IImageWithIDOptions): void;
 
     static fromElement(element: SVGElement, callback: Function, options?: IImageWithIDOptions): ImageWithID;
+
     static fromObject(object: any, callback: any): ImageWithID;
   }
 

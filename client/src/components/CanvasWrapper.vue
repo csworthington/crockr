@@ -176,22 +176,59 @@ export default defineComponent({
         const target = e.target as HTMLInputElement;
         const file: File = (target.files as FileList)[0];
         const reader = new FileReader();
+        reader.readAsDataURL(file);
         reader.onload = () => {
           const imgObj = new Image();
 
           imgObj.src = reader.result as string;
           imgObj.onload = function handleImage() {
-            const image = new fabric.ImageWithID(imgObj);
-            image.set({
-              left: 100,
-              top: 60,
+            // const image = new fabric.ImageWithID(imgObj, {});
+            fabric.ImageWithID.fromURL(imgObj.src, (image) => {
+              image.set({
+                left: 100,
+                top: 60,
+              });
+              image.scaleToWidth(200);
+              canvasData.add(image); // .renderAll();
+              canvasData.setActiveObject(image);
+
+              // Send image to server
+              isObjectBeingAdded = false;
+              const addedObject: fabric.ObjectWithID = canvasData.getObjects()[
+                canvasData.getObjects().length - 1
+              ];
+              const addedId = addedObject.get('id');
+              const addMsg :updateMsg = {
+                msgType: 'Addition',
+                msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
+              };
+              updateServer(addMsg);
             });
-            image.scaleToWidth(200);
             // canvasData.add(image); // .renderAll();
             // canvasData.setActiveObject(image);
+            // const image = new fabric.ImageWithID(imgObj);
+            // image.set({
+            //   left: 100,
+            //   top: 60,
+            // });
+            // image.scaleToWidth(200);
+            // canvasData.add(image); // .renderAll();
+
+            // console.dir(image);
+
+            // canvasData.setActiveObject(image);
+            // isObjectBeingAdded = false;
+
+            // eslint-disable-next-line max-len
+            // const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+            // const addedId = addedObject.get('id');
+            // const addMsg :updateMsg = {
+            //   msgType: 'Addition',
+            //   msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
+            // };
+            // updateServer(addMsg);
           };
         };
-        reader.readAsDataURL(file);
       };
     }
     /**
@@ -735,7 +772,7 @@ export default defineComponent({
       // const msg = JSON.parse(message.data.ToString());
       const msg = JSON.parse(message.data);
       // console.log(msg.msgType);
-      let objct : fabric.Object;
+      let objct : any;
       const parsedMsg = JSON.parse(msg.msg);
       switch (msg.msgType) {
         case 'Addition': {
@@ -766,6 +803,16 @@ export default defineComponent({
             }/*
             case 'imageWithID': {
               // objct = new fabric.ImageWithID(JSON.parse(parsedMsg[1]));
+              debugger;
+              const tempObject: fabric.IImageWithIDOptions = JSON.parse(parsedMsg[1]);
+              console.dir(tempObject);
+              if (tempObject.src) {
+                objct = new fabric.ImageWithID(tempObject.src, tempObject);
+              } else {
+                throw new Error(`No URL source in imageWithID, image=${tempObject}`);
+              }
+              // eslint-disable-next-line no-underscore-dangle
+              // objct = new fabric.ObjectWithID(tempObject);
               break;
             } */
             default: {
@@ -881,6 +928,7 @@ export default defineComponent({
               }/*
               case 'imageWithID': {
                 const tempObject = JSON.parse(element);
+                console.dir(tempObject);
                 // canvasData.add(new fabric.ImageWithID(tempObject.element, tempObject));
                 break;
               } */
