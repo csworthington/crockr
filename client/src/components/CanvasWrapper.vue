@@ -167,7 +167,7 @@ export default defineComponent({
       const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
       const addedId = addedObject.get('id');
       console.log(addedObject);
-      const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+      const addMsg :updateMsg = { roomID: store.state.roomID.ID, msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
       updateServer(addMsg);
     }
 
@@ -203,6 +203,7 @@ export default defineComponent({
               ];
               const addedId = addedObject.get('id');
               const addMsg :updateMsg = {
+                roomID: store.state.roomID.ID,
                 msgType: 'Addition',
                 msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
               };
