@@ -142,17 +142,16 @@ export default defineComponent({
 
     function addText() {
       isObjectBeingAdded = true;
-      const oText = new fabric.ITextWithID('Text', {
+      const oText = new fabric.ITextWithID('Text');/* , {
         left: 100,
         top: 100,
         fill: store.state.colourPalette.primaryToolColour,
         editable: true,
-      });
-      /* oText.left = 100;
+      }); */
+      oText.left = 100;
       oText.top = 100;
       oText.editable = true;
       oText.fill = store.state.colourPalette.primaryToolColour;
-      */
 
       canvasData.add(oText);
       oText.bringToFront();
@@ -163,7 +162,8 @@ export default defineComponent({
       // eslint-disable-next-line max-len
       const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
       const addedId = addedObject.get('id');
-      const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, addedObject.toJSON]) };
+      console.log(addedObject);
+      const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
       updateServer(addMsg);
     }
 
