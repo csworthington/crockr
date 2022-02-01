@@ -72,6 +72,7 @@ import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
+import router from '@/router';
 
 enum ToolType {
   None = 'NONE',
@@ -91,7 +92,6 @@ export default defineComponent({
   setup(props) {
     const store = useStore(StoreKey);
     const axios = useAxios();
-
     let canvasData: fabric.Canvas = reactive((<fabric.Canvas> {}));
     canvasData.perPixelTargetFind = true;
     canvasData.targetFindTolerance = 8;
@@ -113,8 +113,12 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
+    if (store.state.roomID.ID === '-1') {
+      router.push('/roomSelector');
+    }
     interface updateMsg{
       msgType : string;
+      roomID: string;
       msg : string;
     }
     const updateServer = (msg : updateMsg) => {
@@ -429,14 +433,14 @@ export default defineComponent({
         const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
         canvasData.setActiveObject(selectionGroup);
         canvasData.renderAll();
-        movingMsg = { msgType: 'Modified', msg: JSON.stringify(scaledObjects) };
+        movingMsg = { msgType: 'Modified', roomID: store.state.roomID.ID, msg: JSON.stringify(scaledObjects) };
         updateServer(movingMsg);
       } else if (isPenDown) {
         isPenDown = false;
         // eslint-disable-next-line max-len
         const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
         const addedId = addedObject.get('id');
-        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        const addMsg :updateMsg = { msgType: 'Addition', roomID: store.state.roomID.ID, msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
         updateServer(addMsg);
         console.log('send pen event');
       } else if (isObjectBeingAdded) {
@@ -445,7 +449,7 @@ export default defineComponent({
         // eslint-disable-next-line max-len
         const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
         const addedId = addedObject.get('id');
-        const addMsg :updateMsg = { msgType: 'Addition', msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
+        const addMsg :updateMsg = { msgType: 'Addition', roomID: store.state.roomID.ID, msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
         updateServer(addMsg);
       }
     }
@@ -568,7 +572,7 @@ export default defineComponent({
       if (elem != null) {
         elem.remove();
       }
-      const deleteMsg :updateMsg = { msgType: 'Deletion', msg: JSON.stringify(deletionIDs) };
+      const deleteMsg :updateMsg = { msgType: 'Deletion', roomID: store.state.roomID.ID, msg: JSON.stringify(deletionIDs) };
       updateServer(deleteMsg);
       console.log('send delete update');
     };
@@ -607,7 +611,7 @@ export default defineComponent({
               loadedObjects[0].push(element.get('id'));
               loadedObjects[1].push(JSON.stringify(element));
             });
-            const loadMsg : updateMsg = { msgType: 'localLoad', msg: JSON.stringify(loadedObjects) };
+            const loadMsg : updateMsg = { msgType: 'localLoad', roomID: store.state.roomID.ID, msg: JSON.stringify(loadedObjects) };
             updateServer(loadMsg);
           } catch (error) {
             console.error(error);
@@ -621,7 +625,7 @@ export default defineComponent({
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         canvasData.clear();
-        const clearMsg :updateMsg = { msgType: 'Clearing', msg: JSON.stringify('') };
+        const clearMsg :updateMsg = { msgType: 'Clearing', roomID: store.state.roomID.ID, msg: JSON.stringify('') };
         updateServer(clearMsg);
         console.log('send  clear update.');
       }
@@ -631,8 +635,10 @@ export default defineComponent({
      * Send a load message to the server to get the current state of the canvas
      */
     const loadCanvas = () => {
-      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
-      updateServer(loadMsg);
+      if (store.state.roomID.ID !== '-1') {
+        const loadMsg :updateMsg = { msgType: 'Loading', roomID: store.state.roomID.ID, msg: '' };
+        updateServer(loadMsg);
+      }
     };
 
     /**
@@ -668,7 +674,7 @@ export default defineComponent({
         canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
           selectedIds.push(<string>element.get('id'));
         });
-        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+        const selectionUpdate : updateMsg = { msgType: 'Selection', roomID: store.state.roomID.ID, msg: JSON.stringify(selectedIds) };
         updateServer(selectionUpdate);
         console.log(selectedCheck.length);
 
@@ -690,7 +696,7 @@ export default defineComponent({
         canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
           selectedIds.push(<string>element.get('id'));
         });
-        const selectionUpdate : updateMsg = { msgType: 'Selection', msg: JSON.stringify(selectedIds) };
+        const selectionUpdate : updateMsg = { msgType: 'Selection', roomID: store.state.roomID.ID, msg: JSON.stringify(selectedIds) };
         updateServer(selectionUpdate);
         const activeObjectIDS : string[] = [];
         canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
@@ -698,7 +704,7 @@ export default defineComponent({
         });
         const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
         console.log('send selection cleared update');
-        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        const deselectMsg :updateMsg = { msgType: 'Deselection', roomID: store.state.roomID.ID, msg: JSON.stringify(deselectedId) };
         console.log(canvasData.getActiveObjects());
         console.log(deselectMsg);
         updateServer(deselectMsg);
@@ -712,7 +718,7 @@ export default defineComponent({
         });
         const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
         console.log('send selection cleared update');
-        const deselectMsg :updateMsg = { msgType: 'Deselection', msg: JSON.stringify(deselectedId) };
+        const deselectMsg :updateMsg = { msgType: 'Deselection', roomID: store.state.roomID.ID, msg: JSON.stringify(deselectedId) };
         console.log(canvasData.getActiveObjects());
         console.log(deselectMsg);
         updateServer(deselectMsg);
@@ -747,6 +753,7 @@ export default defineComponent({
       console.log(canvasData.toObject());
 
       if (store.state.socket.isConnected) {
+        console.log(store.state.roomID.ID);
         loadCanvas();
       }
     };
