@@ -4,7 +4,8 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import * as MathJax from 'mathjax';
+
+const { mathjax } = require('mathjax-full/js/mathjax.js');
 
 export default defineComponent({
   setup() {
