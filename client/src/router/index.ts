@@ -3,6 +3,7 @@ import Home from '../views/Home.vue';
 import Canvas from '../views/Canvas.vue';
 import WebSockets from '../views/WebSockets.vue';
 import Web from '../views/Web.vue';
+import Equations from '@/views/Equations.vue';
 
 const routes: Array<RouteRecordRaw> = [
   {
@@ -45,6 +46,11 @@ const routes: Array<RouteRecordRaw> = [
     path: '/web',
     name: 'Websocket',
     component: Web,
+  },
+  {
+    path: '/equations',
+    name: 'Equation Tester',
+    component: Equations,
   },
 ];
 
