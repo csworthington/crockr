@@ -6,6 +6,7 @@
   </div>
   <div class="buttons" id = "buttons">
   </div>
+ <span><button @click="routeToCreation" >CreateRoom</button></span>
 
 </template>
 <script lang="ts">
@@ -30,6 +31,10 @@ export default defineComponent({
       console.log(roomCode.value);
       const passwordUpdate : updateMsg = { msgType: 'Password', msg: JSON.stringify([roomId, roomCode.value]) };
       socket.send(JSON.stringify(passwordUpdate));
+    }
+    function routeToCreation() {
+      console.log('test');
+      router.push('/RoomCreator');
     }
     let roomData: string[][] = [[], []];
     socket.addEventListener('message', (message) => {
@@ -70,7 +75,9 @@ export default defineComponent({
         }
       }
     });
-    console.log('test');
+    return {
+      routeToCreation,
+    };
   },
 });
 </script>

@@ -231,6 +231,14 @@ wsServer.on("connection", (socket: connectedClients) => {
         socket.send(JSON.stringify(roomUpdate));
         break;
       }
+      case "addRoom" :{
+        const newRoom = <Room>{name: msg.msg, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+        rooms[0].push(newRoom.id);
+        rooms[1].push(newRoom);
+        const checkMsg : updateMsg = {msgType:"Verification", roomID:newRoom.id,  msg:"" };
+        socket.send(JSON.stringify(checkMsg));
+        break;
+      }
       
       default: {
         console.log("Recieved Unknown update");
