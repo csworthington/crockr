@@ -6,6 +6,7 @@ import lusca from "lusca";
 
 import * as uuidController from "./controllers/uuid";
 import * as canvasController from "./controllers/canvas/canvas";
+import path from "path";
 
 // Create the Express server
 const app = express();
@@ -18,6 +19,11 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(flash());
 app.use(lusca.xframe("SAMEORIGIN"));
 app.use(lusca.xssProtection(true));
+
+// Serve Public folder???
+app.use(
+  express.static(path.join(__dirname, "public"), { maxAge: 31557600000 })
+);
 
 /**
  * Set up canvas

@@ -879,6 +879,8 @@ export default defineComponent({
       URL.revokeObjectURL(svgUrl);
     };
 
+    console.log(`mode is ${process.env.NODE_ENV}`);
+
     onMounted(initFabricCanvas);
     onMounted(() => {
       handleToolChange(ToolType.Select);
