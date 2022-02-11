@@ -67,7 +67,6 @@ export function sendObjectSelected(
   selectedObjects: Array<string>,
 ): void {
   const selectedIds:(string)[] = [];
-  console.log('send selection update');
 
   canvas.getActiveObjects().forEach((active: any) => {
     if (selectedObjects.indexOf(active.get('id')) === -1) {
@@ -84,8 +83,6 @@ export function sendObjectSelected(
     roomID: store.state.roomID.ID,
     msg: JSON.stringify(selectedIds),
   });
-
-  console.log(selectedObjects.length);
 }
 
 /**
@@ -99,7 +96,6 @@ export function sendObjectSelectionUpdated(
 ): void {
   const selectedIds:(string)[] = [];
   // Send selection updated synchronization message to the server
-  console.log('updated');
   canvas.getActiveObjects().forEach((active: any) => {
     if (selectedObjects.indexOf(active.get('id')) === -1) {
       selectedObjects.push(active.get('id'));
@@ -122,14 +118,11 @@ export function sendObjectSelectionUpdated(
 
   // Send selection cleared message
   const deselectedId = selectedObjects.filter((x) => !activeObjectIDS.includes(x));
-  console.log('send selection cleared update');
   const deselectMsg : UpdateMessage = {
     msgType: 'Deselection',
     roomID: store.state.roomID.ID,
     msg: JSON.stringify(deselectedId),
   };
-  console.log(canvas.getActiveObjects());
-  console.log(deselectMsg);
   updateServer(deselectMsg);
 }
 
@@ -144,23 +137,17 @@ export function sendObjectSelectionCleared(
 ): void {
   const activeObjectIDS : string[] = [];
   // Send selection cleared message
-  console.log('selectedCheck');
-  console.dir(selectedObjects);
-
   canvas.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
     activeObjectIDS.push(active.get('id')!);
   });
 
   const deselectedId = selectedObjects.filter((x) => !activeObjectIDS.includes(x));
-  console.log('send selection cleared update');
 
   const deselectMsg : UpdateMessage = {
     msgType: 'Deselection',
     roomID: store.state.roomID.ID,
     msg: JSON.stringify(deselectedId),
   };
-  console.log(canvas.getActiveObjects());
-  console.log(deselectMsg);
   updateServer(deselectMsg);
 }
 
@@ -179,7 +166,6 @@ export function sendObjectDeleted(
     msg: JSON.stringify(deletionIDs),
   };
   updateServer(deleteMsg);
-  console.log('send delete update');
 }
 
 export function sendClearBoardMessage(canvas: fabric.Canvas): void {
@@ -191,7 +177,6 @@ export function sendClearBoardMessage(canvas: fabric.Canvas): void {
     msg: JSON.stringify(''),
   };
   updateServer(clearMsg);
-  console.log('send  clear update.');
 }
 
 export function sendLoadCanvasMessage(): void {

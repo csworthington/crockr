@@ -13,7 +13,7 @@ function handleAddition(
 ): void {
   let obj : fabric.Object;
   const parsedObject = new fabric.ObjectWithID(JSON.parse(objectToAdd[1]));
-  console.log(parsedObject.get('type'));
+
   switch (parsedObject.get('type')) {
     case 'rectWithID': {
       obj = new fabric.RectWithID(JSON.parse(objectToAdd[1]));
@@ -39,7 +39,6 @@ function handleAddition(
     }
   }
   canvas.add(obj);
-  console.log(canvas.getObjects());
   obj.setCoords();
   canvas.renderAll();
 }
@@ -69,12 +68,8 @@ function handleModified(
   canvas: fabric.Canvas,
   objectsToModify: Array<Array<string>>,
 ): void {
-  console.log(objectsToModify);
-
   objectsToModify[1].forEach((element : string) => {
     const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
-    console.log('Scaled Object:');
-    console.log(scaledCanvasObject);
 
     canvas.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
       if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
@@ -103,7 +98,6 @@ function handleSelection(
   canvas: fabric.Canvas,
   selectedObjectUUIDs: Array<string>,
 ): void {
-  console.log(selectedObjectUUIDs);
   selectedObjectUUIDs.forEach((id : string) => {
     canvas.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
       if (canvasObject.get('id') === id) {
@@ -128,8 +122,6 @@ function handleDeselection(
   canvas: fabric.Canvas,
   deselectedObjectUUIDs: Array<string>,
 ): void {
-  console.log('Got Here');
-  console.log(deselectedObjectUUIDs);
   deselectedObjectUUIDs.forEach((id : string) => {
     canvas.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
       if (canvasObject.get('id') === id) {
