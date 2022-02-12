@@ -2,8 +2,8 @@ import errorHandler from "errorhandler";
 import { IncomingMessage } from "http";
 import { Socket } from "net";
 import { WebSocket } from "ws";
-import app from "./app";
-// import app from "./simpleapp";
+// import app from "./app";
+import app from "./simpleapp";
 import wsServer from "./websockets";
 
 
