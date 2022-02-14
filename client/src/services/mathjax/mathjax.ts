@@ -44,6 +44,7 @@ export function initMathJax(callback: () => any): void {
     },
     svg: {
       fontCache: 'global',
+      displayAlign: 'center',
     },
   };
 }

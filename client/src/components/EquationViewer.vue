@@ -43,23 +43,25 @@ export default defineComponent({
     const svgOutput: any = reactive({});
 
     const processEquation = () => {
-      const svg = (window as any).MathJax.tex2svg(texEquation.value);
-      console.log(svg);
+      (window as any).MathJax.texReset();
+      const options = (window as any).MathJax.getMetricsFor(texEquation.value);
+      options.display = true;
+
+      // const svg = (window as any).MathJax.tex2svg(texEquation.value);
+
+      (window as any).MathJax.tex2svgPromise(texEquation.value, options).then((node: any) => {
+        const mathjaxDiv = document.getElementById('mathjax-output');
+        if (mathjaxDiv) {
+          mathjaxDiv.appendChild(node);
+        }
+        (window as any).MathJax.startup.document.clear();
+        (window as any).MathJax.startup.document.updateDocument();
+      });
       // console.log(typeof svg);
       // svgOutput.value = svg;
       // console.log(svgOutput.value);
       // svgOutput.value = '<p>Goodbye</p>';
-      const mathjaxDiv = document.getElementById('mathjax-output');
-      if (mathjaxDiv) {
-        mathjaxDiv.appendChild(svg);
-      }
     };
-
-    // if (window.MathJax) {
-    //   const convertTex = () => {
-    //     const input = texEquation.value;
-    //   };
-    // }
 
     return {
       texEquation,
