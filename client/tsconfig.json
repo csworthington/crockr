@@ -13,7 +13,8 @@
     "baseUrl": ".",
     "types": [
       "webpack-env",
-      "jest"
+      "jest",
+      "mathjax"
     ],
     "typeRoots": [
       "types/*", 
@@ -41,6 +42,7 @@
   ],
   "exclude": [
     "node_modules",
-    "types"
+    "types",
+    "src/assets/mathjax"
   ]
 }
