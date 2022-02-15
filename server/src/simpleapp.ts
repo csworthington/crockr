@@ -6,6 +6,9 @@ import lusca from "lusca";
 
 import * as uuidController from "./controllers/uuid";
 import * as canvasController from "./controllers/canvas/canvas";
+import * as roomsController from "./controllers/rooms/rooms";
+import * as webSocketController from "./websockets";
+
 
 // Create the Express server
 const app = express();
@@ -42,5 +45,8 @@ app.get("/api/canvas/getline", canvasController.getLine);
 app.get("/api/canvas/getrect", canvasController.getRect);
 app.get("/api/canvas/getcircle", canvasController.getCircle);
 app.get("/api/canvas/getpen", canvasController.getPen);
+app.get("/api/rooms/getrooms", roomsController.getRooms);
+app.get("/api/rooms/trypass", roomsController.tryPass);
+app.get("/api/rooms/createroom", roomsController.createRoom);
 
 export default app;

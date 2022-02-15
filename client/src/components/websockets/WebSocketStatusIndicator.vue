@@ -84,4 +84,5 @@ export default defineComponent({
     };
   },
 });
+const person = { name: 'test', surname: 'smith' };
 </script>

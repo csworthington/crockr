@@ -31,7 +31,12 @@ rooms[1].push(mainRoom);
 rooms[0].push(secondaryRoom.id);
 rooms[1].push(secondaryRoom);
 let  x = 1;
+const roomData : string[][]  = [[],[]];
 const wsServer = new ws.Server({ noServer: true });
+rooms[1].forEach((element : Room) => {
+  roomData[0].push(element.name);
+  roomData[1].push(element.id);
+  });
 wsServer.on("connection", (socket: connectedClients) => {
   console.log(`new connection created! Number of connected clients = ${wsServer.clients.size}`);
 
@@ -45,11 +50,6 @@ wsServer.on("connection", (socket: connectedClients) => {
 
   // add new socket to the socket set
   activeConnections.add(socket);
-  const roomData : string[][]  = [[],[]];
-  rooms[1].forEach((element : Room) => {
-    roomData[0].push(element.name);
-    roomData[1].push(element.id);
-    });
   const loadMsg : updateMsg = {msgType: "Loading", roomID:"", msg: JSON.stringify(rooms[1][0].canvas[1])};
   const roomUpdate : updateMsg = {msgType: "roomUpdate", roomID:"",  msg: JSON.stringify(roomData)};
   socket.send(JSON.stringify(loadMsg));
@@ -109,7 +109,7 @@ wsServer.on("connection", (socket: connectedClients) => {
         break;
       }
       case "Addition":{
-        
+        console.log(index);
         const  parsedMsg : string = JSON.parse(msg.msg);
         rooms[1][index].canvas[0].push(parsedMsg[0]);
         rooms[1][index].canvas[1].push(parsedMsg[1]);
@@ -173,11 +173,14 @@ wsServer.on("connection", (socket: connectedClients) => {
       case "Loading":{
         console.log("got here");
         console.log(index);
-        msg.msg = JSON.stringify(rooms[1][index].canvas[1]);
-        socket.send(JSON.stringify(msg));
-        msg.msgType = "Selection";
-        msg.msg = JSON.stringify(rooms[1][index].lockedObjects[1]);
-        socket.send(JSON.stringify(msg));
+        if(index != -1){
+          msg.msg = JSON.stringify(rooms[1][index].canvas[1]);
+          socket.send(JSON.stringify(msg));
+          msg.msgType = "Selection";
+          msg.msg = JSON.stringify(rooms[1][index].lockedObjects[1]);
+          socket.send(JSON.stringify(msg));
+          rooms[1][index].users.add(socket);
+        }
         break;
       }
       // Type: "localLoad" Contents: [Object IDs] [Serialized Objects]
@@ -228,14 +231,18 @@ wsServer.on("connection", (socket: connectedClients) => {
         break;
       }
       case "roomUpdate" :{
-        socket.send(JSON.stringify(roomUpdate));
+        console.log(roomData);
+        const updateRooms : updateMsg = {msgType: "roomUpdate", roomID:"",  msg: JSON.stringify(roomData)};
+        socket.send(JSON.stringify(updateRooms));
         break;
       }
       case "addRoom" :{
         const newRoom = <Room>{name: msg.msg, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
         rooms[0].push(newRoom.id);
         rooms[1].push(newRoom);
-        const checkMsg : updateMsg = {msgType:"Verification", roomID:newRoom.id,  msg:"" };
+        roomData[0].push(newRoom.name);
+        roomData[1].push(newRoom.id);
+        const checkMsg : updateMsg = {msgType:"RoomVerification", roomID:newRoom.id,  msg:JSON.stringify(newRoom.id) };
         socket.send(JSON.stringify(checkMsg));
         break;
       }
@@ -260,6 +267,28 @@ wsServer.on("connection", (socket: connectedClients) => {
       });
       
   });
+  
 });
-
+export const getRooms = () => {
+  return roomData;
+};
+export  const tryPass = (roomCode:string, roomID:string) => {
+  console.log("got here");
+  let check = false;
+  rooms[1].forEach((element: Room ) => {
+    if(element.id == roomID && element.pass == roomCode){
+      check = true;
+      return;
+    }
+  });
+  return check;
+};
+export  const createRoom = (roomName:string) => {
+  const newRoom = <Room>{name: roomName, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+  rooms[0].push(newRoom.id);
+  rooms[1].push(newRoom);
+  roomData[0].push(newRoom.name);
+  roomData[1].push(newRoom.id);
+  return newRoom.id;
+};
 export default wsServer;
