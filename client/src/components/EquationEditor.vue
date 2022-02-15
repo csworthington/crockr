@@ -16,8 +16,15 @@ import katex from 'katex';
 import html2canvas from 'html2canvas';
 
 export default defineComponent({
-  setup() {
-    const texEquation: Ref<string> = ref('');
+  props: {
+    equation: {
+      type: String,
+      required: false,
+      default: '',
+    },
+  },
+  setup(props) {
+    const texEquation: Ref<string> = ref(props.equation);
 
     const renderEquationToHTML = () => {
       const katexDiv = document.getElementById('katex-output');

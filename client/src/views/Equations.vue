@@ -6,7 +6,7 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import EquationViewer from '@/components/EquationViewer.vue';
+import EquationViewer from '@/components/EquationEditor.vue';
 
 export default defineComponent({
   name: 'Equations',
