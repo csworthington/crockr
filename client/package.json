@@ -14,6 +14,8 @@
     "axios": "^0.24.0",
     "core-js": "^3.19.1",
     "fabric": "^4.6.0",
+    "html2canvas": "^1.4.1",
+    "katex": "^0.15.2",
     "mathjax-full": "^3.2.0",
     "uuid": "^8.3.2",
     "vue": "^3.2.21",
@@ -25,6 +27,7 @@
   "devDependencies": {
     "@types/fabric": "^4.5.4",
     "@types/jest": "^24.0.19",
+    "@types/katex": "^0.11.1",
     "@types/mathjax": "0.0.37",
     "@types/uuid": "^8.3.1",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
