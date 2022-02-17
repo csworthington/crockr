@@ -34,6 +34,13 @@
         </option>
       </select>
     </span>
+    </div>
+  <div>
+    <span><button @click="addText()">Add Custom Text</button></span>
+<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
+    <span><button @click="openFile()">
+      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+       </button></span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -115,7 +122,7 @@ export default defineComponent({
     //   msgType : string;
     //   msg : string;
     // }
-    // const updateServer = (msg : updateMsg) => {
+    // const updateServer = (msg : UpdateMessage) => {
     //   socket.send(JSON.stringify(msg));
     // };
     // determines how thick line tool and pen tool are
@@ -138,6 +145,97 @@ export default defineComponent({
       },
     });
 
+    function addText() {
+      isObjectBeingAdded = true;
+      const oText = new fabric.ITextWithID('Text', {
+        left: 100,
+        top: 100,
+        fill: store.state.colourPalette.primaryToolColour,
+        editable: true,
+      });
+      /* oText.left = 100;
+      oText.top = 100;
+      oText.editable = true;
+      oText.fill = store.state.colourPalette.primaryToolColour;
+      */
+
+      canvasData.add(oText);
+      oText.bringToFront();
+      canvasData.setActiveObject(oText);
+      isObjectBeingAdded = false;
+      console.log('send real add  event');
+      console.log(JSON.stringify(oText));
+      // eslint-disable-next-line max-len
+      const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+      const addedId = addedObject.get('id');
+      const addMsg : UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, addedObject.toJSON]) };
+      updateServer(addMsg);
+    }
+
+    // adds image to the canvas
+    function openFile() {
+      let movingMsg :UpdateMessage;
+      isObjectBeingAdded = true;
+      const img = document.getElementById('imageFile');
+      img!.onchange = function handle(e) {
+        const target = e.target as HTMLInputElement;
+        const file: File = (target.files as FileList)[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => {
+          const imgObj = new Image();
+
+          imgObj.src = reader.result as string;
+          imgObj.onload = function handleImage() {
+            // const image = new fabric.ImageWithID(imgObj, {});
+            fabric.ImageWithID.fromURL(imgObj.src, (image) => {
+              image.set({
+                left: 100,
+                top: 60,
+              });
+              image.scaleToWidth(200);
+              canvasData.add(image); // .renderAll();
+              canvasData.setActiveObject(image);
+
+              // Send image to server
+              isObjectBeingAdded = false;
+              const addedObject: fabric.ObjectWithID = canvasData.getObjects()[
+                canvasData.getObjects().length - 1
+              ];
+              const addedId = addedObject.get('id');
+              const addMsg : UpdateMessage = {
+                msgType: 'Addition',
+                msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
+              };
+              updateServer(addMsg);
+            });
+            // canvasData.add(image); // .renderAll();
+            // canvasData.setActiveObject(image);
+            // const image = new fabric.ImageWithID(imgObj);
+            // image.set({
+            //   left: 100,
+            //   top: 60,
+            // });
+            // image.scaleToWidth(200);
+            // canvasData.add(image); // .renderAll();
+
+            // console.dir(image);
+
+            // canvasData.setActiveObject(image);
+            // isObjectBeingAdded = false;
+
+            // eslint-disable-next-line max-len
+            // const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+            // const addedId = addedObject.get('id');
+            // const addMsg :updateMsg = {
+            //   msgType: 'Addition',
+            //   msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
+            // };
+            // updateServer(addMsg);
+          };
+        };
+      };
+    }
     /**
      * Start drawing a line on the canvas when the line tool is selected and the
      * mouse:down event has been fired by the canvas
@@ -326,6 +424,19 @@ export default defineComponent({
       }
     }
 
+    /* zoom control */
+    // eslint-disable-next-line max-len
+    function handleMouseWheelEvent(opt: { e: { deltaY: any; preventDefault: () => void; stopPropagation: () => void; }; }) {
+      const delta = opt.e.deltaY;
+      let zoom = canvasData.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      canvasData.setZoom(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
+    }
+
     /**
      * Disable all custom event handlers for the fabric.js canvas
      */
@@ -342,6 +453,7 @@ export default defineComponent({
       canvasData.on('mouse:down', handleMouseDownEvent);
       canvasData.on('mouse:move', handleMouseMoveEvent);
       canvasData.on('mouse:up', handleMouseUpEvent);
+      canvasData.on('mouse:wheel', handleMouseWheelEvent);
     }
 
     /**
@@ -674,6 +786,9 @@ export default defineComponent({
       getCircleFromServer,
       getPenFromServer,
       loadCanvas,
+      updateServer,
+      addText,
+      openFile,
       exportCanvasToSVG,
     };
   },
