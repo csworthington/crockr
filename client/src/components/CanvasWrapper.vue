@@ -163,13 +163,15 @@ export default defineComponent({
       oText.bringToFront();
       canvasData.setActiveObject(oText);
       isObjectBeingAdded = false;
-      console.log('send real add  event');
-      console.log(JSON.stringify(oText));
+      outgoingMessageHandler.sendObjectAdded(canvasData);
+      // console.log('send real add  event');
+      // console.log(JSON.stringify(oText));
       // eslint-disable-next-line max-len
-      const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-      const addedId = addedObject.get('id');
-      const addMsg : UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, addedObject.toJSON]) };
-      updateServer(addMsg);
+      // const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
+      // const addedId = addedObject.get('id');
+      // eslint-disable-next-line max-len
+      // const addMsg : UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, addedObject.toJSON]) };
+      // updateServer(addMsg);
     }
 
     // adds image to the canvas
@@ -197,41 +199,13 @@ export default defineComponent({
               canvasData.add(image); // .renderAll();
               canvasData.setActiveObject(image);
 
+              // Set image src
+              image.set('src', image.getSrc());
+
               // Send image to server
+              outgoingMessageHandler.sendObjectAdded(canvasData);
               isObjectBeingAdded = false;
-              const addedObject: fabric.ObjectWithID = canvasData.getObjects()[
-                canvasData.getObjects().length - 1
-              ];
-              const addedId = addedObject.get('id');
-              const addMsg : UpdateMessage = {
-                msgType: 'Addition',
-                msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
-              };
-              updateServer(addMsg);
             });
-            // canvasData.add(image); // .renderAll();
-            // canvasData.setActiveObject(image);
-            // const image = new fabric.ImageWithID(imgObj);
-            // image.set({
-            //   left: 100,
-            //   top: 60,
-            // });
-            // image.scaleToWidth(200);
-            // canvasData.add(image); // .renderAll();
-
-            // console.dir(image);
-
-            // canvasData.setActiveObject(image);
-            // isObjectBeingAdded = false;
-
-            // eslint-disable-next-line max-len
-            // const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-            // const addedId = addedObject.get('id');
-            // const addMsg :updateMsg = {
-            //   msgType: 'Addition',
-            //   msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
-            // };
-            // updateServer(addMsg);
           };
         };
       };

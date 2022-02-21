@@ -1,4 +1,5 @@
 import { fabric } from 'fabric';
+import { ShapesWithID } from '@/utils/addCustomFabricObjects';
 import { UpdateMessage } from './typings.d';
 
 /**
@@ -11,35 +12,62 @@ function handleAddition(
   canvas: fabric.Canvas,
   objectToAdd: Array<string>,
 ): void {
-  let obj : fabric.Object;
   const parsedObject = new fabric.ObjectWithID(JSON.parse(objectToAdd[1]));
+  let objToAdd: fabric.Object = parsedObject;
 
   switch (parsedObject.get('type')) {
     case 'rectWithID': {
-      obj = new fabric.RectWithID(JSON.parse(objectToAdd[1]));
+      objToAdd = new fabric.RectWithID(JSON.parse(objectToAdd[1]));
       break;
     }
     case 'circleWithID': {
-      obj = new fabric.CircleWithID(JSON.parse(objectToAdd[1]));
+      objToAdd = new fabric.CircleWithID(JSON.parse(objectToAdd[1]));
       break;
     }
     case 'lineWithID': {
       const tempObject = JSON.parse(objectToAdd[1]);
       const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
-      obj = new fabric.LineWithID(points, JSON.parse(objectToAdd[1]));
+      objToAdd = new fabric.LineWithID(points, JSON.parse(objectToAdd[1]));
       break;
     }
     case 'pathWithID': {
       const tempObject = JSON.parse(objectToAdd[1]);
-      obj = new fabric.PathWithID(tempObject.path, tempObject);
+      objToAdd = new fabric.PathWithID(tempObject.path, tempObject);
+      break;
+    }
+    case ShapesWithID.image: {
+      const tempObject: fabric.IImageWithIDOptions = JSON.parse(objectToAdd[1], (key, value) => {
+        console.log(key);
+        return value;
+      });
+      if (tempObject !== undefined && tempObject.src !== undefined) {
+        const imgStr = tempObject.src;
+        if (imgStr) {
+          fabric.ImageWithID.fromURL(
+            imgStr,
+            (image) => {
+              console.log('in callback');
+              canvas.add(image);
+              image.setCoords();
+              canvas.renderAll();
+              console.dir(canvas);
+            },
+            tempObject,
+          );
+        }
+      } else {
+        throw new Error(`Image object or src string is undefined, object = ${tempObject}`);
+      }
       break;
     }
     default: {
-      obj = new fabric.ObjectWithID(JSON.parse(objectToAdd[1]));
+      objToAdd = new fabric.ObjectWithID(JSON.parse(objectToAdd[1]));
     }
   }
-  canvas.add(obj);
-  obj.setCoords();
+  if (parsedObject.get('type') !== ShapesWithID.image) {
+    canvas.add(objToAdd);
+    objToAdd.setCoords();
+  }
   canvas.renderAll();
 }
 
@@ -148,8 +176,10 @@ function handleLoading(
 ): void {
   canvas.clear();
   serializedObjects.forEach((element : string) => {
-    const object = new fabric.ObjectWithID(JSON.parse(element));
-    switch (object.get('type')) {
+    // const object = new fabric.ObjectWithID(JSON.parse(element));
+    const parsedObject: fabric.IObjectWithIDOptions = JSON.parse(element);
+    // switch (object.get('type')) {
+    switch (parsedObject.type) {
       case 'rectWithID': {
         canvas.add(new fabric.RectWithID(JSON.parse(element)));
         break;
@@ -169,8 +199,25 @@ function handleLoading(
         canvas.add(new fabric.PathWithID(tempObject.path, tempObject));
         break;
       }
+      case ShapesWithID.image: {
+        const tempObject: fabric.IImageWithIDOptions = parsedObject;
+        if (tempObject && tempObject.src !== undefined) {
+          const imgStr = tempObject.src;
+          if (imgStr) {
+            const newImg = fabric.ImageWithID.fromURL(
+              imgStr,
+              (image) => {
+                canvas.add(image);
+                image.setCoords();
+              },
+              tempObject,
+            );
+          }
+        }
+        break;
+      }
       default: {
-        console.error(`Parsed object type is unknown, type = ${object.get('type')}`);
+        console.error(`Parsed object type is unknown, type = ${parsedObject.type}`);
       }
     }
   });
@@ -186,6 +233,8 @@ export default function receiveMessage(
   message: MessageEvent,
 ): void {
   const messageData : UpdateMessage = JSON.parse(message.data);
+
+  // debugger;
 
   switch (messageData.msgType) {
     case 'Addition': {
