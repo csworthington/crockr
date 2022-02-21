@@ -20,20 +20,7 @@ import { useAxios } from '@/utils/useAxios';
 export default defineComponent({
   setup() {
     const axios = useAxios();
-    const socket = useGlobalWebSocket();
     const store = useStore(StoreKey);
-    interface updateMsg{
-      msgType : string;
-      msg : string;
-    }
-    function selectRoom(roomId : string) {
-      console.log('Hellllooo');
-      const roomCode = <HTMLInputElement> document.getElementById('passCode');
-      console.log(roomId);
-      console.log(roomCode.value);
-      const passwordUpdate : updateMsg = { msgType: 'Password', msg: JSON.stringify([roomId, roomCode.value]) };
-      socket.send(JSON.stringify(passwordUpdate));
-    }
     function tryPass(choosenRoom: string) {
       console.log('Hellllo');
       const roomCode = <HTMLInputElement> document.getElementById('passCode');
@@ -74,30 +61,6 @@ export default defineComponent({
       console.log('test');
       router.push('/RoomCreator');
     }
-    socket.addEventListener('message', (message) => {
-    // const msg = JSON.parse(message.data.ToString());
-      const msg = JSON.parse(message.data);
-      const parsedMsg = JSON.parse(msg.msg);
-      switch (msg.msgType) {
-        case 'Verification': {
-          const parsedObject = JSON.parse(msg.msg);
-          if (parsedObject[0]) {
-            console.log('yay');
-            console.log(parsedObject[1]);
-            store.commit('roomID/updateID', parsedObject[1]);
-            console.log(store.state.roomID.ID);
-            router.push('/canvas');
-          } else {
-            alert('wrong room code or room');
-          }
-          break;
-        }
-        default: {
-          console.log('unknown message');
-          break;
-        }
-      }
-    });
     return {
       routeToCreation,
     };

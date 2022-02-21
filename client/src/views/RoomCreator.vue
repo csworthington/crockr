@@ -17,19 +17,8 @@ import { useAxios } from '@/utils/useAxios';
 
 export default defineComponent({
   setup() {
-    const socket = useGlobalWebSocket();
     const axios = useAxios();
     const store = useStore(StoreKey);
-    interface updateMsg{
-      msgType : string;
-      roomId: string;
-      msg : string;
-    }
-    function sendRoom() {
-      const name = <HTMLInputElement> document.getElementById('roomName');
-      const roomMsg = { msgType: 'addRoom', roomId: store.state.roomID.ID, msg: name.value };
-      socket.send(JSON.stringify(roomMsg));
-    }
     function createRoom() {
       const name = <HTMLInputElement> document.getElementById('roomName');
       axios.get('./api/rooms/createroom', {
@@ -41,26 +30,7 @@ export default defineComponent({
         router.push('/canvas');
       });
     }
-    socket.addEventListener('message', (message) => {
-    // const msg = JSON.parse(message.data.ToString());
-      const msg = JSON.parse(message.data);
-      const parsedMsg = JSON.parse(msg.msg);
-      switch (msg.msgType) {
-        case 'RoomVerification': {
-          console.log(msg.roomId);
-          console.log(parsedMsg);
-          store.commit('roomID/updateID', parsedMsg);
-          router.push('/canvas');
-          break;
-        }
-        default: {
-          console.log('unknown message');
-          break;
-        }
-      }
-    });
     return {
-      sendRoom,
       createRoom,
     };
   },

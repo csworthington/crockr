@@ -8,11 +8,28 @@ import * as uuidController from "./controllers/uuid";
 import * as canvasController from "./controllers/canvas/canvas";
 import * as roomsController from "./controllers/rooms/rooms";
 import * as webSocketController from "./websockets";
-
+import { MONGODB_URI, SESSION_SECRET } from "./util/secrets";
+import mongoose, { mongo } from "mongoose";
+import bluebird from "bluebird";
 
 // Create the Express server
 const app = express();
-
+const mongoUrl = MONGODB_URI;
+mongoose.Promise = bluebird;
+mongoose.connect(mongoUrl).then(
+    () => { 
+        const testSchema = new mongoose.Schema({name: "string"});
+        const Twist = mongoose.model("twist", testSchema);   
+        console.log( `Connected to the following mongo url${mongoUrl}`);
+        Twist.create({ name: "small" }, function (err, twist) {
+            // saved!
+          });
+        /** ready to use. The `mongoose.connect()` promise resolves to undefined. */ 
+    },
+).catch(err => {
+    console.log(`MongoDB connection error. Please make sure MongoDB is running. ${err}`);
+    // process.exit();
+});
 // Set up configuration for Express
 app.set("port", process.env.PORT || 3000);
 app.use(compression());
