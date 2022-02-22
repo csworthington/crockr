@@ -230,6 +230,21 @@ export  const tryPass = (roomCode:string, roomID:string) => {
   });
   return check;
 };
+export  const roomIDExists = (cookieID:string) => {
+  const filter = rooms.filter(obj => {
+     return obj.id === cookieID;
+  }
+  );
+
+  if (filter.length === 0){
+    console.log(filter);
+    return false;
+  }
+  else{
+    console.log(filter);
+    return true;
+  }
+};
 export  const createRoom = (roomName:string) => {
   const newRoom = <Room>{name: roomName, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
   rooms.push(newRoom);

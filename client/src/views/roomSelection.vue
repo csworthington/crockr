@@ -12,7 +12,6 @@
 <script lang="ts">
 import { defineComponent } from 'vue';
 import { useStore } from 'vuex';
-import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import router from '@/router';
 import { StoreKey } from '@/symbols';
 import { useAxios } from '@/utils/useAxios';
@@ -21,6 +20,25 @@ export default defineComponent({
   setup() {
     const axios = useAxios();
     const store = useStore(StoreKey);
+    const retrievedCookie = document.cookie.split(';');
+    console.log('cookie test');
+    console.log(retrievedCookie);
+    function handleCookie(id : string) {
+      console.log('Retrieved cookie');
+      console.log(retrievedCookie);
+      axios.get('./api/rooms/handlecookie', {
+        params: {
+          roomID: id,
+        },
+      }).then((value) => {
+        if (value.data === true) {
+          console.log('yay');
+          store.commit('roomID/updateID', id);
+          console.log(store.state.roomID.ID);
+          router.push('/canvas');
+        }
+      });
+    }
     function tryPass(choosenRoom: string) {
       console.log('Hellllo');
       const roomCode = <HTMLInputElement> document.getElementById('passCode');
@@ -33,6 +51,7 @@ export default defineComponent({
         if (value.data) {
           console.log('yay');
           store.commit('roomID/updateID', choosenRoom);
+          document.cookie = `RoomID = ${choosenRoom}`;
           console.log(store.state.roomID.ID);
           router.push('/canvas');
         }
@@ -56,6 +75,7 @@ export default defineComponent({
         }
       });
     }
+    handleCookie(retrievedCookie[0].split('=')[1]);
     roomSetup();
     function routeToCreation() {
       console.log('test');

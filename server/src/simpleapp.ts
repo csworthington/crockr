@@ -65,5 +65,7 @@ app.get("/api/canvas/getpen", canvasController.getPen);
 app.get("/api/rooms/getrooms", roomsController.getRooms);
 app.get("/api/rooms/trypass", roomsController.tryPass);
 app.get("/api/rooms/createroom", roomsController.createRoom);
+app.get("/api/rooms/handleCookie", roomsController.handleCookie);
+app.get("/api/rooms/getuuid", roomsController.getUUID);
 
 export default app;
