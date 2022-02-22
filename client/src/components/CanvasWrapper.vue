@@ -806,7 +806,9 @@ export default defineComponent({
               objct = new fabric.PathWithID(tempObject.path, tempObject);
               break;
             } case 'textWithID': {
+              console.log('Object');
               objct = new fabric.ITextWithID(JSON.parse(parsedMsg[1]));
+              console.log(objct);
               break;
             }/*
             case 'imageWithID': {

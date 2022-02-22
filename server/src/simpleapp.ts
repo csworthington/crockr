@@ -45,7 +45,7 @@ app.use(session({
             autoReconnect: true
         }
     }),
-    cookie: { maxAge: 60000 }
+    cookie: { maxAge: 60000, secure:true }
 }));
 
 /**
