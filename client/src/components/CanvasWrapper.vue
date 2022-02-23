@@ -41,6 +41,7 @@
     <span><button @click="openFile()">
       <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
        </button></span>
+       <span><button @click="handleToolChange('PAN')"> Pan </button></span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -81,6 +82,7 @@ enum ToolType {
   Line = 'LINE',
   Circle = 'CIRCLE',
   Pen = 'PEN',
+  Pan = 'PAN',
 }
 
 export default defineComponent({
@@ -154,6 +156,7 @@ export default defineComponent({
       }); */
       oText.left = 100;
       oText.top = 100;
+      oText.padding = 0;
       oText.editable = true;
       oText.fill = store.state.colourPalette.primaryToolColour;
 
@@ -357,6 +360,18 @@ export default defineComponent({
     }
 
     /**
+     * Pans the canvas relative to the original points upon mouse click down
+     * and the current position of the mouse
+     */
+    function PanMove(x : number, y : number) {
+      const deltaX = x - origX;
+      const deltaY = y - origY;
+      const delta = new fabric.Point(deltaX, deltaY);
+      // const delta = new fabric.Point(x, y);
+      canvasData.relativePan(delta);
+    }
+
+    /**
      * Primary event handler for fabric.js canvas mouse:down event
      * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
      */
@@ -402,6 +417,8 @@ export default defineComponent({
         // line tool handler, makes line follow mouse
       } else if (tool.value === ToolType.Line) {
         lineMove(pointer.x, pointer.y);
+      } else if (tool.value === ToolType.Pan) {
+        PanMove(pointer.x, pointer.y);
       }
     }
 
@@ -550,6 +567,10 @@ export default defineComponent({
         }
         case ToolType.Line: {
           tool.value = ToolType.Line;
+          break;
+        }
+        case ToolType.Pan: {
+          tool.value = ToolType.Pan;
           break;
         }
         default: {
