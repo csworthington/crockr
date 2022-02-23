@@ -1,16 +1,5 @@
 import { Object, BaseBrush } from "fabric/fabric-impl";
 
-export enum ShapesWithID {
-  object = 'objectWithID',
-  line = 'lineWithID',
-  circle = 'circleWithID',
-  rect = 'rectWithID',
-  path = 'pathWithID',
-  pencilBrush = 'pencilBrushWithID',
-  image = 'imageWithID',
-  text = 'textWithID',
-}
-
 declare global {
   namespace fabric {
     export interface IObjectWithIDOptions extends IObjectOptions {
