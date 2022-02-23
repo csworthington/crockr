@@ -1,4 +1,7 @@
 <template>
+  <div>
+    <h3>Room is "room"</h3>
+  </div>
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
   </div>
@@ -18,7 +21,6 @@
     </span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
     <span><button @click="getDogFromServer">Get Dog🐶</button></span>
     <span><button @click="getLineFromServer">Get Line</button></span>
     <span><button @click="getPenFromServer">Get Pen</button></span>
@@ -34,6 +36,13 @@
         </option>
       </select>
     </span>
+    </div>
+  <div>
+    <span><button @click="addText()">Add Custom Text</button></span>
+<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
+    <span><button @click="openFile()">
+      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+       </button></span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -111,13 +120,9 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
-    // interface updateMsg{
-    //   msgType : string;
-    //   msg : string;
-    // }
-    // const updateServer = (msg : updateMsg) => {
-    //   socket.send(JSON.stringify(msg));
-    // };
+
+    let enableSelectionMessageSending = true;
+
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
     const thicknessOptions = [
@@ -138,6 +143,69 @@ export default defineComponent({
       },
     });
 
+    function addText() {
+      isObjectBeingAdded = true;
+      const oText = new fabric.ITextWithID('Text', {
+        left: 100,
+        top: 100,
+        fill: store.state.colourPalette.primaryToolColour,
+        editable: true,
+      });
+      /* oText.left = 100;
+      oText.top = 100;
+      oText.editable = true;
+      oText.fill = store.state.colourPalette.primaryToolColour;
+      */
+
+      canvasData.add(oText);
+      oText.bringToFront();
+      canvasData.setActiveObject(oText);
+      isObjectBeingAdded = false;
+      outgoingMessageHandler.sendObjectAdded(canvasData);
+    }
+
+    // adds image to the canvas
+    function openFile() {
+      let movingMsg: UpdateMessage;
+      isObjectBeingAdded = true;
+      const img = document.getElementById('imageFile');
+      img!.onchange = function handle(e) {
+        const target = e.target as HTMLInputElement;
+        const file: File = (target.files as FileList)[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        // Before loading image, disable the sending of selection messages until image loads
+        enableSelectionMessageSending = false;
+
+        reader.onload = () => {
+          const imgObj = new Image();
+
+          imgObj.src = reader.result as string;
+          imgObj.onload = function handleImage() {
+            fabric.ImageWithID.fromURL(imgObj.src, (image) => {
+              image.set({
+                left: 100,
+                top: 60,
+              });
+              image.scaleToWidth(200);
+              canvasData.add(image);
+              canvasData.setActiveObject(image);
+
+              // Set image src
+              image.set('src', image.getSrc());
+
+              // Send image to server
+              outgoingMessageHandler.sendObjectAdded(canvasData);
+              isObjectBeingAdded = false;
+
+              // Once image has been added, reenable sending of selection messages
+              enableSelectionMessageSending = true;
+            });
+          };
+        };
+      };
+    }
     /**
      * Start drawing a line on the canvas when the line tool is selected and the
      * mouse:down event has been fired by the canvas
@@ -316,14 +384,25 @@ export default defineComponent({
       if (isObjectModified) {
         isObjectModified = false;
         outgoingMessageHandler.sendObjectModified(canvasData);
-      } else {
-        if (isPenDown) {
-          isPenDown = false;
-        } else if (isObjectBeingAdded) {
-          isObjectBeingAdded = false;
-        }
+      } else if (isObjectBeingAdded) {
+        isObjectBeingAdded = false;
         outgoingMessageHandler.sendObjectAdded(canvasData);
+      } else if (isPenDown) {
+        isPenDown = false;
       }
+    }
+
+    /* zoom control */
+    // eslint-disable-next-line max-len
+    function handleMouseWheelEvent(opt: { e: { deltaY: any; preventDefault: () => void; stopPropagation: () => void; }; }) {
+      const delta = opt.e.deltaY;
+      let zoom = canvasData.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      canvasData.setZoom(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
     }
 
     /**
@@ -342,6 +421,7 @@ export default defineComponent({
       canvasData.on('mouse:down', handleMouseDownEvent);
       canvasData.on('mouse:move', handleMouseMoveEvent);
       canvasData.on('mouse:up', handleMouseUpEvent);
+      canvasData.on('mouse:wheel', handleMouseWheelEvent);
     }
 
     /**
@@ -501,8 +581,10 @@ export default defineComponent({
       canvasData.freeDrawingBrush = new fabric.PencilBrushWithID(canvasData);
 
       canvasData.on('selection:created', () => {
-        // Send selection update to the server
-        outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
+        if (enableSelectionMessageSending) {
+          // Send selection update to the server
+          outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
+        }
 
         // Create a delete button on object selection
         const deleteBtn = document.createElement('button');
@@ -513,17 +595,21 @@ export default defineComponent({
       });
 
       canvasData.on('selection:updated', () => {
-        outgoingMessageHandler.sendObjectSelectionUpdated(
-          canvasData,
-          selectedCheck,
-        );
+        if (enableSelectionMessageSending) {
+          outgoingMessageHandler.sendObjectSelectionUpdated(
+            canvasData,
+            selectedCheck,
+          );
+        }
       });
 
       canvasData.on('selection:cleared', () => {
-        outgoingMessageHandler.sendObjectSelectionCleared(
-          canvasData,
-          selectedCheck,
-        );
+        if (enableSelectionMessageSending) {
+          outgoingMessageHandler.sendObjectSelectionCleared(
+            canvasData,
+            selectedCheck,
+          );
+        }
 
         // Remove delete button when object is deselected
         const elem = document.getElementById('deleteBtn');
@@ -553,11 +639,7 @@ export default defineComponent({
         isObjectModified = true;
       });
 
-      console.dir(canvasData);
-      console.log(canvasData.toObject());
-
       if (store.state.socket.isConnected) {
-        console.log(store.state.roomID.ID);
         loadCanvas();
       }
     };
@@ -592,10 +674,6 @@ export default defineComponent({
 
     const printCanvasToConsole = () => {
       console.dir(canvasData.toObject());
-    };
-
-    const sendCanvasToServer = () => {
-      axios.post('./api/canvas/addobj', canvasData.toObject());
     };
 
     const getDogFromServer = () => {
@@ -667,13 +745,15 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
-      sendCanvasToServer,
       getDogFromServer,
       getLineFromServer,
       getRectFromServer,
       getCircleFromServer,
       getPenFromServer,
       loadCanvas,
+      updateServer,
+      addText,
+      openFile,
       exportCanvasToSVG,
     };
   },

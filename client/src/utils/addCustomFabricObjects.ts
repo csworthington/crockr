@@ -7,7 +7,9 @@ export enum ShapesWithID {
   circle = 'circleWithID',
   rect = 'rectWithID',
   path = 'pathWithID',
-  pencilBrush = 'pencilBrushWithID'
+  pencilBrush = 'pencilBrushWithID',
+  image = 'imageWithID',
+  text = 'textWithID',
 }
 
 function createObjectWithId(): void{
@@ -136,6 +138,73 @@ function createCircleWithID(): void {
   };
 }
 
+function createImageWithID(): void {
+  fabric.ImageWithID = fabric.util.createClass(fabric.Image, {
+    type: ShapesWithID.image,
+    initialize(
+      element: string | HTMLImageElement | HTMLVideoElement,
+      options?: fabric.IImageWithIDOptions,
+    ) {
+      this.callSuper('initialize', element, (options || {}));
+      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
+      // generate one at random.
+      this.set('id', options?.id || getUUID());
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), {
+        id: this.get('id'),
+      });
+    },
+    toString() {
+      return `${this.callSuper('toString')} (id: ${this.id})`;
+    },
+  });
+
+  fabric.ImageWithID.fromURL = function (
+    url: string,
+    callback?: (image: fabric.ImageWithID) => void,
+    imgOptions?: fabric.IImageWithIDOptions,
+  ): void {
+    fabric.util.loadImage(
+      url,
+      (img) => callback && callback(new fabric.ImageWithID(img, imgOptions)),
+      null,
+      imgOptions && imgOptions.crossOrigin,
+    );
+  };
+
+  fabric.ImageWithID.fromObject = function (object: any, callback: any) {
+    console.dir(object);
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.ImageWithID>fabric.Object._fromObject('ImageWithID', object, callback, '_element');
+  };
+}
+
+function createITextWithID(): void {
+  fabric.ITextWithID = fabric.util.createClass(fabric.IText, {
+    type: ShapesWithID.text,
+    initialize(options: any) {
+      this.callSuper('initialize', options);
+      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
+      // generate one at random.
+      this.set('id', options.id || getUUID());
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), {
+        id: this.get('id'),
+      });
+    },
+    toString() {
+      return `${this.callSuper('toString')} (id: ${this.id})`;
+    },
+  });
+
+  fabric.ITextWithID.fromObject = function (object: any, callback: any) {
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.ITextWithID>fabric.Object._fromObject('ITextWithID', object, callback);
+  };
+}
+
 function createPencilBrushWithID(): void {
   fabric.PathWithID = fabric.util.createClass(fabric.Path, {
     type: ShapesWithID.path,
@@ -209,4 +278,6 @@ export default function addCustomFabricObjects(): void {
   createCircleWithID();
   createPencilBrushWithID();
   createObjectWithId();
+  createImageWithID();
+  createITextWithID();
 }

@@ -9,7 +9,7 @@
 
 </template>
 <script lang="ts">
-import { defineComponent } from 'vue';
+import { defineComponent, onUnmounted } from 'vue';
 import { useStore } from 'vuex';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import router from '@/router';
@@ -26,8 +26,6 @@ export default defineComponent({
     socket.send(JSON.stringify({ msgType: 'roomUpdate' }));
     function selectRoom(roomId : string) {
       const roomCode = <HTMLInputElement> document.getElementById('passCode');
-      console.log(roomId);
-      console.log(roomCode.value);
       const passwordUpdate : updateMsg = { msgType: 'Password', msg: JSON.stringify([roomId, roomCode.value]) };
       socket.send(JSON.stringify(passwordUpdate));
     }
@@ -54,10 +52,7 @@ export default defineComponent({
         case 'Verification': {
           const parsedObject = JSON.parse(msg.msg);
           if (parsedObject[0]) {
-            console.log('yay');
-            console.log(parsedObject[1]);
             store.commit('roomID/updateID', parsedObject[1]);
-            console.log(store.state.roomID.ID);
             router.push('/canvas');
           } else {
             alert('wrong room code or room');
@@ -65,14 +60,18 @@ export default defineComponent({
           break;
         }
         default: {
-          console.log('unknown message');
+          console.error(`Unknown message type received: message = ${msg.msgType}`);
           break;
         }
       }
     };
 
     socket.addEventListener('message', listenForRoomMessages);
-    console.log('test');
+
+    // Remove event listener upon navigation away from this page
+    onUnmounted(() => {
+      socket.removeEventListener('message', listenForRoomMessages);
+    });
   },
 });
 </script>
