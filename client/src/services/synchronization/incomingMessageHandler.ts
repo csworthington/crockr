@@ -36,21 +36,16 @@ function handleAddition(
       break;
     }
     case ShapesWithID.image: {
-      const tempObject: fabric.IImageWithIDOptions = JSON.parse(objectToAdd[1], (key, value) => {
-        console.log(key);
-        return value;
-      });
+      const tempObject: fabric.IImageWithIDOptions = JSON.parse(objectToAdd[1]);
       if (tempObject !== undefined && tempObject.src !== undefined) {
         const imgStr = tempObject.src;
         if (imgStr) {
           fabric.ImageWithID.fromURL(
             imgStr,
             (image) => {
-              console.log('in callback');
               canvas.add(image);
               image.setCoords();
               canvas.renderAll();
-              console.dir(canvas);
             },
             tempObject,
           );
@@ -133,7 +128,6 @@ function handleSelection(
           selectable: false,
           evented: false,
           opacity: 0.5,
-
         });
       }
     });
@@ -233,8 +227,6 @@ export default function receiveMessage(
   message: MessageEvent,
 ): void {
   const messageData : UpdateMessage = JSON.parse(message.data);
-
-  // debugger;
 
   switch (messageData.msgType) {
     case 'Addition': {

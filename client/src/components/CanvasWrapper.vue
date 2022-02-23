@@ -1,4 +1,7 @@
 <template>
+  <div>
+    <h3>Room is "room"</h3>
+  </div>
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
   </div>
@@ -18,7 +21,6 @@
     </span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
     <span><button @click="getDogFromServer">Get Dog🐶</button></span>
     <span><button @click="getLineFromServer">Get Line</button></span>
     <span><button @click="getPenFromServer">Get Pen</button></span>
@@ -118,13 +120,9 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
-    // interface updateMsg{
-    //   msgType : string;
-    //   msg : string;
-    // }
-    // const updateServer = (msg : UpdateMessage) => {
-    //   socket.send(JSON.stringify(msg));
-    // };
+
+    let enableSelectionMessageSending = true;
+
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
     const thicknessOptions = [
@@ -164,19 +162,11 @@ export default defineComponent({
       canvasData.setActiveObject(oText);
       isObjectBeingAdded = false;
       outgoingMessageHandler.sendObjectAdded(canvasData);
-      // console.log('send real add  event');
-      // console.log(JSON.stringify(oText));
-      // eslint-disable-next-line max-len
-      // const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-      // const addedId = addedObject.get('id');
-      // eslint-disable-next-line max-len
-      // const addMsg : UpdateMessage = { msgType: 'Addition', msg: JSON.stringify([addedId, addedObject.toJSON]) };
-      // updateServer(addMsg);
     }
 
     // adds image to the canvas
     function openFile() {
-      let movingMsg :UpdateMessage;
+      let movingMsg: UpdateMessage;
       isObjectBeingAdded = true;
       const img = document.getElementById('imageFile');
       img!.onchange = function handle(e) {
@@ -184,19 +174,22 @@ export default defineComponent({
         const file: File = (target.files as FileList)[0];
         const reader = new FileReader();
         reader.readAsDataURL(file);
+
+        // Before loading image, disable the sending of selection messages until image loads
+        enableSelectionMessageSending = false;
+
         reader.onload = () => {
           const imgObj = new Image();
 
           imgObj.src = reader.result as string;
           imgObj.onload = function handleImage() {
-            // const image = new fabric.ImageWithID(imgObj, {});
             fabric.ImageWithID.fromURL(imgObj.src, (image) => {
               image.set({
                 left: 100,
                 top: 60,
               });
               image.scaleToWidth(200);
-              canvasData.add(image); // .renderAll();
+              canvasData.add(image);
               canvasData.setActiveObject(image);
 
               // Set image src
@@ -205,6 +198,9 @@ export default defineComponent({
               // Send image to server
               outgoingMessageHandler.sendObjectAdded(canvasData);
               isObjectBeingAdded = false;
+
+              // Once image has been added, reenable sending of selection messages
+              enableSelectionMessageSending = true;
             });
           };
         };
@@ -388,13 +384,11 @@ export default defineComponent({
       if (isObjectModified) {
         isObjectModified = false;
         outgoingMessageHandler.sendObjectModified(canvasData);
-      } else {
-        if (isPenDown) {
-          isPenDown = false;
-        } else if (isObjectBeingAdded) {
-          isObjectBeingAdded = false;
-        }
+      } else if (isObjectBeingAdded) {
+        isObjectBeingAdded = false;
         outgoingMessageHandler.sendObjectAdded(canvasData);
+      } else if (isPenDown) {
+        isPenDown = false;
       }
     }
 
@@ -587,8 +581,10 @@ export default defineComponent({
       canvasData.freeDrawingBrush = new fabric.PencilBrushWithID(canvasData);
 
       canvasData.on('selection:created', () => {
-        // Send selection update to the server
-        outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
+        if (enableSelectionMessageSending) {
+          // Send selection update to the server
+          outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
+        }
 
         // Create a delete button on object selection
         const deleteBtn = document.createElement('button');
@@ -599,17 +595,21 @@ export default defineComponent({
       });
 
       canvasData.on('selection:updated', () => {
-        outgoingMessageHandler.sendObjectSelectionUpdated(
-          canvasData,
-          selectedCheck,
-        );
+        if (enableSelectionMessageSending) {
+          outgoingMessageHandler.sendObjectSelectionUpdated(
+            canvasData,
+            selectedCheck,
+          );
+        }
       });
 
       canvasData.on('selection:cleared', () => {
-        outgoingMessageHandler.sendObjectSelectionCleared(
-          canvasData,
-          selectedCheck,
-        );
+        if (enableSelectionMessageSending) {
+          outgoingMessageHandler.sendObjectSelectionCleared(
+            canvasData,
+            selectedCheck,
+          );
+        }
 
         // Remove delete button when object is deselected
         const elem = document.getElementById('deleteBtn');
@@ -639,11 +639,7 @@ export default defineComponent({
         isObjectModified = true;
       });
 
-      console.dir(canvasData);
-      console.log(canvasData.toObject());
-
       if (store.state.socket.isConnected) {
-        console.log(store.state.roomID.ID);
         loadCanvas();
       }
     };
@@ -678,10 +674,6 @@ export default defineComponent({
 
     const printCanvasToConsole = () => {
       console.dir(canvasData.toObject());
-    };
-
-    const sendCanvasToServer = () => {
-      axios.post('./api/canvas/addobj', canvasData.toObject());
     };
 
     const getDogFromServer = () => {
@@ -753,7 +745,6 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
-      sendCanvasToServer,
       getDogFromServer,
       getLineFromServer,
       getRectFromServer,
