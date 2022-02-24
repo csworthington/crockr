@@ -134,6 +134,7 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       }
       case "Deletion":{
         const deletionIDs = JSON.parse(msg.msg);
+        console.log(`Received Deletion Message\nIDs = ${deletionIDs}`);
         deletionIDs.forEach( (id: string) => {
           if (rooms[1][index].canvas[0].includes(id)) {
             const x = rooms[1][index].canvas[0].indexOf(id);

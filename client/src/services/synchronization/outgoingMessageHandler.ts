@@ -22,7 +22,9 @@ export function sendObjectModified(
     scaledIds.push(element.get('id')!);
   });
 
+  // This line is sending the deselection message!
   canvas.discardActiveObject().renderAll();
+
   scaledIds.forEach((id : string) => {
     canvas.getObjects().forEach((element: fabric.ObjectWithID) => {
       if (element.get('id') === id) {

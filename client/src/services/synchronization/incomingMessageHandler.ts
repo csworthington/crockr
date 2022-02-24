@@ -16,23 +16,28 @@ function handleAddition(
   let objToAdd: fabric.Object = parsedObject;
 
   switch (parsedObject.get('type')) {
-    case 'rectWithID': {
+    case ShapesWithID.rect: {
       objToAdd = new fabric.RectWithID(JSON.parse(objectToAdd[1]));
       break;
     }
-    case 'circleWithID': {
+    case ShapesWithID.circle: {
       objToAdd = new fabric.CircleWithID(JSON.parse(objectToAdd[1]));
       break;
     }
-    case 'lineWithID': {
+    case ShapesWithID.line: {
       const tempObject = JSON.parse(objectToAdd[1]);
       const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
       objToAdd = new fabric.LineWithID(points, JSON.parse(objectToAdd[1]));
       break;
     }
-    case 'pathWithID': {
+    case ShapesWithID.path: {
       const tempObject = JSON.parse(objectToAdd[1]);
       objToAdd = new fabric.PathWithID(tempObject.path, tempObject);
+      break;
+    }
+    case ShapesWithID.text: {
+      const tempObject = JSON.parse(objectToAdd[1]);
+      objToAdd = new fabric.ITextWithID(tempObject.text, tempObject);
       break;
     }
     case ShapesWithID.image: {
@@ -91,6 +96,7 @@ function handleModified(
   canvas: fabric.Canvas,
   objectsToModify: Array<Array<string>>,
 ): void {
+  debugger;
   objectsToModify[1].forEach((element : string) => {
     const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
 
@@ -170,27 +176,30 @@ function handleLoading(
 ): void {
   canvas.clear();
   serializedObjects.forEach((element : string) => {
-    // const object = new fabric.ObjectWithID(JSON.parse(element));
     const parsedObject: fabric.IObjectWithIDOptions = JSON.parse(element);
-    // switch (object.get('type')) {
     switch (parsedObject.type) {
-      case 'rectWithID': {
+      case ShapesWithID.rect: {
         canvas.add(new fabric.RectWithID(JSON.parse(element)));
         break;
       }
-      case 'circleWithID': {
+      case ShapesWithID.circle: {
         canvas.add(new fabric.CircleWithID(JSON.parse(element)));
         break;
       }
-      case 'lineWithID': {
+      case ShapesWithID.line: {
         const tempObject = JSON.parse(element);
         const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
         canvas.add(new fabric.LineWithID(points, tempObject));
         break;
       }
-      case 'pathWithID': {
+      case ShapesWithID.path: {
         const tempObject = JSON.parse(element);
         canvas.add(new fabric.PathWithID(tempObject.path, tempObject));
+        break;
+      }
+      case ShapesWithID.text: {
+        const tempObject = JSON.parse(element);
+        canvas.add(new fabric.ITextWithID(tempObject.text, tempObject));
         break;
       }
       case ShapesWithID.image: {
