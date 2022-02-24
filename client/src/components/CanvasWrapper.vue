@@ -151,11 +151,6 @@ export default defineComponent({
         fill: store.state.colourPalette.primaryToolColour,
         editable: true,
       });
-      /* oText.left = 100;
-      oText.top = 100;
-      oText.editable = true;
-      oText.fill = store.state.colourPalette.primaryToolColour;
-      */
 
       canvasData.add(oText);
       oText.bringToFront();
@@ -637,6 +632,13 @@ export default defineComponent({
 
       canvasData.on('object:scaling', () => {
         isObjectModified = true;
+      });
+
+      // Send a modification synchronization event to the server when any text is changed
+      canvasData.on('text:editing:exited', (evt: fabric.IEvent) => {
+        console.log('in canvas text:editing:exited');
+        console.dir(evt);
+        outgoingMessageHandler.sendObjectModified(canvasData);
       });
 
       if (store.state.socket.isConnected) {

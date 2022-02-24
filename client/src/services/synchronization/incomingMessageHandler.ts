@@ -35,6 +35,11 @@ function handleAddition(
       objToAdd = new fabric.PathWithID(tempObject.path, tempObject);
       break;
     }
+    case ShapesWithID.text: {
+      const tempObject = JSON.parse(objectToAdd[1]);
+      objToAdd = new fabric.ITextWithID(tempObject.text, tempObject);
+      break;
+    }
     case ShapesWithID.image: {
       const tempObject: fabric.IImageWithIDOptions = JSON.parse(objectToAdd[1]);
       if (tempObject !== undefined && tempObject.src !== undefined) {
@@ -91,6 +96,7 @@ function handleModified(
   canvas: fabric.Canvas,
   objectsToModify: Array<Array<string>>,
 ): void {
+  debugger;
   objectsToModify[1].forEach((element : string) => {
     const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
 
@@ -170,9 +176,7 @@ function handleLoading(
 ): void {
   canvas.clear();
   serializedObjects.forEach((element : string) => {
-    // const object = new fabric.ObjectWithID(JSON.parse(element));
     const parsedObject: fabric.IObjectWithIDOptions = JSON.parse(element);
-    // switch (object.get('type')) {
     switch (parsedObject.type) {
       case ShapesWithID.rect: {
         canvas.add(new fabric.RectWithID(JSON.parse(element)));
@@ -191,6 +195,11 @@ function handleLoading(
       case ShapesWithID.path: {
         const tempObject = JSON.parse(element);
         canvas.add(new fabric.PathWithID(tempObject.path, tempObject));
+        break;
+      }
+      case ShapesWithID.text: {
+        const tempObject = JSON.parse(element);
+        canvas.add(new fabric.ITextWithID(tempObject.text, tempObject));
         break;
       }
       case ShapesWithID.image: {
