@@ -17,14 +17,6 @@
     <input @click="loadBoard" id="file-input" type="file" name="name" style="display:none;"/>
     </span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
-    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
-    <span><button @click="getLineFromServer">Get Line</button></span>
-    <span><button @click="getPenFromServer">Get Pen</button></span>
-    <span><button @click="getRectFromServer">Get Rect</button></span>
-    <span><button @click="getCircleFromServer">Get circle</button></span>
-    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -35,6 +27,16 @@
       </select>
     </span>
     </div>
+   <div>
+     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
+    <span><button @click="getLineFromServer">Get Line</button></span>
+    <span><button @click="getPenFromServer">Get Pen</button></span>
+    <span><button @click="getRectFromServer">Get Rect</button></span>
+    <span><button @click="getCircleFromServer">Get circle</button></span>
+    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
+  </div>
   <div>
     <span><button @click="addText()">Add Custom Text</button></span>
 <!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
