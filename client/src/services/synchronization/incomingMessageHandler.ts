@@ -102,7 +102,7 @@ function handleModified(
 
     canvas.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
       if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
-        canvasObject.set({
+        /* canvasObject.set({
           scaleX: scaledCanvasObject.get('scaleX'),
           scaleY: scaledCanvasObject.get('scaleY'),
           top: scaledCanvasObject.get('top'),
@@ -110,7 +110,8 @@ function handleModified(
           angle: scaledCanvasObject.get('angle'),
           skewX: scaledCanvasObject.get('skewX'),
           skewY: scaledCanvasObject.get('skewY'),
-        });
+        }); */
+        canvasObject.set(scaledCanvasObject);
         canvasObject.setCoords();
       }
     });
