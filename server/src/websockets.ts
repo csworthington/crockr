@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { ConnectedClients, UpdateMessage, Room } from "synchronization";
 
 const activeConnections = new  Set<ConnectedClients>();
-const rooms: (any)[][] = [[],[]];
+const rooms: (Room)[] = [];
 // export interface Room {
 //   name:string;
 //   canvas: string[][];
@@ -23,12 +23,15 @@ const rooms: (any)[][] = [[],[]];
 // }
 const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
 const secondaryRoom = <Room>{name: "Comp2804", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
-rooms[0].push(mainRoom.id);
-rooms[1].push(mainRoom);
-rooms[0].push(secondaryRoom.id);
-rooms[1].push(secondaryRoom);
+rooms.push(mainRoom);
+rooms.push(secondaryRoom);
 let  x = 1;
+const roomData : string[][]  = [[],[]];
 const wsServer = new ws.Server({ noServer: true });
+rooms.forEach((element : Room) => {
+  roomData[0].push(element.name);
+  roomData[1].push(element.id);
+  });
 wsServer.on("connection", (socket: ConnectedClients) => {
   console.log(`new connection created! Number of connected clients = ${wsServer.clients.size}`);
 
@@ -42,17 +45,7 @@ wsServer.on("connection", (socket: ConnectedClients) => {
 
   // add new socket to the socket set
   activeConnections.add(socket);
-  const roomData : string[][]  = [[],[]];
-  rooms[1].forEach((element : Room) => {
-    roomData[0].push(element.name);
-    roomData[1].push(element.id);
-    });
-  const loadMsg : UpdateMessage = {msgType: "Loading", roomID:"", msg: JSON.stringify(rooms[1][0].canvas[1])};
   const roomUpdate : UpdateMessage = {msgType: "roomUpdate", roomID:"",  msg: JSON.stringify(roomData)};
-  socket.send(JSON.stringify(loadMsg));
-  loadMsg.msgType = "Selection";
-  loadMsg.msg = JSON.stringify(rooms[1][0].lockedObjects[1]);
-  socket.send(JSON.stringify(loadMsg));
   socket.send(JSON.stringify(roomUpdate));
 
   // Handle incoming messages
@@ -60,53 +53,60 @@ wsServer.on("connection", (socket: ConnectedClients) => {
     // Create a message showing who sent what information
 
     const msg = JSON.parse(message.toString());
-    const index = rooms[0].indexOf(msg.roomID);
-
+    console.log("test msg:");
+    console.log(msg);
+    console.log("ID array:");
+    const filter = rooms.filter(obj => {
+      return obj.id === msg.roomID;
+    }
+    );
+    const roomMsg = filter[0];
     switch (msg.msgType) {
       case "Selection": {
         // TODO: Test if received ID exists in room board
         const selectedIds = JSON.parse(msg.msg);
         console.log("recieved Selection update ");
         selectedIds.forEach( (id: string) => {
-          if (rooms[1][index].lockedObjects[1].includes(id) === false){
-            rooms[1][index].lockedObjects[0].push(socket.id);
-            rooms[1][index].lockedObjects[1].push(id);
+          if(roomMsg.lockedObjects[1].includes(id) === false){
+            roomMsg.lockedObjects[0].push(socket.id);
+            roomMsg.lockedObjects[1].push(id);
+  
           }
         });
-        rooms[1][index].users.forEach((sockets: ConnectedClients) => {
-          if (socket.id !== sockets.id) {
+        roomMsg.users.forEach((sockets: ConnectedClients) =>{
+          if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
           }
         });
-        console.log(rooms[1][index].lockedObjects);
+        console.log(roomMsg.lockedObjects);
         break;
       }
       case "Deselection": {
         console.log("recieved Deselection update ");
         const deselectedIds = JSON.parse(msg.msg);
         deselectedIds.forEach( (id: string) => {
-          if(rooms[1][index].lockedObjects[1].includes(id)){
-            const x = rooms[1][index].lockedObjects[1].indexOf(id);
-            rooms[1][index].lockedObjects[0].splice(x,1);
-            rooms[1][index].lockedObjects[1].splice(x,1);
-
+          if(roomMsg.lockedObjects[1].includes(id)){
+            const x = roomMsg.lockedObjects[1].indexOf(id);
+            roomMsg.lockedObjects[0].splice(x,1);
+            roomMsg.lockedObjects[1].splice(x,1);
+  
           }
-          rooms[1][index].users.forEach((sockets: ConnectedClients) =>{
+          roomMsg.users.forEach((sockets: ConnectedClients) =>{
             if(socket.id !== sockets.id){
               sockets.send(JSON.stringify(msg));
             }
           });
 
         });
-        console.log(rooms[1][index].lockedObjects);
+        console.log(roomMsg.lockedObjects);
         break;
       }
-      case "Addition": {
-        const parsedMsg : string = JSON.parse(msg.msg);
-        rooms[1][index].canvas[0].push(parsedMsg[0]);
-        rooms[1][index].canvas[1].push(parsedMsg[1]);
-        console.log(rooms[1][index].canvas);
-        rooms[1][index].users.forEach((sockets: ConnectedClients) =>{
+      case "Addition":{
+        const  parsedMsg : string = JSON.parse(msg.msg);
+        roomMsg.canvas[0].push(parsedMsg[0]);
+        roomMsg.canvas[1].push(parsedMsg[1]);
+        console.log(roomMsg.canvas);
+        roomMsg.users.forEach((sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
           }
@@ -116,16 +116,16 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       case "Modified": {
         const scaledObjects = JSON.parse(msg.msg);
         console.log(scaledObjects[0].length);
-        for (let i = 0; i < scaledObjects[0].length; i++) {
-          if (rooms[1][index].canvas[0].includes(scaledObjects[0][i])){
-            const x = rooms[1][index].canvas[0].indexOf(scaledObjects[0][i]);
-            rooms[1][index].canvas[1][x] = scaledObjects[1][i];
+        for(let i = 0; i < scaledObjects[0].length; i++){
+          if(roomMsg.canvas[0].includes(scaledObjects[0][i])){
+            const x = roomMsg.canvas[0].indexOf(scaledObjects[0][i]);
+            roomMsg.canvas[1][x] = scaledObjects[1][i];
           }
           else {
             console.log("Object does not exist");
           }
         }
-        rooms[1][index].users.forEach((sockets: ConnectedClients) =>{
+        roomMsg.users.forEach((sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
           }
@@ -136,25 +136,25 @@ wsServer.on("connection", (socket: ConnectedClients) => {
         const deletionIDs = JSON.parse(msg.msg);
         console.log(`Received Deletion Message\nIDs = ${deletionIDs}`);
         deletionIDs.forEach( (id: string) => {
-          if (rooms[1][index].canvas[0].includes(id)) {
-            const x = rooms[1][index].canvas[0].indexOf(id);
-            rooms[1][index].canvas[0].splice(x,1);
-            rooms[1][index].canvas[1].splice(x,1);
+          if(roomMsg.canvas[0].includes(id)){
+            const x = roomMsg.canvas[0].indexOf(id);
+            roomMsg.canvas[0].splice(x,1);
+            roomMsg.canvas[1].splice(x,1);
           }
 
         });
-        rooms[1][index].users.forEach((sockets: ConnectedClients) =>{
+        roomMsg.users.forEach((sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
           }
         });
         break;
       }
-      case "Clearing":{
-
-        rooms[1][index].canvas[1] = [];
-        rooms[1][index].canvas[0] = [];
-        rooms[1][index].users.forEach((sockets: ConnectedClients) =>{
+      case "Clearing":{    
+           
+        roomMsg.canvas[1] = [];
+        roomMsg.canvas[0] = [];
+        roomMsg.users.forEach((sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
           }
@@ -164,22 +164,25 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       // Type: "Loading" Contents: [empty]
       case "Loading":{
         console.log("got here");
-        console.log(index);
-        msg.msg = JSON.stringify(rooms[1][index].canvas[1]);
-        socket.send(JSON.stringify(msg));
-        msg.msgType = "Selection";
-        msg.msg = JSON.stringify(rooms[1][index].lockedObjects[1]);
-        socket.send(JSON.stringify(msg));
+        console.log(roomMsg);
+        if(roomMsg != undefined){
+          msg.msg = JSON.stringify(roomMsg.canvas[1]);
+          socket.send(JSON.stringify(msg));
+          msg.msgType = "Selection";
+          msg.msg = JSON.stringify(roomMsg.lockedObjects[1]);
+          socket.send(JSON.stringify(msg));
+          roomMsg.users.add(socket);
+        }
         break;
       }
       // Type: "localLoad" Contents: [Object IDs] [Serialized Objects]
       case "localLoad":{
         const loadedObjects = JSON.parse(msg.msg);
-        rooms[1][index].canvas[0]  = loadedObjects[0];
-        rooms[1][index].canvas[1] = loadedObjects[1];
-        msg.msg = JSON.stringify(rooms[1][index].canvas[1]);
+        roomMsg.canvas[0]  = loadedObjects[0];
+        roomMsg.canvas[1] = loadedObjects[1];
+        msg.msg = JSON.stringify(roomMsg.canvas[1]);
         msg.msgType = "Loading";
-        rooms[1][index].users.forEach((sockets: ConnectedClients) =>{
+        roomMsg.users.forEach((sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
           }
@@ -187,43 +190,6 @@ wsServer.on("connection", (socket: ConnectedClients) => {
          break;
 
       }
-      // Type: "newRoom" Contents: String : Name
-      case "newRoom":{
-        const tempPass = "1";
-        // rooms.push(<Room> {name: msg.msg, canvas:[[],[]], users: new Set([socket]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: tempPass  });
-
-        break;
-      }
-      case "Password":{
-        const passData : string[]= JSON.parse(msg.msg);
-        let check = false;
-        let roomIDCheck = "";
-        rooms[1].forEach((element: Room ) => {
-          if(element.id == passData[0] && element.pass == passData[1]){
-            check = true;
-            roomIDCheck = passData[0];
-            element.users.add(socket);
-            return;
-          }
-
-        });
-        if (check){
-          const checkMsg : UpdateMessage = {msgType:"Verification", roomID:"", msg:  JSON.stringify([true,roomIDCheck])};
-          socket.send(JSON.stringify(checkMsg));
-
-        }
-        else{
-          const checkMsg : UpdateMessage = {msgType:"Verification", roomID:"",  msg:  JSON.stringify([false,roomIDCheck])};
-          socket.send(JSON.stringify(checkMsg));
-        }
-
-        break;
-      }
-      case "roomUpdate" :{
-        socket.send(JSON.stringify(roomUpdate));
-        break;
-      }
-
       default: {
         console.log("Recieved Unknown update");
       }
@@ -244,6 +210,42 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       });
 
   });
+  
 });
+export const getRooms = () => {
+  return roomData;
+};
+export  const tryPass = (roomCode:string, roomID:string) => {
+  console.log("got here");
+  let check = false;
+  rooms.forEach((element: Room ) => {
+    if(element.id == roomID && element.pass == roomCode){
+      check = true;
+      return;
+    }
+  });
+  return check;
+};
+export  const roomIDExists = (cookieID:string) => {
+  const filter = rooms.filter(obj => {
+     return obj.id === cookieID;
+  }
+  );
 
+  if (filter.length === 0){
+    console.log(filter);
+    return false;
+  }
+  else{
+    console.log(filter);
+    return true;
+  }
+};
+export  const createRoom = (roomName:string) => {
+  const newRoom = <Room>{name: roomName, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+  rooms.push(newRoom);
+  roomData[0].push(newRoom.name);
+  roomData[1].push(newRoom.id);
+  return newRoom.id;
+};
 export default wsServer;
