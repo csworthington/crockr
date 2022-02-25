@@ -1,10 +1,35 @@
 <template>
-  <textarea id="tex-equation" v-model.trim="texEquation" @input="renderEquationToHTML"/>
-  <div>
-    <button id="process-equation" @click="renderEquationToHTML">Process</button>
-    <button id="render-equation-canvas" @click="printCanvasFromKatex">Print Canvas</button>
+  <div class="modal" :id="modalID" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Equation Editor</h5>
+          <button type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                  aria-label="Close">
+          </button>
+        </div>
+        <div class="modal-body">
+          <textarea id="tex-equation" v-model.trim="texEquation" @input="renderEquationToHTML"/>
+          <div id="katex-output" ></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button"
+                  class="btn btn-secondary"
+                  data-bs-dismiss="modal">
+            Close
+          </button>
+          <button type="button"
+                  class="btn btn-primary"
+                  id="render-equation-canvas"
+                  @click="printCanvasFromKatex">
+            Print Canvas
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
-  <div id="katex-output" ></div>
   <div id="html-to-canvas-div"></div>
 </template>
 
@@ -21,6 +46,10 @@ export default defineComponent({
       type: String,
       required: false,
       default: '',
+    },
+    modalID: {
+      type: String,
+      required: true,
     },
   },
   setup(props) {
