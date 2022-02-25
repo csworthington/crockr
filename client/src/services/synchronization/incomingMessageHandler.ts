@@ -96,13 +96,13 @@ function handleModified(
   canvas: fabric.Canvas,
   objectsToModify: Array<Array<string>>,
 ): void {
-  debugger;
   objectsToModify[1].forEach((element : string) => {
     const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
 
     canvas.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
       if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
-        /* canvasObject.set({
+        // canvasObject.set(scaledCanvasObject);
+        canvasObject.set({
           scaleX: scaledCanvasObject.get('scaleX'),
           scaleY: scaledCanvasObject.get('scaleY'),
           top: scaledCanvasObject.get('top'),
@@ -110,8 +110,12 @@ function handleModified(
           angle: scaledCanvasObject.get('angle'),
           skewX: scaledCanvasObject.get('skewX'),
           skewY: scaledCanvasObject.get('skewY'),
-        }); */
-        canvasObject.set(scaledCanvasObject);
+        });
+
+        if (canvasObject.type === ShapesWithID.text) {
+          const text: fabric.ITextWithID = <fabric.ITextWithID>canvasObject;
+          text.set('text', (scaledCanvasObject as fabric.ITextWithID).get('text'));
+        }
         canvasObject.setCoords();
       }
     });
