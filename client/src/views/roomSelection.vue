@@ -6,72 +6,86 @@
   </div>
   <div class="buttons" id = "buttons">
   </div>
+ <span><button @click="routeToCreation" >CreateRoom</button></span>
 
 </template>
 <script lang="ts">
 import { defineComponent, onUnmounted } from 'vue';
 import { useStore } from 'vuex';
-import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import router from '@/router';
 import { StoreKey } from '@/symbols';
+import { useAxios } from '@/utils/useAxios';
 
 export default defineComponent({
   setup() {
-    const socket = useGlobalWebSocket();
+    const axios = useAxios();
     const store = useStore(StoreKey);
-    interface updateMsg {
-      msgType : string;
-      msg : string;
+    const retrievedCookie = document.cookie.split(';');
+    console.log('cookie test');
+    console.log(retrievedCookie);
+    function handleCookie(id : string) {
+      console.log('Retrieved cookie');
+      console.log(retrievedCookie);
+      axios.get('./api/rooms/handlecookie', {
+        params: {
+          roomID: id,
+        },
+      }).then((value) => {
+        if (value.data === true) {
+          console.log('yay');
+          store.commit('roomID/updateID', id);
+          console.log(store.state.roomID.ID);
+          router.push('/canvas');
+        }
+      });
     }
-    socket.send(JSON.stringify({ msgType: 'roomUpdate' }));
-    function selectRoom(roomId : string) {
+    function tryPass(choosenRoom: string) {
+      console.log('Hellllo');
       const roomCode = <HTMLInputElement> document.getElementById('passCode');
-      const passwordUpdate : updateMsg = { msgType: 'Password', msg: JSON.stringify([roomId, roomCode.value]) };
-      socket.send(JSON.stringify(passwordUpdate));
+      axios.get('./api/rooms/tryPass', {
+        params: {
+          pass: roomCode.value,
+          roomID: choosenRoom,
+        },
+      }).then((value) => {
+        if (value.data) {
+          console.log('yay');
+          store.commit('roomID/updateID', choosenRoom);
+          document.cookie = `RoomID = ${choosenRoom}`;
+          console.log(store.state.roomID.ID);
+          router.push('/canvas');
+        }
+      });
     }
-    let roomData: string[][] = [[], []];
-
-    const listenForRoomMessages = (message: MessageEvent<any>) => {
-      const msg : updateMsg = JSON.parse(message.data);
-      const parsedMsg = JSON.parse(msg.msg);
-      switch (msg.msgType) {
-        case 'roomUpdate': {
-          roomData = parsedMsg;
-          const div = document.getElementById('buttons')!;
-          div.innerHTML = '';
-          // eslint-disable-next-line no-plusplus
-          for (let i = 0; i < roomData.length; i++) {
-            const roomBtn = document.createElement('button');
-            roomBtn.innerHTML = roomData[0][i];
-            roomBtn.id = roomData[1][i];
-            roomBtn.onclick = function () { selectRoom(roomBtn.id); };
-            div.appendChild(roomBtn);
-          }
-          break;
+    function roomSetup() {
+      let roomData :string[][] = [[], []];
+      axios.get('./api/rooms/getrooms').then((value) => {
+        console.log(value.data);
+        roomData = value.data;
+        console.log(roomData);
+        const div = document.getElementById('buttons')!;
+        div.innerHTML = '';
+        // eslint-disable-next-line no-plusplus
+        for (let i = 0; i < roomData[0].length; i++) {
+          const roomBtn = document.createElement('button');
+          roomBtn.innerHTML = roomData[0][i];
+          roomBtn.id = roomData[1][i];
+          roomBtn.onclick = function () { tryPass(roomBtn.id); };
+          div.appendChild(roomBtn);
         }
-        case 'Verification': {
-          const parsedObject = JSON.parse(msg.msg);
-          if (parsedObject[0]) {
-            store.commit('roomID/updateID', parsedObject[1]);
-            router.push('/canvas');
-          } else {
-            alert('wrong room code or room');
-          }
-          break;
-        }
-        default: {
-          console.error(`Unknown message type received: message = ${msg.msgType}`);
-          break;
-        }
-      }
+      });
+    }
+    if (retrievedCookie.length > 1) {
+      handleCookie(retrievedCookie[1].split('=')[1]);
+    }
+    roomSetup();
+    function routeToCreation() {
+      console.log('test');
+      router.push('/RoomCreator');
+    }
+    return {
+      routeToCreation,
     };
-
-    socket.addEventListener('message', listenForRoomMessages);
-
-    // Remove event listener upon navigation away from this page
-    onUnmounted(() => {
-      socket.removeEventListener('message', listenForRoomMessages);
-    });
   },
 });
 </script>
