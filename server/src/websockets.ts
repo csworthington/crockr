@@ -4,23 +4,6 @@ import { ConnectedClients, UpdateMessage, Room } from "synchronization";
 
 const activeConnections = new  Set<ConnectedClients>();
 const rooms: (Room)[] = [];
-// export interface Room {
-//   name:string;
-//   canvas: string[][];
-//   users: Set<ConnectedClients>;
-//   lockedObjects:string[][];
-//   id : string;
-//   pass : string;
-// }
-// export interface ConnectedClients extends ws.WebSocket {
-//   name : string;
-//   id: string;
-// }
-// export interface UpdateMessage {
-//   msgType : string;
-//   roomID: string;
-//   msg : string;
-// }
 const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
 const secondaryRoom = <Room>{name: "Comp2804", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
 rooms.push(mainRoom);
@@ -154,6 +137,8 @@ wsServer.on("connection", (socket: ConnectedClients) => {
            
         roomMsg.canvas[1] = [];
         roomMsg.canvas[0] = [];
+        roomMsg.lockedObjects[0] = [];
+        roomMsg.lockedObjects[1] = [];
         roomMsg.users.forEach((sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
