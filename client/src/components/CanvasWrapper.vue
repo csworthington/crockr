@@ -664,7 +664,6 @@ export default defineComponent({
     };
     // Event Handler for every type of message recieved
     socket.addEventListener('message', (message) => {
-      debugger;
       // const msg = JSON.parse(message.data.ToString());
       const msg = JSON.parse(message.data);
       // console.log(msg.msgType);

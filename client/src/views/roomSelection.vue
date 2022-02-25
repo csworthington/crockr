@@ -75,7 +75,9 @@ export default defineComponent({
         }
       });
     }
-    handleCookie(retrievedCookie[0].split('=')[1]);
+    if (retrievedCookie.length > 1) {
+      handleCookie(retrievedCookie[1].split('=')[1]);
+    }
     roomSetup();
     function routeToCreation() {
       console.log('test');
