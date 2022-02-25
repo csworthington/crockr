@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Room is "room"</h3>
+    <h3>Room is "{{ roomName }}"</h3>
   </div>
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
@@ -39,10 +39,14 @@
     </div>
   <div>
     <span><button @click="addText()">Add Custom Text</button></span>
-<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
-    <span><button @click="openFile()">
-      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-       </button></span>
+    <span>
+      <button @click="openFile()">
+        <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+      </button>
+    </span>
+    <span style="display:none">
+      <EquationEditor/>
+    </span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -74,7 +78,7 @@ import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
-import router from '@/router';
+import EquationEditor from '@/components/EquationEditor.vue';
 
 import { UpdateMessage } from '@/services/synchronization/typings.d';
 import { updateServer } from '@/services/synchronization/outgoingMessageHandler';
@@ -94,6 +98,7 @@ export default defineComponent({
   name: 'CanvasWrapper',
   components: {
     ColourPicker,
+    EquationEditor,
     WebSocketStatusIndicator,
   },
   setup(props) {
@@ -120,6 +125,8 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
+
+    const roomName = store.state.roomID.ID;
 
     let enableSelectionMessageSending = true;
 
@@ -757,6 +764,7 @@ export default defineComponent({
       addText,
       openFile,
       exportCanvasToSVG,
+      roomName,
     };
   },
 });
