@@ -1,0 +1,71 @@
+@startuml
+
+title FabricJS - Custom Class Diagram
+
+class Object {}
+
+class Rect {}
+
+class Circle {}
+
+class Line {}
+
+class Path {}
+
+class BaseBrush {}
+
+class ObjectWithID {
+  + id: string
+}
+
+class RectWithID {
+  + id: string
+  ----
+  + initialize(options: IRectWithIDOptions): RectWithID
+  + fromObject(object: RectWithID, callback: Function): RectWithID
+}
+
+class CircleWithID {
+  + id: string
+  ----
+  + initialize(options: ICircleWithIDOptions): CircleWithID
+  + fromObject(object: CircleWithID, callback: Function): CircleWithID
+}
+
+class LineWithID {
+  + id: string
+  ----
+  + initialize(points: number[], options: ILineWithIDOptions): LineWithID
+  + fromObject(object: LineWithID, callback: Function): LineWithID
+}
+
+class PathWithID {
+  + id: string
+  ----
+  + initialize(path: string | Point[], options: IRectWithIDOptions): PathWithID
+  + fromObject(object: PathWithID, callback: Function): PathWithID
+}
+
+class PencilBrushWithID {
+  + id: string
+  ----
+  + initialize(canvas: Canvas): PencilBrushWithID
+  + createPath(pathData: string | Array<fabric.Point>): PathWithID
+}
+
+
+Object <|-- Rect
+Object <|-- Circle
+Object <|-- Line
+Object <|-- Path
+Object <|-- BaseBrush
+
+Object <|-- ObjectWithID
+Rect <|-- RectWithID
+Circle <|-- CircleWithID
+Line <|-- LineWithID
+Path <|-- PathWithID
+BaseBrush <|-- PencilBrushWithID
+
+
+@enduml

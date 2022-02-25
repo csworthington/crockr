@@ -1,14 +1,5 @@
 import { Object, BaseBrush } from "fabric/fabric-impl";
 
-export enum ShapesWithID {
-  object = 'objectWithID',
-  line = 'lineWithID',
-  circle = 'circleWithID',
-  rect = 'rectWithID',
-  path = 'pathWithID',
-  pencilBrush = 'pencilBrushWithID'
-}
-
 declare global {
   namespace fabric {
     export interface IObjectWithIDOptions extends IObjectOptions {
@@ -109,6 +100,50 @@ declare global {
        * List of attribute names to account for when parsing SVG element (used by `fabric.Polygon.fromElement`)
        */
     }
+
+    //Text with ID
+    export interface ITextWithIDOptions extends ITextOptions, IObjectWithIDOptions { }
+    export interface ITextWithID extends Object, ITextWithIDOptions { }
+    export class ITextWithID extends IText {
+
+      constructor(text: string, options?: ITextWithIDOptions);
+      static fromObject(object: any, callback?: Function): ITextWithID;
+      selectAll(): ITextWithID;
+      selectLine(selectionStart: number): ITextWithID;
+    /**
+     * Enters editing state
+     * @return {fabric.IText} thisArg
+     * @chainable
+     */
+      enterEditing(e?: MouseEvent): ITextWithID;
+      exitEditing(): ITextWithID;
+    }
+
+
+    // Image with ID
+    export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions { }
+    export interface ImageWithID extends Object, IImageWithIDOptions { }
+    // Image with ID
+    export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions {
+      src?: string
+    }
+    export interface ImageWithID extends Image, IImageWithIDOptions { }
+    export class ImageWithID extends Image {
+
+    constructor(element: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
+
+    setElement(element: HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions): ImageWithID;
+
+    setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): ImageWithID;
+
+    applyFilters(filters?: IBaseFilter[]): ImageWithID;
+
+    static fromURL(url: string, callback?: (image: fabric.ImageWithID) => void, imgOptions?: IImageWithIDOptions): void;
+
+    static fromElement(element: SVGElement, callback: Function, options?: IImageWithIDOptions): ImageWithID;
+
+    static fromObject(object: any, callback: any): ImageWithID;
+  }
 
 
     // PencilBrush with ID Types

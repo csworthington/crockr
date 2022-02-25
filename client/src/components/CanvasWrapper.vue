@@ -1,4 +1,7 @@
 <template>
+  <div>
+    <h3>Room is "room"</h3>
+  </div>
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
   </div>
@@ -18,7 +21,6 @@
     </span>
     <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
     <span><button @click="getDogFromServer">Get Dog🐶</button></span>
     <span><button @click="getLineFromServer">Get Line</button></span>
     <span><button @click="getPenFromServer">Get Pen</button></span>
@@ -34,6 +36,13 @@
         </option>
       </select>
     </span>
+    </div>
+  <div>
+    <span><button @click="addText()">Add Custom Text</button></span>
+<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
+    <span><button @click="openFile()">
+      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+       </button></span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -66,6 +75,11 @@ import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
 import router from '@/router';
+
+import { UpdateMessage } from '@/services/synchronization/typings.d';
+import { updateServer } from '@/services/synchronization/outgoingMessageHandler';
+import * as outgoingMessageHandler from '@/services/synchronization/outgoingMessageHandler';
+import * as handleIncomingMessage from '@/services/synchronization/incomingMessageHandler';
 
 enum ToolType {
   None = 'NONE',
@@ -106,17 +120,9 @@ export default defineComponent({
     // comparison array for comparing when deselected.
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
-    if (store.state.roomID.ID === '-1') {
-      router.push('/roomSelector');
-    }
-    interface updateMsg{
-      msgType : string;
-      roomID: string;
-      msg : string;
-    }
-    const updateServer = (msg : updateMsg) => {
-      socket.send(JSON.stringify(msg));
-    };
+
+    let enableSelectionMessageSending = true;
+
     // determines how thick line tool and pen tool are
     const lineThickness: Ref<number> = ref(2);
     const thicknessOptions = [
@@ -137,6 +143,64 @@ export default defineComponent({
       },
     });
 
+    function addText() {
+      isObjectBeingAdded = true;
+      const oText = new fabric.ITextWithID('Text', {
+        left: 100,
+        top: 100,
+        fill: store.state.colourPalette.primaryToolColour,
+        editable: true,
+      });
+
+      canvasData.add(oText);
+      oText.bringToFront();
+      canvasData.setActiveObject(oText);
+      isObjectBeingAdded = false;
+      outgoingMessageHandler.sendObjectAdded(canvasData);
+    }
+
+    // adds image to the canvas
+    function openFile() {
+      let movingMsg: UpdateMessage;
+      isObjectBeingAdded = true;
+      const img = document.getElementById('imageFile');
+      img!.onchange = function handle(e) {
+        const target = e.target as HTMLInputElement;
+        const file: File = (target.files as FileList)[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+
+        // Before loading image, disable the sending of selection messages until image loads
+        enableSelectionMessageSending = false;
+
+        reader.onload = () => {
+          const imgObj = new Image();
+
+          imgObj.src = reader.result as string;
+          imgObj.onload = function handleImage() {
+            fabric.ImageWithID.fromURL(imgObj.src, (image) => {
+              image.set({
+                left: 100,
+                top: 60,
+              });
+              image.scaleToWidth(200);
+              canvasData.add(image);
+              canvasData.setActiveObject(image);
+
+              // Set image src
+              image.set('src', image.getSrc());
+
+              // Send image to server
+              outgoingMessageHandler.sendObjectAdded(canvasData);
+              isObjectBeingAdded = false;
+
+              // Once image has been added, reenable sending of selection messages
+              enableSelectionMessageSending = true;
+            });
+          };
+        };
+      };
+    }
     /**
      * Start drawing a line on the canvas when the line tool is selected and the
      * mouse:down event has been fired by the canvas
@@ -312,48 +376,28 @@ export default defineComponent({
      */
     function handleMouseUpEvent(evt: fabric.IEvent<Event>) {
       isDown = false;
-      let movingMsg :updateMsg;
       if (isObjectModified) {
         isObjectModified = false;
-        const scaledObjects: string[]|any[] = [[], []];
-        const scaledIds : string[] = [];
-        canvasData.getActiveObjects().forEach((element: fabric.ObjectWithID) => {
-          scaledIds.push(element.get('id')!);
-        });
-        const objectArray : fabric.ObjectWithID[] = [];
-        canvasData.discardActiveObject().renderAll();
-        scaledIds.forEach((id : string) => {
-          canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-            if (element.get('id') === id) {
-              scaledObjects[0].push(id);
-              scaledObjects[1].push(JSON.stringify(element));
-              objectArray.push(element);
-            }
-          });
-        });
-        // eslint-disable-next-line max-len
-        const selectionGroup : fabric.ActiveSelection = new fabric.ActiveSelection(objectArray, { canvas: canvasData });
-        canvasData.setActiveObject(selectionGroup);
-        canvasData.renderAll();
-        movingMsg = { msgType: 'Modified', roomID: store.state.roomID.ID, msg: JSON.stringify(scaledObjects) };
-        updateServer(movingMsg);
-      } else if (isPenDown) {
-        isPenDown = false;
-        // eslint-disable-next-line max-len
-        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-        const addedId = addedObject.get('id');
-        const addMsg :updateMsg = { msgType: 'Addition', roomID: store.state.roomID.ID, msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
-        updateServer(addMsg);
-        console.log('send pen event');
+        outgoingMessageHandler.sendObjectModified(canvasData);
       } else if (isObjectBeingAdded) {
         isObjectBeingAdded = false;
-        console.log('send real add  event');
-        // eslint-disable-next-line max-len
-        const addedObject: fabric.ObjectWithID = canvasData.getObjects()[canvasData.getObjects().length - 1];
-        const addedId = addedObject.get('id');
-        const addMsg :updateMsg = { msgType: 'Addition', roomID: store.state.roomID.ID, msg: JSON.stringify([addedId, JSON.stringify(addedObject)]) };
-        updateServer(addMsg);
+        outgoingMessageHandler.sendObjectAdded(canvasData);
+      } else if (isPenDown) {
+        isPenDown = false;
       }
+    }
+
+    /* zoom control */
+    // eslint-disable-next-line max-len
+    function handleMouseWheelEvent(opt: { e: { deltaY: any; preventDefault: () => void; stopPropagation: () => void; }; }) {
+      const delta = opt.e.deltaY;
+      let zoom = canvasData.getZoom();
+      zoom *= 0.999 ** delta;
+      if (zoom > 20) zoom = 20;
+      if (zoom < 0.01) zoom = 0.01;
+      canvasData.setZoom(zoom);
+      opt.e.preventDefault();
+      opt.e.stopPropagation();
     }
 
     /**
@@ -372,6 +416,7 @@ export default defineComponent({
       canvasData.on('mouse:down', handleMouseDownEvent);
       canvasData.on('mouse:move', handleMouseMoveEvent);
       canvasData.on('mouse:up', handleMouseUpEvent);
+      canvasData.on('mouse:wheel', handleMouseWheelEvent);
     }
 
     /**
@@ -450,26 +495,18 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
-      const deletionIDs :string[] = [];
-      const objectList = canvasData.getActiveObjects();
-      objectList.forEach((object : fabric.ObjectWithID) => {
-        deletionIDs.push(<string>object.get('id'));
-        canvasData.remove(object);
-      });
       const elem = document.getElementById('deleteBtn');
-      if (elem != null) {
+      if (elem !== null) {
         elem.remove();
       }
-      const deleteMsg :updateMsg = { msgType: 'Deletion', roomID: store.state.roomID.ID, msg: JSON.stringify(deletionIDs) };
-      updateServer(deleteMsg);
-      console.log('send delete update');
+      outgoingMessageHandler.sendObjectDeleted(canvasData);
     };
 
     /**
      * Clear the canvas of all objects when the user selects the clear button
      */
     /* const loadCanvas = () => {
-      const loadMsg :updateMsg = { msgType: 'Loading', msg: '' };
+      const loadMsg :UpdateMessage = { msgType: 'Loading', msg: '' };
       updateServer(loadMsg);
     }; */
     const saveBoard = () => {
@@ -484,6 +521,7 @@ export default defineComponent({
       downloadAnchorNode.remove();
     };
     function loadBoard() {
+      // Send load board message to the server
       const canvasFile = document.getElementById('file-input');
       canvasFile!.onchange = function handle(e) {
         const reader = new FileReader();
@@ -494,13 +532,7 @@ export default defineComponent({
             canvasData.loadFromJSON(reader.result, function () {
               canvasData.renderAll();
             });
-            const loadedObjects: string[]|any[] = [[], []];
-            canvasData.getObjects().forEach((element: fabric.ObjectWithID) => {
-              loadedObjects[0].push(element.get('id'));
-              loadedObjects[1].push(JSON.stringify(element));
-            });
-            const loadMsg : updateMsg = { msgType: 'localLoad', roomID: store.state.roomID.ID, msg: JSON.stringify(loadedObjects) };
-            updateServer(loadMsg);
+            outgoingMessageHandler.sendLocalLoadMessage(canvasData);
           } catch (error) {
             console.error(error);
           }
@@ -512,10 +544,7 @@ export default defineComponent({
     }
     const clearBoard = () => {
       if (window.confirm('Are you sure you want to clear the canvas?')) {
-        canvasData.clear();
-        const clearMsg :updateMsg = { msgType: 'Clearing', roomID: store.state.roomID.ID, msg: JSON.stringify('') };
-        updateServer(clearMsg);
-        console.log('send  clear update.');
+        outgoingMessageHandler.sendClearBoardMessage(canvasData);
       }
     };
 
@@ -523,10 +552,7 @@ export default defineComponent({
      * Send a load message to the server to get the current state of the canvas
      */
     const loadCanvas = () => {
-      if (store.state.roomID.ID !== '-1') {
-        const loadMsg :updateMsg = { msgType: 'Loading', roomID: store.state.roomID.ID, msg: '' };
-        updateServer(loadMsg);
-      }
+      outgoingMessageHandler.sendLoadCanvasMessage();
     };
 
     /**
@@ -550,66 +576,37 @@ export default defineComponent({
       canvasData.freeDrawingBrush = new fabric.PencilBrushWithID(canvasData);
 
       canvasData.on('selection:created', () => {
-        console.log('send selection update');
+        if (enableSelectionMessageSending) {
+          // Send selection update to the server
+          outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
+        }
 
-        canvasData.getActiveObjects().forEach((active: any) => {
-          if (selectedCheck.indexOf(active.get('id')) === -1) {
-            selectedCheck.push(active.get('id'));
-          }
-        });
-
-        const selectedIds:(string)[] = [];
-        canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
-          selectedIds.push(<string>element.get('id'));
-        });
-        const selectionUpdate : updateMsg = { msgType: 'Selection', roomID: store.state.roomID.ID, msg: JSON.stringify(selectedIds) };
-        updateServer(selectionUpdate);
-        console.log(selectedCheck.length);
-
+        // Create a delete button on object selection
         const deleteBtn = document.createElement('button');
         deleteBtn.innerHTML = 'delete selected element';
         deleteBtn.id = 'deleteBtn';
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
       });
-      canvasData.on('selection:updated', () => {
-        console.log('updated');
-        canvasData.getActiveObjects().forEach((active: any) => {
-          if (selectedCheck.indexOf(active.get('id')) === -1) {
-            selectedCheck.push(active.get('id'));
-          }
-        });
 
-        const selectedIds:(string)[] = [];
-        canvasData.getActiveObjects().forEach((element : fabric.ObjectWithID) => {
-          selectedIds.push(<string>element.get('id'));
-        });
-        const selectionUpdate : updateMsg = { msgType: 'Selection', roomID: store.state.roomID.ID, msg: JSON.stringify(selectedIds) };
-        updateServer(selectionUpdate);
-        const activeObjectIDS : string[] = [];
-        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
-          activeObjectIDS.push(active.get('id')!);
-        });
-        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
-        console.log('send selection cleared update');
-        const deselectMsg :updateMsg = { msgType: 'Deselection', roomID: store.state.roomID.ID, msg: JSON.stringify(deselectedId) };
-        console.log(canvasData.getActiveObjects());
-        console.log(deselectMsg);
-        updateServer(deselectMsg);
+      canvasData.on('selection:updated', () => {
+        if (enableSelectionMessageSending) {
+          outgoingMessageHandler.sendObjectSelectionUpdated(
+            canvasData,
+            selectedCheck,
+          );
+        }
       });
+
       canvasData.on('selection:cleared', () => {
-        console.log('selectedCheck');
-        console.dir(selectedCheck);
-        const activeObjectIDS : string[] = [];
-        canvasData.getActiveObjects().forEach((active : fabric.ObjectWithID) => {
-          activeObjectIDS.push(active.get('id')!);
-        });
-        const deselectedId = selectedCheck.filter((x) => !activeObjectIDS.includes(x));
-        console.log('send selection cleared update');
-        const deselectMsg :updateMsg = { msgType: 'Deselection', roomID: store.state.roomID.ID, msg: JSON.stringify(deselectedId) };
-        console.log(canvasData.getActiveObjects());
-        console.log(deselectMsg);
-        updateServer(deselectMsg);
+        if (enableSelectionMessageSending) {
+          outgoingMessageHandler.sendObjectSelectionCleared(
+            canvasData,
+            selectedCheck,
+          );
+        }
+
+        // Remove delete button when object is deselected
         const elem = document.getElementById('deleteBtn');
         if (elem != null) {
           elem.remove();
@@ -637,11 +634,14 @@ export default defineComponent({
         isObjectModified = true;
       });
 
-      console.dir(canvasData);
-      console.log(canvasData.toObject());
+      // Send a modification synchronization event to the server when any text is changed
+      canvasData.on('text:editing:exited', (evt: fabric.IEvent) => {
+        console.log('in canvas text:editing:exited');
+        console.dir(evt);
+        outgoingMessageHandler.sendObjectModified(canvasData);
+      });
 
       if (store.state.socket.isConnected) {
-        console.log(store.state.roomID.ID);
         loadCanvas();
       }
     };
@@ -662,168 +662,20 @@ export default defineComponent({
 
       canvasData.setViewportTransform([zoom, 0, 0, zoom, 0, 0]);
     };
+
     // Event Handler for every type of message recieved
     socket.addEventListener('message', (message) => {
-      // const msg = JSON.parse(message.data.ToString());
-      const msg = JSON.parse(message.data);
-      // console.log(msg.msgType);
-      let objct : fabric.Object;
-      const parsedMsg = JSON.parse(msg.msg);
-      switch (msg.msgType) {
-        case 'Addition': {
-          const parsedObject = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
-          console.log(parsedObject.get('type'));
-          switch (parsedObject.get('type')) {
-            case 'rectWithID': {
-              objct = new fabric.RectWithID(JSON.parse(parsedMsg[1]));
-              break;
-            }
-            case 'circleWithID': {
-              objct = new fabric.CircleWithID(JSON.parse(parsedMsg[1]));
-              break;
-            }
-            case 'lineWithID': {
-              const tempObject = JSON.parse(parsedMsg[1]);
-              const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
-              objct = new fabric.LineWithID(points, JSON.parse(parsedMsg[1]));
-              break;
-            }
-            case 'pathWithID': {
-              const tempObject = JSON.parse(parsedMsg[1]);
-              objct = new fabric.PathWithID(tempObject.path, tempObject);
-              break;
-            }
-            default: {
-              objct = new fabric.ObjectWithID(JSON.parse(parsedMsg[1]));
-            }
-          }
-          canvasData.add(objct);
-          console.log(canvasData.getObjects());
-          objct.setCoords();
-          canvasData.renderAll();
-          break;
-        }
-        case 'Deletion': {
-          const deletionIDs = parsedMsg;
-          deletionIDs.forEach((ID : string) => {
-            canvasData.getObjects().forEach((object : fabric.ObjectWithID) => {
-              if (object.get('id') === ID) {
-                canvasData.remove(object);
-              }
-            });
-          });
-          break;
-        }
-        case 'Clearing': {
-          canvasData.clear();
-          break;
-        }
-        case 'Modified': {
-          console.log(parsedMsg);
-          parsedMsg[1].forEach((element : any) => {
-            const scaledCanvasObject = new fabric.ObjectWithID(JSON.parse(element));
-            console.log('Scaled Object:');
-            console.log(scaledCanvasObject);
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === scaledCanvasObject.get('id')) {
-                canvasObject.set({
-                  scaleX: scaledCanvasObject.get('scaleX'),
-                  scaleY: scaledCanvasObject.get('scaleY'),
-                  top: scaledCanvasObject.get('top'),
-                  left: scaledCanvasObject.get('left'),
-                  angle: scaledCanvasObject.get('angle'),
-                  skewX: scaledCanvasObject.get('skewX'),
-                  skewY: scaledCanvasObject.get('skewY'),
-                });
-                canvasObject.setCoords();
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Selection': {
-          console.log(parsedMsg);
-          parsedMsg.forEach((id : any) => {
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === id) {
-                canvasObject.set({
-                  selectable: false,
-                  evented: false,
-                  opacity: 0.5,
-
-                });
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Deselection': {
-          console.log('Got Here');
-          console.log(parsedMsg);
-          parsedMsg.forEach((id : any) => {
-            canvasData.getObjects().forEach((canvasObject : fabric.ObjectWithID) => {
-              if (canvasObject.get('id') === id) {
-                canvasObject.set({
-                  selectable: true,
-                  evented: true,
-                  opacity: 1,
-
-                });
-              }
-            });
-          });
-          canvasData.renderAll();
-          break;
-        }
-        case 'Loading': {
-          canvasData.clear();
-          parsedMsg.forEach((element : string) => {
-            const object = new fabric.ObjectWithID(JSON.parse(element));
-            switch (object.get('type')) {
-              case 'rectWithID': {
-                canvasData.add(new fabric.RectWithID(JSON.parse(element)));
-                break;
-              }
-              case 'circleWithID': {
-                canvasData.add(new fabric.CircleWithID(JSON.parse(element)));
-                break;
-              }
-              case 'lineWithID': {
-                const tempObject = JSON.parse(element);
-                const points = [tempObject.x1, tempObject.y1, tempObject.x2, tempObject.y2];
-                canvasData.add(new fabric.LineWithID(points, tempObject));
-                break;
-              }
-              case 'pathWithID': {
-                const tempObject = JSON.parse(element);
-                canvasData.add(new fabric.PathWithID(tempObject.path, tempObject));
-                break;
-              }
-              default: {
-                console.log('Unknown type');
-              }
-            }
-          });
-          break;
-        }
-        default: {
-          console.log('unknown message');
-        }
-      }
+      // TODO: Import needs to be changed? Don't like calling default
+      handleIncomingMessage.default(canvasData, message);
       canvasData.renderAll();
     });
+
     // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
     onBeforeUnmount(() => window.removeEventListener('resize', resizeCanvas));
 
     const printCanvasToConsole = () => {
       console.dir(canvasData.toObject());
-    };
-
-    const sendCanvasToServer = () => {
-      axios.post('./api/canvas/addobj', canvasData.toObject());
     };
 
     const getDogFromServer = () => {
@@ -895,7 +747,6 @@ export default defineComponent({
       lineThickness,
       thicknessOptions,
       printCanvasToConsole,
-      sendCanvasToServer,
       getDogFromServer,
       getLineFromServer,
       getRectFromServer,
@@ -903,6 +754,8 @@ export default defineComponent({
       getPenFromServer,
       loadCanvas,
       updateServer,
+      addText,
+      openFile,
       exportCanvasToSVG,
     };
   },
