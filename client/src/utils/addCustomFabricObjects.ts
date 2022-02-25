@@ -183,11 +183,11 @@ function createImageWithID(): void {
 function createITextWithID(): void {
   fabric.ITextWithID = fabric.util.createClass(fabric.IText, {
     type: ShapesWithID.text,
-    initialize(options: any) {
-      this.callSuper('initialize', options);
+    initialize(text: string, options?: fabric.ITextWithIDOptions) {
+      this.callSuper('initialize', text, options);
       // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
       // generate one at random.
-      this.set('id', options.id || getUUID());
+      this.set('id', options?.id || getUUID());
     },
     toObject() {
       return fabric.util.object.extend(this.callSuper('toObject'), {
