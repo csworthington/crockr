@@ -11,6 +11,8 @@ export interface Room {
 export interface ConnectedClients extends ws.WebSocket {
   name: string;
   id: string;
+  roomID: string;
+  userID: string;
 }
 export interface UpdateMessage {
   msgType: string;

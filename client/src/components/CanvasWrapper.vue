@@ -27,6 +27,7 @@
     <span><button @click="getRectFromServer">Get Rect</button></span>
     <span><button @click="getCircleFromServer">Get circle</button></span>
     <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
+      <span><button @click="leaveRoom">Leave</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -730,6 +731,12 @@ export default defineComponent({
       // Garbage collect the blob after window open
       URL.revokeObjectURL(svgUrl);
     };
+    const leaveRoom = () => {
+      outgoingMessageHandler.leaveRoom();
+      store.commit('roomID/updateID', '-1');
+      document.cookie = 'RoomID =';
+      router.push('/roomSelector');
+    };
 
     onMounted(initFabricCanvas);
     onMounted(() => {
@@ -757,6 +764,7 @@ export default defineComponent({
       addText,
       openFile,
       exportCanvasToSVG,
+      leaveRoom,
     };
   },
 });

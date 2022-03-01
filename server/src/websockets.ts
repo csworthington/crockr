@@ -1,7 +1,7 @@
 import * as ws from "ws";
 import { v4 as uuidv4 } from "uuid";
 import { ConnectedClients, UpdateMessage, Room } from "synchronization";
-
+import * as mongoController from "./UserSchema";
 const activeConnections = new  Set<ConnectedClients>();
 const rooms: (Room)[] = [];
 const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
@@ -149,7 +149,10 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       // Type: "Loading" Contents: [empty]
       case "Loading":{
         console.log("got here");
-        console.log(roomMsg);
+        socket.roomID = msg.roomID;
+        socket.userID = msg.msg;
+        // console.log(roomMsg);
+        mongoController.addUser(msg.msg, roomMsg.id );
         if(roomMsg != undefined){
           msg.msg = JSON.stringify(roomMsg.canvas[1]);
           socket.send(JSON.stringify(msg));
@@ -175,6 +178,15 @@ wsServer.on("connection", (socket: ConnectedClients) => {
          break;
 
       }
+      case "Leaving":{
+        const leftRoom = rooms.filter(obj => {
+          return obj.id = socket.roomID;
+        });
+        leftRoom[0].users.delete(socket);
+        mongoController.removeUser(socket.userID);
+        break;
+
+      }
       default: {
         console.log("Recieved Unknown update");
       }
@@ -189,9 +201,11 @@ wsServer.on("connection", (socket: ConnectedClients) => {
         if(socket.id === sockets.id){
           activeConnections.delete(sockets);
         }
-        else{
-          //sockets.send(socket.name  + " disconnected");
-        }
+       const leftRoom = rooms.filter(obj => {
+         return obj.id = socket.roomID;
+       });
+       leftRoom[0].users.delete(sockets);
+       console.log(leftRoom[0].users);
       });
 
   });

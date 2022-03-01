@@ -16,20 +16,7 @@ import bluebird from "bluebird";
 const app = express();
 const mongoUrl = MONGODB_URI;
 mongoose.Promise = bluebird;
-mongoose.connect(mongoUrl).then(
-    () => { 
-        const testSchema = new mongoose.Schema({name: "string"});
-        const Twist = mongoose.model("twist", testSchema);   
-        console.log( `Connected to the following mongo url${mongoUrl}`);
-        Twist.create({ name: "small" }, function (err, twist) {
-            // saved!
-          });
-        /** ready to use. The `mongoose.connect()` promise resolves to undefined. */ 
-    },
-).catch(err => {
-    console.log(`MongoDB connection error. Please make sure MongoDB is running. ${err}`);
-    // process.exit();
-});
+
 // Set up configuration for Express
 app.set("port", process.env.PORT || 3000);
 app.use(compression());

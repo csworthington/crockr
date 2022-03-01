@@ -58,6 +58,14 @@ export function sendObjectAdded(canvas: fabric.Canvas): void {
   };
   updateServer(addMsg);
 }
+export function leaveRoom(): void {
+  const leaveMsg : UpdateMessage = {
+    msgType: 'Leaving',
+    roomID: store.state.roomID.ID,
+    msg: '',
+  };
+  updateServer(leaveMsg);
+}
 
 /**
  * Send a selection message to the server
@@ -186,7 +194,7 @@ export function sendLoadCanvasMessage(): void {
   const loadMsg : UpdateMessage = {
     msgType: 'Loading',
     roomID: store.state.roomID.ID,
-    msg: '',
+    msg: store.state.userID.ID,
   };
   updateServer(loadMsg);
 }
