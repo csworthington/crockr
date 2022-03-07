@@ -296,7 +296,7 @@ function createEquationWithID(): void {
 
   fabric.EquationWithID.fromURL = function (
     url: string,
-    callback?: (image: fabric.EquationWithID) => void,
+    callback?: (equation: fabric.EquationWithID) => void,
     eqnOptions?: fabric.IEquationWithIDOptions,
   ): void {
     fabric.util.loadImage(

@@ -158,7 +158,7 @@ declare global {
 
       applyFilters(filters?: IBaseFilter[]): EquationWithID;
 
-      static fromURL(url: string, callback?: (eqn: fabric.IEquationWithIDOptions) => void, eqnOptions?: IEquationWithIDOptions): void;
+      static fromURL(url: string, callback?: (eqn: fabric.EquationWithID) => void, eqnOptions?: IEquationWithIDOptions): void;
 
       static fromObject(object: any, callback: any): EquationWithID;
     }

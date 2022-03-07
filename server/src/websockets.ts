@@ -53,7 +53,7 @@ wsServer.on("connection", (socket: ConnectedClients) => {
           if(roomMsg.lockedObjects[1].includes(id) === false){
             roomMsg.lockedObjects[0].push(socket.id);
             roomMsg.lockedObjects[1].push(id);
-  
+
           }
         });
         roomMsg.users.forEach((sockets: ConnectedClients) =>{
@@ -72,7 +72,7 @@ wsServer.on("connection", (socket: ConnectedClients) => {
             const x = roomMsg.lockedObjects[1].indexOf(id);
             roomMsg.lockedObjects[0].splice(x,1);
             roomMsg.lockedObjects[1].splice(x,1);
-  
+
           }
           roomMsg.users.forEach((sockets: ConnectedClients) =>{
             if(socket.id !== sockets.id){
@@ -133,8 +133,8 @@ wsServer.on("connection", (socket: ConnectedClients) => {
         });
         break;
       }
-      case "Clearing":{    
-           
+      case "Clearing":{
+
         roomMsg.canvas[1] = [];
         roomMsg.canvas[0] = [];
         roomMsg.lockedObjects[0] = [];
@@ -195,7 +195,7 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       });
 
   });
-  
+
 });
 export const getRooms = () => {
   return roomData;
