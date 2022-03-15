@@ -42,7 +42,8 @@ export function sendObjectModified(
 
   const movingMessage : UpdateMessage = {
     msgType: 'Modified',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(scaledObjects),
   };
   updateServer(movingMessage);
@@ -53,7 +54,8 @@ export function sendObjectAdded(canvas: fabric.Canvas): void {
   const addedId = addedObject.get('id');
   const addMsg : UpdateMessage = {
     msgType: 'Addition',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify([addedId, JSON.stringify(addedObject)]),
   };
   updateServer(addMsg);
@@ -61,10 +63,20 @@ export function sendObjectAdded(canvas: fabric.Canvas): void {
 export function leaveRoom(): void {
   const leaveMsg : UpdateMessage = {
     msgType: 'Leaving',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: '',
   };
   updateServer(leaveMsg);
+}
+export function endRoom(): void {
+  const endMsg : UpdateMessage = {
+    msgType: 'EndRoom',
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
+    msg: '',
+  };
+  updateServer(endMsg);
 }
 
 /**
@@ -90,8 +102,9 @@ export function sendObjectSelected(
 
   updateServer({
     msgType: 'Selection',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
     msg: JSON.stringify(selectedIds),
+    roomID: store.state.userID.roomID,
   });
 }
 
@@ -117,7 +130,8 @@ export function sendObjectSelectionUpdated(
   });
   const selectionUpdate : UpdateMessage = {
     msgType: 'Selection',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(selectedIds),
   };
   updateServer(selectionUpdate);
@@ -130,7 +144,8 @@ export function sendObjectSelectionUpdated(
   const deselectedId = selectedObjects.filter((x) => !activeObjectIDS.includes(x));
   const deselectMsg : UpdateMessage = {
     msgType: 'Deselection',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(deselectedId),
   };
   updateServer(deselectMsg);
@@ -155,7 +170,8 @@ export function sendObjectSelectionCleared(
 
   const deselectMsg : UpdateMessage = {
     msgType: 'Deselection',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(deselectedId),
   };
   updateServer(deselectMsg);
@@ -172,7 +188,8 @@ export function sendObjectDeleted(
   });
   const deleteMsg : UpdateMessage = {
     msgType: 'Deletion',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(deletionIDs),
   };
   updateServer(deleteMsg);
@@ -183,7 +200,8 @@ export function sendClearBoardMessage(canvas: fabric.Canvas): void {
   // Send clear message to the server
   const clearMsg : UpdateMessage = {
     msgType: 'Clearing',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(''),
   };
   updateServer(clearMsg);
@@ -193,7 +211,8 @@ export function sendLoadCanvasMessage(): void {
   // Send load message to the server
   const loadMsg : UpdateMessage = {
     msgType: 'Loading',
-    roomID: store.state.roomID.ID,
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
     msg: store.state.userID.ID,
   };
   updateServer(loadMsg);
@@ -207,7 +226,8 @@ export function sendLocalLoadMessage(canvas: fabric.Canvas): void {
   });
   const loadMsg : UpdateMessage = {
     msgType: 'LocalLoad',
-    roomID: store.state.roomID.ID,
+    userID: store.state.roomID.ID,
+    roomID: store.state.userID.roomID,
     msg: JSON.stringify(loadedObjects),
   };
   updateServer(loadMsg);

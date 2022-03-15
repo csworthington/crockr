@@ -1,6 +1,8 @@
 import { fabric } from 'fabric';
+import { store } from '@/store/index';
 import { ShapesWithID } from '@/utils/addCustomFabricObjects';
 import { UpdateMessage } from './typings.d';
+import router from '@/router';
 
 /**
  * Handle an incoming object addition message
@@ -8,6 +10,7 @@ import { UpdateMessage } from './typings.d';
  * @param {Array<string>} objectToAdd String array, where parsedMessage[0] is the object UUID,
  * and parsedMessage[1] is the serialized object
  */
+
 function handleAddition(
   canvas: fabric.Canvas,
   objectToAdd: Array<string>,
@@ -239,6 +242,7 @@ function handleLoading(
 export default function receiveMessage(
   canvas: fabric.Canvas,
   message: MessageEvent,
+  document: any,
 ): void {
   const messageData : UpdateMessage = JSON.parse(message.data);
 
@@ -275,6 +279,20 @@ export default function receiveMessage(
     case 'Loading': {
       const serializedObjects: Array<string> = JSON.parse(messageData.msg);
       handleLoading(canvas, serializedObjects);
+      break;
+    }
+    case 'TA': {
+      const endRoomBtn = document.createElement('button');
+      endRoomBtn.innerHTML = 'End Room';
+      endRoomBtn.id = 'endRoomBtn';
+      document.body.appendChild(endRoomBtn);
+      break;
+    }
+    case 'EndRoom': {
+      store.commit('roomID/updateID', '-1');
+      // eslint-disable-next-line no-param-reassign
+      document.cookie = 'RoomID =';
+      router.push('/roomSelector');
       break;
     }
     default: {

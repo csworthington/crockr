@@ -502,6 +502,13 @@ export default defineComponent({
       }
       outgoingMessageHandler.sendObjectDeleted(canvasData);
     };
+    const endRoom = () => {
+      document.getElementById('endRoomBtn')!.remove();
+      outgoingMessageHandler.endRoom();
+      store.commit('userID/updateRoomID', '-1');
+      document.cookie = 'RoomID =';
+      router.push('/roomSelector');
+    };
 
     /**
      * Clear the canvas of all objects when the user selects the clear button
@@ -667,7 +674,10 @@ export default defineComponent({
     // Event Handler for every type of message recieved
     socket.addEventListener('message', (message) => {
       // TODO: Import needs to be changed? Don't like calling default
-      handleIncomingMessage.default(canvasData, message);
+      handleIncomingMessage.default(canvasData, message, document);
+      if (document.getElementById('endRoomBtn') !== null) {
+        document.getElementById('endRoomBtn')!.onclick = endRoom;
+      }
       canvasData.renderAll();
     });
 
@@ -733,8 +743,7 @@ export default defineComponent({
     };
     const leaveRoom = () => {
       outgoingMessageHandler.leaveRoom();
-      store.commit('roomID/updateID', '-1');
-      document.cookie = 'RoomID =';
+      store.commit('userID/updateRoomID', '-1');
       router.push('/roomSelector');
     };
 

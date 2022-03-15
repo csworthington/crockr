@@ -33,7 +33,7 @@ export default defineComponent({
       }).then((value) => {
         if (value.data === true) {
           console.log('yay');
-          store.commit('roomID/updateID', id);
+          store.commit('userID/updateroomID', id);
           console.log(store.state.roomID.ID);
           router.push('/canvas');
         }
@@ -44,15 +44,15 @@ export default defineComponent({
       const roomCode = <HTMLInputElement> document.getElementById('passCode');
       axios.get('./api/rooms/tryPass', {
         params: {
+          userID: store.state.userID.ID,
           pass: roomCode.value,
           roomID: choosenRoom,
         },
       }).then((value) => {
         if (value.data) {
           console.log('yay');
-          store.commit('roomID/updateID', choosenRoom);
-          document.cookie = `RoomID = ${choosenRoom}`;
-          console.log(store.state.roomID.ID);
+          store.commit('userID/updateRoomID', choosenRoom);
+          console.log(store.state.userID.ID);
           router.push('/canvas');
         }
       });
@@ -75,8 +75,8 @@ export default defineComponent({
         }
       });
     }
-    if (retrievedCookie.length > 1) {
-      handleCookie(retrievedCookie[1].split('=')[1]);
+    if (store.state.userID.roomID !== '-1') {
+      router.push('/canvas');
     }
     roomSetup();
     function routeToCreation() {

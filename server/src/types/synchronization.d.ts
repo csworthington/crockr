@@ -7,6 +7,7 @@ export interface Room {
   lockedObjects: string[][];
   id: string;
   pass: string;
+  taID: string;
 }
 export interface ConnectedClients extends ws.WebSocket {
   name: string;
@@ -16,7 +17,7 @@ export interface ConnectedClients extends ws.WebSocket {
 }
 export interface UpdateMessage {
   msgType: string;
-  roomID: string;
+  userID: string;
   msg: string;
 }
 

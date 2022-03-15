@@ -27,6 +27,10 @@ const routes: Array<RouteRecordRaw> = [
     // this generates a separate chunk (about.[hash].js) for this route
     // which is lazy-loaded when the route is visited.
     component: () => import(/* webpackChunkName: "about" */ '../views/roomSelection.vue'),
+    beforeEnter(to, from) {
+      if (store.state.userID.roomID !== '-1') return { path: '/canvas' };
+      return true;
+    },
   },
   {
     path: '/RoomCreator',
@@ -41,7 +45,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Canvas',
     component: Canvas,
     beforeEnter(to, from) {
-      if (store.state.roomID.ID === '-1') return { path: '/roomSelector' };
+      if (store.state.userID.roomID === '-1') return { path: '/roomSelector' };
       return true;
     },
   },

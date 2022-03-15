@@ -3,6 +3,7 @@ import compression from "compression";
 import bodyParser from "body-parser";
 import flash from "express-flash";
 import lusca from "lusca";
+import * as mongoController from "./UserSchema";
 
 import * as uuidController from "./controllers/uuid";
 import * as canvasController from "./controllers/canvas/canvas";
@@ -37,6 +38,7 @@ app.locals.replaceCanvas = (newCanvas: Record<string, any>): void => {
 /**
  * Set up Primary App Routes
  */
+mongoController.resetDatabase();
 app.get("/api/uuid", uuidController.getUUID);
 app.post("/api/canvas/addobj", canvasController.addObject);
 app.post("/api/web",  function (req, res) {
@@ -54,5 +56,6 @@ app.get("/api/rooms/trypass", roomsController.tryPass);
 app.get("/api/rooms/createroom", roomsController.createRoom);
 app.get("/api/rooms/handleCookie", roomsController.handleCookie);
 app.get("/api/rooms/getuuid", roomsController.getUUID);
+app.get("/api/rooms/getroomID", roomsController.getRoomID);
 
 export default app;
