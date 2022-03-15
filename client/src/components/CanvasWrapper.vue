@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h3>Room is "room"</h3>
+    <h3>Room is "{{ roomName }}"</h3>
   </div>
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
@@ -40,10 +40,18 @@
     </div>
   <div>
     <span><button @click="addText()">Add Custom Text</button></span>
-<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
-    <span><button @click="openFile()">
-      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-       </button></span>
+    <span>
+      <button @click="openFile()">
+        <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+      </button>
+    </span>
+    <span>
+      <button type="button"
+              class="btn btn-primary"
+              @click="handleEquationButton">
+      {{ equationButtonText }}
+    </button>
+    </span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -51,6 +59,11 @@
   <div>
     <WebSocketStatusIndicator />
   </div>
+  <EquationEditor :modalID="MODAL_ID"
+                  :equation="equationLatex"
+                  :equationID="equationID"
+                  @update:equation="getEquationUpdate"
+  ></EquationEditor>
 </template>
 
 <script lang="ts">
@@ -69,18 +82,20 @@ import {
 } from 'vue';
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
+import { Modal } from 'bootstrap';
 import { StoreKey } from '@/symbols';
 import ColourPicker from '@/components/ToolPalette/ColourPicker.vue';
 import getUUID from '@/utils/id-generator';
 import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
-import router from '@/router';
+import EquationEditor, { EquationEditorUpdate } from '@/components/EquationEditor.vue';
 
 import { UpdateMessage } from '@/services/synchronization/typings.d';
 import { updateServer } from '@/services/synchronization/outgoingMessageHandler';
 import * as outgoingMessageHandler from '@/services/synchronization/outgoingMessageHandler';
 import * as handleIncomingMessage from '@/services/synchronization/incomingMessageHandler';
+import { ShapesWithID } from '@/utils/addCustomFabricObjects';
 
 enum ToolType {
   None = 'NONE',
@@ -95,6 +110,7 @@ export default defineComponent({
   name: 'CanvasWrapper',
   components: {
     ColourPicker,
+    EquationEditor,
     WebSocketStatusIndicator,
   },
   setup(props) {
@@ -122,6 +138,8 @@ export default defineComponent({
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
 
+    const roomName = store.state.roomID.ID;
+
     let enableSelectionMessageSending = true;
 
     // determines how thick line tool and pen tool are
@@ -134,6 +152,12 @@ export default defineComponent({
     ];
     const canvasRatio = (16 / 6); // Aspect ratio of the canvas. Currently 16:6
 
+    const MODAL_ID = 'canvas-equation-editor';
+
+    const equationButtonText: Ref<string> = ref('New Equation');
+    const equationLatex: Ref<string> = ref('');
+    const equationID: Ref<string> = ref('');
+
     // Primary tool colour. Stored in Vuex Store
     const primaryColour: WritableComputedRef<string> = computed({
       get(): string {
@@ -143,6 +167,22 @@ export default defineComponent({
         store.commit('colourPalette/updatePrimaryToolColour', newValue);
       },
     });
+
+    const getObjectByID = (canvas: fabric.Canvas, id: string): fabric.ObjectWithID | null => {
+      canvas.getObjects().forEach((
+        obj: fabric.ObjectWithID,
+        index: number,
+      // eslint-disable-next-line consistent-return
+      ): fabric.ObjectWithID | undefined => {
+        if (obj.get('id') === id) {
+          return obj;
+        }
+        if (index === canvas.getObjects().length - 1) {
+          return undefined;
+        }
+      });
+      return null;
+    };
 
     function addText() {
       isObjectBeingAdded = true;
@@ -158,6 +198,28 @@ export default defineComponent({
       canvasData.setActiveObject(oText);
       isObjectBeingAdded = false;
       outgoingMessageHandler.sendObjectAdded(canvasData);
+    }
+
+    function addImageToCanvasFromURL(url: string) {
+      fabric.ImageWithID.fromURL(url, (image) => {
+        image.set({
+          left: 100,
+          top: 60,
+        });
+        image.scaleToWidth(200);
+        canvasData.add(image);
+        canvasData.setActiveObject(image);
+
+        // Set image src
+        image.set('src', image.getSrc());
+
+        // Send image to server
+        outgoingMessageHandler.sendObjectAdded(canvasData);
+        isObjectBeingAdded = false;
+
+        // Once image has been added, reenable sending of selection messages
+        enableSelectionMessageSending = true;
+      });
     }
 
     // adds image to the canvas
@@ -178,27 +240,30 @@ export default defineComponent({
           const imgObj = new Image();
 
           imgObj.src = reader.result as string;
-          imgObj.onload = function handleImage() {
-            fabric.ImageWithID.fromURL(imgObj.src, (image) => {
-              image.set({
-                left: 100,
-                top: 60,
-              });
-              image.scaleToWidth(200);
-              canvasData.add(image);
-              canvasData.setActiveObject(image);
-
-              // Set image src
-              image.set('src', image.getSrc());
-
-              // Send image to server
-              outgoingMessageHandler.sendObjectAdded(canvasData);
-              isObjectBeingAdded = false;
-
-              // Once image has been added, reenable sending of selection messages
-              enableSelectionMessageSending = true;
-            });
+          imgObj.onload = () => {
+            addImageToCanvasFromURL(imgObj.src);
           };
+          // imgObj.onload = function handleImage() {
+          //   fabric.ImageWithID.fromURL(imgObj.src, (image) => {
+          //     image.set({
+          //       left: 100,
+          //       top: 60,
+          //     });
+          //     image.scaleToWidth(200);
+          //     canvasData.add(image);
+          //     canvasData.setActiveObject(image);
+
+          //     // Set image src
+          //     image.set('src', image.getSrc());
+
+          //     // Send image to server
+          //     outgoingMessageHandler.sendObjectAdded(canvasData);
+          //     isObjectBeingAdded = false;
+
+          //     // Once image has been added, reenable sending of selection messages
+          //     enableSelectionMessageSending = true;
+          //   });
+          // };
         };
       };
     }
@@ -492,6 +557,58 @@ export default defineComponent({
       }
     }
 
+    const addEquationToCanvas = (eqnUpdate: EquationEditorUpdate) => {
+      fabric.EquationWithID.fromURL(eqnUpdate.dataURL, (eqnImg) => {
+        eqnImg.set({
+          left: 100,
+          top: 60,
+        });
+        eqnImg.scaleToWidth(200);
+        canvasData.add(eqnImg);
+        canvasData.setActiveObject(eqnImg);
+
+        // Set image src
+        eqnImg.set('src', eqnImg.getSrc());
+        eqnImg.set('latex', eqnUpdate.texEquation);
+
+        // Send image to server
+        outgoingMessageHandler.sendObjectAdded(canvasData);
+        isObjectBeingAdded = false;
+
+        // Once image has been added, reenable sending of selection messages
+        enableSelectionMessageSending = true;
+      });
+    };
+
+    const getEquationUpdate = (equation: EquationEditorUpdate) => {
+      // Find if id already exists on canvas
+      const equationObj = getObjectByID(canvasData, equation.id);
+      if (equationObj) {
+        equationObj.set('latex');
+      }
+      addEquationToCanvas(equation);
+    };
+
+    const handleEquationButton = () => {
+      // See if an equation is selected
+      const activeObjects = canvasData.getActiveObjects();
+
+      activeObjects.forEach((element) => {
+        if (element.get('type') === ShapesWithID.equation) {
+          console.log('equation is selected');
+          equationButtonText.value = 'Edit Equation';
+          equationLatex.value = (element as fabric.EquationWithID).get('latex');
+          equationID.value = (element as fabric.EquationWithID).get('id') || 'NO ID!';
+        }
+      });
+
+      // Toggle modal
+      const modalDiv = document.getElementById(MODAL_ID);
+      if (modalDiv) {
+        Modal.getOrCreateInstance(modalDiv).show();
+      }
+    };
+
     /**
      * Delete a specific object when the user presses the delete button
      */
@@ -583,7 +700,7 @@ export default defineComponent({
       // Set the brush to be the brush with the ID attached
       canvasData.freeDrawingBrush = new fabric.PencilBrushWithID(canvasData);
 
-      canvasData.on('selection:created', () => {
+      canvasData.on('selection:created', (evt) => {
         if (enableSelectionMessageSending) {
           // Send selection update to the server
           outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
@@ -751,6 +868,7 @@ export default defineComponent({
     onMounted(() => {
       handleToolChange(ToolType.Select);
     });
+
     return {
       resizeCanvas,
       tool,
@@ -774,6 +892,13 @@ export default defineComponent({
       openFile,
       exportCanvasToSVG,
       leaveRoom,
+      roomName,
+      getEquationUpdate,
+      MODAL_ID,
+      equationButtonText,
+      equationLatex,
+      equationID,
+      handleEquationButton,
     };
   },
 });

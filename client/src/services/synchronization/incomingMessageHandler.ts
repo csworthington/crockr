@@ -43,6 +43,26 @@ function handleAddition(
       objToAdd = new fabric.ITextWithID(tempObject.text, tempObject);
       break;
     }
+    case ShapesWithID.equation: {
+      const tempEqn: fabric.IEquationWithIDOptions = JSON.parse(objectToAdd[1]);
+      if (tempEqn !== undefined && tempEqn.src !== undefined) {
+        const imgStr = tempEqn.src;
+        if (imgStr) {
+          fabric.EquationWithID.fromURL(
+            imgStr,
+            (eqn) => {
+              canvas.add(eqn);
+              eqn.setCoords();
+              canvas.renderAll();
+            },
+            tempEqn,
+          );
+        }
+      } else {
+        throw new Error(`Equation object or src string is undefined, object = ${tempEqn}`);
+      }
+      break;
+    }
     case ShapesWithID.image: {
       const tempObject: fabric.IImageWithIDOptions = JSON.parse(objectToAdd[1]);
       if (tempObject !== undefined && tempObject.src !== undefined) {
@@ -208,6 +228,26 @@ function handleLoading(
       case ShapesWithID.text: {
         const tempObject = JSON.parse(element);
         canvas.add(new fabric.ITextWithID(tempObject.text, tempObject));
+        break;
+      }
+      case ShapesWithID.equation: {
+        const tempEqn: fabric.IEquationWithIDOptions = JSON.parse(element);
+        if (tempEqn !== undefined && tempEqn.src !== undefined) {
+          const imgStr = tempEqn.src;
+          if (imgStr) {
+            fabric.EquationWithID.fromURL(
+              imgStr,
+              (eqn) => {
+                canvas.add(eqn);
+                eqn.setCoords();
+                canvas.renderAll();
+              },
+              tempEqn,
+            );
+          }
+        } else {
+          throw new Error(`Equation object or src string is undefined, object = ${tempEqn}`);
+        }
         break;
       }
       case ShapesWithID.image: {

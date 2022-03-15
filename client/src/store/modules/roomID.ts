@@ -1,6 +1,6 @@
 /* eslint-disable no-param-reassign */
 export interface roomState {
-    ID:string;
+    ID: string;
   }
 const state: roomState = {
   ID: '-1',
