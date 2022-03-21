@@ -1,0 +1,44 @@
+@startuml
+
+class Object {
+  ----
+  fromObject(object: Object): Object
+}
+
+class Rect {}
+
+class RectWithID {
+  id: string
+  ----
+  initialize(options: IRectWithIDOptions): RectWithID
+  fromObject(object: RectWithID, callback: Function): RectWithID
+}
+
+class Image {
+  src: string
+  ----
+}
+
+class ImageWithID {
+  id: string
+  src: string
+  ----
+  fromURL(url: string, callback: Function, imgOptions: IImageWithIDOptions)
+}
+
+class EquationWithID {
+  id: string
+  src: string
+  latex: string
+  ----
+  initialize(element: string | HTMLImageElement | HTMLVideoElement, options: IEquationWithIDOptions)
+  fromURL(url: string, callback: Function, eqnOptions: IEquationWithIDOptions): void
+}
+
+Object <-- Rect
+Rect <-- RectWithID
+Object <-- Image
+Image <-right- ImageWithID
+Image <-- EquationWithID
+
+@enduml

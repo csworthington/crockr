@@ -174,18 +174,14 @@ export default defineComponent({
     });
 
     const getObjectByID = (canvas: fabric.Canvas, id: string): fabric.ObjectWithID | null => {
-      canvas.getObjects().forEach((
-        obj: fabric.ObjectWithID,
-        index: number,
-      // eslint-disable-next-line consistent-return
-      ): fabric.ObjectWithID | undefined => {
-        if (obj.get('id') === id) {
-          return obj;
-        }
-        if (index === canvas.getObjects().length - 1) {
-          return undefined;
-        }
-      });
+      const filteredObjArray = canvas.getObjects().filter((obj: fabric.ObjectWithID) => obj.get('id') === id);
+
+      if (filteredObjArray.length === 1) {
+        return filteredObjArray[0];
+      } if (filteredObjArray.length === 0) {
+        return null;
+      }
+      console.error(`Multiple objects found with ID = ${id}, objects = ${filteredObjArray}`);
       return null;
     };
 
@@ -593,28 +589,57 @@ export default defineComponent({
       });
     };
 
-    const getEquationUpdate = (equation: EquationEditorUpdate) => {
-      // Find if id already exists on canvas
-      const equationObj = getObjectByID(canvasData, equation.id);
-      if (equationObj) {
-        equationObj.set('latex');
-      }
-      addEquationToCanvas(equation);
+    const editEquationOnCanvas = (
+      oldEquation: fabric.EquationWithID,
+      newEquation: EquationEditorUpdate,
+    ) => {
+      // Change latex and src data url
+      oldEquation.set('latex', newEquation.texEquation);
+      oldEquation.setSrc(newEquation.dataURL);
+
+      // New Equation
+      fabric.EquationWithID.fromURL(newEquation.dataURL, (eqnImg) => {
+        canvasData.renderAll();
+      }, oldEquation.toObject());
     };
 
-    const handleEquationButton = () => {
+    const getEquationUpdate = (equation: EquationEditorUpdate) => {
+      // Find if id already exists on canvas
+      const filteredObj = getObjectByID(canvasData, equation.id);
+
+      if (filteredObj && filteredObj.isType(ShapesWithID.equation)) {
+        console.log('equation with this id already exists');
+        const eqnObj = filteredObj as fabric.EquationWithID;
+
+        editEquationOnCanvas(eqnObj, equation);
+
+        // Send outgoing update message
+        outgoingMessageHandler.sendObjectModified(canvasData);
+      } else {
+        addEquationToCanvas(equation);
+      }
+    };
+
+    const handleEquationSelection = () => {
       // See if an equation is selected
       const activeObjects = canvasData.getActiveObjects();
+      let equationSelectedFlag = false;
 
       activeObjects.forEach((element) => {
         if (element.get('type') === ShapesWithID.equation) {
-          console.log('equation is selected');
+          equationSelectedFlag = true;
           equationButtonText.value = 'Edit Equation';
           equationLatex.value = (element as fabric.EquationWithID).get('latex');
           equationID.value = (element as fabric.EquationWithID).get('id') || 'NO ID!';
         }
       });
 
+      if (!equationSelectedFlag) {
+        equationButtonText.value = 'New Equation';
+      }
+    };
+
+    const handleEquationButton = () => {
       // Toggle modal
       const modalDiv = document.getElementById(MODAL_ID);
       if (modalDiv) {
@@ -694,6 +719,11 @@ export default defineComponent({
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         outgoingMessageHandler.sendClearBoardMessage(canvasData);
       }
+
+      // Reset Equation Modal Values
+      equationButtonText.value = 'New Equation';
+      equationLatex.value = '';
+      equationID.value = '';
     };
 
     /**
@@ -735,6 +765,9 @@ export default defineComponent({
         deleteBtn.id = 'deleteBtn';
         deleteBtn.onclick = deleteSelected;
         document.body.appendChild(deleteBtn);
+
+        // Check if equation is selected
+        handleEquationSelection();
       });
 
       canvasData.on('selection:updated', () => {
@@ -744,6 +777,9 @@ export default defineComponent({
             selectedCheck,
           );
         }
+
+        // Check if equation is selected
+        handleEquationSelection();
       });
 
       canvasData.on('selection:cleared', () => {
@@ -759,6 +795,9 @@ export default defineComponent({
         if (elem != null) {
           elem.remove();
         }
+
+        // Check if equation is selected
+        handleEquationSelection();
       });
 
       /**

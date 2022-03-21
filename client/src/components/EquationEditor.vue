@@ -40,7 +40,7 @@
 
 <script lang="ts">
 import {
-  defineComponent, Ref, ref, watch, watchEffect,
+  defineComponent, onMounted, Ref, ref, watch, watchEffect,
 } from 'vue';
 import { Modal } from 'bootstrap';
 import katex from 'katex';
@@ -73,6 +73,17 @@ export default defineComponent({
   setup(props, { emit }) {
     const texEquation: Ref<string> = ref(props.equation);
 
+    /**
+     * Get a javascript instance of the equation editor modal
+     */
+    const getModalInstance = (): Modal => {
+      const modalDiv = document.getElementById(props.modalID);
+      if (modalDiv) {
+        return Modal.getOrCreateInstance(modalDiv);
+      }
+      throw new Error('No Modal instance found!');
+    };
+
     const emitEquation = (canvasDataURL: string) => {
       emit('update:equation', {
         id: props.equationID,
@@ -89,6 +100,19 @@ export default defineComponent({
           throwOnError: false,
           output: 'html',
         });
+      }
+    };
+
+    const onOpenEquationModal = (evt: Event) => {
+      renderEquationToHTML();
+    };
+
+    const attachModalShownEventListener = () => {
+      const modalDiv = document.getElementById(props.modalID);
+      if (modalDiv) {
+        modalDiv.addEventListener('shown.bs.modal', onOpenEquationModal);
+      } else {
+        console.error(`No modal div found with id "${props.modalID}`);
       }
     };
 
@@ -122,17 +146,24 @@ export default defineComponent({
             texEquation.value = '';
 
             // Close the Modal
-            const modalDiv = document.getElementById(props.modalID);
-            if (modalDiv) {
-              Modal.getOrCreateInstance(modalDiv).hide();
-            }
+            getModalInstance().hide();
           });
         }
       }
     };
 
-    watch(() => props.equation, (first: string, second: string) => {
-      console.log(`equation was ${first}, is now ${second}`);
+    /**
+     * Listen for change in equation prop, and update texEquation when changed
+     */
+    watch(() => props.equation, (currentEqn: string, prevEqn: string) => {
+      texEquation.value = currentEqn;
+    });
+
+    /**
+     * On component mount, attach the modal event listener
+     */
+    onMounted(() => {
+      attachModalShownEventListener();
     });
 
     return {
