@@ -24,9 +24,10 @@ export default defineComponent({
       axios.get('./api/rooms/createroom', {
         params: {
           name: name.value,
+          userID: store.state.userID.ID,
         },
       }).then((value) => {
-        store.commit('roomID/updateID', value.data);
+        store.commit('userID/updateRoomID', value.data);
         router.push('/canvas');
       });
     }
