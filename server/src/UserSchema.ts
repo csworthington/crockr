@@ -66,6 +66,26 @@ export const getRoomID = async (userId : string) => {
     console.log(`before return ${foundRoomID}`);
     return foundRoomID;     
 };
+export const getCanEdit = async (userId : string) => {
+    let foundCanEdit: any = true;
+    console.log(`Initialized ${foundCanEdit}`);
+    await mongoose.connect(mongoUrl).then(async () => {
+        console.log("testing trigger");   
+        await User.findOne({userID: userId}).exec().then(async (user : any) => {
+            console.log(`roomID: ${user.canEdit}`);
+            console.log(foundCanEdit);
+            foundCanEdit = user.roomID;
+            console.log(foundCanEdit);
+
+        });
+    }
+    ).catch(err => {
+        console.log(`MongoDB connection error. Please make sure MongoDB is running. ${err}`);
+        // process.exit();
+    });
+    console.log(`before return ${foundCanEdit}`);
+    return foundCanEdit;     
+};
 export const setTA = async (userId: string, value: boolean) =>{
     const updateValue = {TA: value};
     console.log("Entered Ta SEt");

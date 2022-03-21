@@ -319,7 +319,7 @@ export default function receiveMessage(
     case 'Loading': {
       const data = JSON.parse(messageData.msg);
       const serializedObjects: Array<string> = data[0];
-      store.commit('userID/updateCanEdit', data[1]);
+      store.commit('userID/updateRoomEdit', data[1]);
       handleLoading(canvas, serializedObjects);
       break;
     }

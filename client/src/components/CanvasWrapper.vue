@@ -532,6 +532,8 @@ export default defineComponent({
       mouseEventsOn();
       canvasData.isDrawingMode = false;
       // eslint-disable-next-line max-len
+      console.log(`permissions are room:${store.state.userID.roomEdit} and user: ${store.state.userID.canEdit}`);
+      // eslint-disable-next-line max-len
       if ((store.state.userID.canEdit === true && store.state.userID.roomEdit === true) || (store.state.userID.Ta === true)) {
         console.log(store.state.userID.canEdit);
         switch (clickedTool) {
