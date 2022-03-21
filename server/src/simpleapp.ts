@@ -3,15 +3,12 @@ import compression from "compression";
 import bodyParser from "body-parser";
 import flash from "express-flash";
 import lusca from "lusca";
-<<<<<<< HEAD
 import mongoose from "mongoose";
 import passport from "passport";
 import bluebird from "bluebird";
 import MongoStore from "connect-mongo";
 import { MONGODB_URI, SESSION_SECRET } from "./util/secrets";
-=======
 import * as mongoController from "./UserSchema";
->>>>>>> origin/dev
 
 import * as uuidController from "./controllers/uuid";
 import * as canvasController from "./controllers/canvas/canvas";
