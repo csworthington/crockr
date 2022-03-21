@@ -6,28 +6,10 @@
     <canvas id="main-canvas"></canvas>
   </div>
   <div id ="canvasButtons">
+    <!-- Drawing Modifiers -->
     <span>
       <ColourPicker />
     </span>
-    <span><button @click="handleToolChange('PEN')">Pen tool toggle</button></span>
-    <span><button @click="handleToolChange('RECTANGLE')"> Rectangle </button></span>
-    <span><button @click="handleToolChange('CIRCLE')"> Circle </button></span>
-    <span><button @click="handleToolChange('SELECT')"> select </button></span>
-    <span><button @click="clearBoard"> Clear </button></span>
-    <span><button @click="saveBoard"> Save </button></span>
-    <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
-    <span>
-    <input @click="loadBoard" id="file-input" type="file" name="name" style="display:none;"/>
-    </span>
-    <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
-    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
-    <span><button @click="getLineFromServer">Get Line</button></span>
-    <span><button @click="getPenFromServer">Get Pen</button></span>
-    <span><button @click="getRectFromServer">Get Rect</button></span>
-    <span><button @click="getCircleFromServer">Get circle</button></span>
-    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
-      <span><button @click="leaveRoom">Leave</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -37,21 +19,128 @@
         </option>
       </select>
     </span>
+
+    <ul class="nav nav-tabs" >
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="drawing-tools-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#drawing-tools-panel"
+                type="button"
+                role="tab"
+                aria-controls="drawing-tools-panel"
+                aria-selected="true">
+            Drawing Tools
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="advanced-tools-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#advanced-tools-panel"
+                type="button"
+                role="tab"
+                aria-controls="advanced-tools-panel"
+                aria-selected="false">
+            Advanced Tools
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="room-tools-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#room-tools-panel"
+                type="button"
+                role="tab"
+                aria-controls="room-tools-panel"
+                aria-selected="false">
+            Room Tools
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Drawing Tools -->
+      <div class="tab-pane fade show active"
+           id="drawing-tools-panel"
+           role="tabpanel"
+           aria-labelledby="drawing-tools-tab">
+        <div class="btn-group">
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('SELECT')">
+            Select
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('PEN')">
+            Pen
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('RECTANGLE')">
+            Rectangle
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('CIRCLE')">
+            Circle
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('LINE')">
+            Line
+          </button>
+        </div>
+      </div>
+
+      <!-- Advanced Shapes -->
+      <div class="tab-pane fade"
+           id="advanced-tools-panel"
+           role="tabpanel"
+           aria-labelledby="advanced-tools-tab">
+        <span><button @click="addText()">Text</button></span>
+        <span>
+          <button @click="openFile()">
+            <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+          </button>
+        </span>
+        <span>
+          <button type="button"
+                  class="btn btn-primary"
+                  @click="handleEquationButton">
+            {{ equationButtonText }}
+          </button>
+        </span>
+      </div>
+
+      <!-- Room Tools -->
+      <div class="tab-pane fade"
+           id="room-tools-panel"
+           role="tabpanel"
+           aria-labelledby="room-tools-tab">
+        <span><button @click="saveBoard"> Save </button></span>
+        <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
+        <input @click="loadBoard"
+                id="file-input"
+                type="file"
+                name="name"
+                style="display:none;" />
+        <span><button @click="clearBoard"> Clear Canvas</button></span>
+        <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+        <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
+        <span><button @click="leaveRoom">Leave</button></span>
+      </div>
+
+    </div>
+
+    <!-- Advanced Shapes -->
+
+    <!-- Room Tools -->
+
     </div>
   <div>
-    <span><button @click="addText()">Add Custom Text</button></span>
-    <span>
-      <button @click="openFile()">
-        <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-      </button>
-    </span>
-    <span>
-      <button type="button"
-              class="btn btn-primary"
-              @click="handleEquationButton">
-      {{ equationButtonText }}
-    </button>
-    </span>
+
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -64,8 +153,7 @@
                   :equationID="equationID"
                   @update:equation="getEquationUpdate"
   ></EquationEditor>
-  <UserConfig modalID="userconfig"
-  ></UserConfig>
+  <UserConfig modalID="userconfig" />
 </template>
 
 <script lang="ts">
