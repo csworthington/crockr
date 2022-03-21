@@ -5,7 +5,7 @@
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
   </div>
-  <div>
+  <div id ="canvasButtons">
     <span>
       <ColourPicker />
     </span>
@@ -64,6 +64,8 @@
                   :equationID="equationID"
                   @update:equation="getEquationUpdate"
   ></EquationEditor>
+  <UserConfig :modalID="userconfig"
+  ></UserConfig>
 </template>
 
 <script lang="ts">
@@ -90,12 +92,14 @@ import { useAxios } from '@/utils/useAxios';
 import { useGlobalWebSocket } from '@/plugins/websocket/useGlobalWebSocket';
 import WebSocketStatusIndicator from '@/components/websockets/WebSocketStatusIndicator.vue';
 import EquationEditor, { EquationEditorUpdate } from '@/components/EquationEditor.vue';
+import UserConfig, { updateUserList } from '@/components/UserConfig.vue';
 
 import { UpdateMessage } from '@/services/synchronization/typings.d';
 import { updateServer } from '@/services/synchronization/outgoingMessageHandler';
 import * as outgoingMessageHandler from '@/services/synchronization/outgoingMessageHandler';
 import * as handleIncomingMessage from '@/services/synchronization/incomingMessageHandler';
 import { ShapesWithID } from '@/utils/addCustomFabricObjects';
+import router from '@/router';
 
 enum ToolType {
   None = 'NONE',
@@ -111,6 +115,7 @@ export default defineComponent({
   components: {
     ColourPicker,
     EquationEditor,
+    UserConfig,
     WebSocketStatusIndicator,
   },
   setup(props) {
@@ -526,34 +531,39 @@ export default defineComponent({
       mouseEventsOff();
       mouseEventsOn();
       canvasData.isDrawingMode = false;
-      switch (clickedTool) {
-        case ToolType.Pen: {
-          tool.value = ToolType.Pen;
-          canvasData.isDrawingMode = true;
-          canvasData.freeDrawingBrush.color = primaryColour.value;
-          canvasData.freeDrawingBrush.width = lineThickness.value;
-          break;
+      if (store.state.userID.canEdit === true) {
+        console.log(store.state.userID.canEdit);
+        switch (clickedTool) {
+          case ToolType.Pen: {
+            tool.value = ToolType.Pen;
+            canvasData.isDrawingMode = true;
+            canvasData.freeDrawingBrush.color = primaryColour.value;
+            canvasData.freeDrawingBrush.width = lineThickness.value;
+            break;
+          }
+          case ToolType.Rectangle: {
+            tool.value = ToolType.Rectangle;
+            break;
+          }
+          case ToolType.Circle: {
+            tool.value = ToolType.Circle;
+            break;
+          }
+          case ToolType.Select: {
+            tool.value = ToolType.Select;
+            break;
+          }
+          case ToolType.Line: {
+            tool.value = ToolType.Line;
+            break;
+          }
+          default: {
+            tool.value = ToolType.None;
+            break;
+          }
         }
-        case ToolType.Rectangle: {
-          tool.value = ToolType.Rectangle;
-          break;
-        }
-        case ToolType.Circle: {
-          tool.value = ToolType.Circle;
-          break;
-        }
-        case ToolType.Select: {
-          tool.value = ToolType.Select;
-          break;
-        }
-        case ToolType.Line: {
-          tool.value = ToolType.Line;
-          break;
-        }
-        default: {
-          tool.value = ToolType.None;
-          break;
-        }
+      } else {
+        tool.value = ToolType.None;
       }
     }
 
@@ -625,6 +635,16 @@ export default defineComponent({
       store.commit('userID/updateRoomID', '-1');
       document.cookie = 'RoomID =';
       router.push('/roomSelector');
+    };
+    const userPermissions = () => {
+      updateUserList();
+      const usermodalDiv = document.getElementById('userconfig');
+      if (usermodalDiv) {
+        Modal.getOrCreateInstance(usermodalDiv).show();
+      }
+    };
+    const editPermissions = () => {
+      outgoingMessageHandler.toggleEdit();
     };
 
     /**
@@ -792,8 +812,16 @@ export default defineComponent({
     socket.addEventListener('message', (message) => {
       // TODO: Import needs to be changed? Don't like calling default
       handleIncomingMessage.default(canvasData, message, document);
+      // eslint-disable-next-line max-len
+      if (store.state.userID.canEdit === false && tool.value !== ToolType.None && !store.state.userID.Ta) {
+        handleToolChange(ToolType.None);
+      }
       if (document.getElementById('endRoomBtn') !== null) {
         document.getElementById('endRoomBtn')!.onclick = endRoom;
+        document.getElementById('usereditt')!.onclick = userPermissions;
+      }
+      if (document.getElementById('edit') !== null) {
+        document.getElementById('edit')!.onclick = editPermissions;
       }
       canvasData.renderAll();
     });

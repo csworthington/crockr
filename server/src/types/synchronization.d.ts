@@ -8,6 +8,7 @@ export interface Room {
   id: string;
   pass: string;
   taID: string;
+  edit:boolean;
 }
 export interface ConnectedClients extends ws.WebSocket {
   name: string;

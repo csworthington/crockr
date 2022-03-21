@@ -317,22 +317,43 @@ export default function receiveMessage(
       break;
     }
     case 'Loading': {
-      const serializedObjects: Array<string> = JSON.parse(messageData.msg);
+      const data = JSON.parse(messageData.msg);
+      const serializedObjects: Array<string> = data[0];
+      store.commit('userID/updateCanEdit', data[1]);
       handleLoading(canvas, serializedObjects);
       break;
     }
     case 'TA': {
+      store.commit('userID/updateTa', true);
       const endRoomBtn = document.createElement('button');
       endRoomBtn.innerHTML = 'End Room';
       endRoomBtn.id = 'endRoomBtn';
-      document.body.appendChild(endRoomBtn);
+      const toggleEdit = document.createElement('button');
+      toggleEdit.innerHTML = 'Toggle Edit';
+      toggleEdit.id = 'edit';
+      const userEdit = document.createElement('button');
+      userEdit.innerHTML = 'User permissions';
+      userEdit.id = 'usereditt';
+      document.getElementById('canvasButtons').appendChild(userEdit);
+      document.getElementById('canvasButtons').appendChild(endRoomBtn);
+      document.getElementById('canvasButtons').appendChild(toggleEdit);
       break;
     }
     case 'EndRoom': {
-      store.commit('roomID/updateID', '-1');
+      store.commit('userID/updateRoomID', '-1');
       // eslint-disable-next-line no-param-reassign
-      document.cookie = 'RoomID =';
       router.push('/roomSelector');
+      break;
+    }
+    case 'toggleEdit': {
+      store.commit('userID/updateCanEdit', !store.state.userID.canEdit);
+      // eslint-disable-next-line no-param-reassign
+      break;
+    }
+    case 'Editing': {
+      store.commit('userID/updateCanEdit', !store.state.userID.canEdit);
+      console.log('Flipped the edit with edit msg');
+      // eslint-disable-next-line no-param-reassign
       break;
     }
     default: {

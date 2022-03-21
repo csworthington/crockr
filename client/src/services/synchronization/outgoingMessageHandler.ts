@@ -78,6 +78,16 @@ export function endRoom(): void {
   };
   updateServer(endMsg);
 }
+export function toggleEdit(): void {
+  const toggleEditMsg : UpdateMessage = {
+    msgType: 'toggleEdit',
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
+    msg: '',
+  };
+  console.log('sending toggle msg');
+  updateServer(toggleEditMsg);
+}
 
 /**
  * Send a selection message to the server
@@ -231,4 +241,25 @@ export function sendLocalLoadMessage(canvas: fabric.Canvas): void {
     msg: JSON.stringify(loadedObjects),
   };
   updateServer(loadMsg);
+}
+export function kickUser(kickedUser : string): void {
+  // Send clear message to the server
+  const clearMsg : UpdateMessage = {
+    msgType: 'Kicked',
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
+    msg: JSON.stringify(kickedUser),
+  };
+  updateServer(clearMsg);
+}
+export function editing(userID : string, canEdit : boolean): void {
+  // Send clear message to the server
+  const toSendMsg = [userID, canEdit];
+  const clearMsg : UpdateMessage = {
+    msgType: 'Editing',
+    userID: store.state.userID.ID,
+    roomID: store.state.userID.roomID,
+    msg: JSON.stringify(toSendMsg),
+  };
+  updateServer(clearMsg);
 }

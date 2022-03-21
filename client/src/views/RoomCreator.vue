@@ -27,7 +27,7 @@ export default defineComponent({
           userID: store.state.userID.ID,
         },
       }).then((value) => {
-        store.commit('userID/roomID', value);
+        store.commit('userID/updateRoomID', value);
         router.push('/canvas');
       });
     }

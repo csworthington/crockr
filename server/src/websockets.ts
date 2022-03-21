@@ -4,8 +4,8 @@ import { ConnectedClients, UpdateMessage, Room } from "synchronization";
 import * as mongoController from "./UserSchema";
 const activeConnections = new  Set<ConnectedClients>();
 const rooms: (Room)[] = [];
-const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
-const secondaryRoom = <Room>{name: "Comp2804", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), edit: true, lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+const secondaryRoom = <Room>{name: "Comp2804", canvas:[[],[]], users: new Set([]), edit: true, lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
 rooms.push(mainRoom);
 rooms.push(secondaryRoom);
 let  x = 1;
@@ -157,7 +157,8 @@ wsServer.on("connection", (socket: ConnectedClients) => {
         socket.userID = msg.userID;
         // console.log(roomMsg);
         if(roomMsg != undefined){
-          msg.msg = JSON.stringify(roomMsg.canvas[1]);
+          const data = [roomMsg.canvas[1], roomMsg.edit];
+          msg.msg = JSON.stringify(data);
           socket.send(JSON.stringify(msg));
           msg.msgType = "Selection";
           msg.msg = JSON.stringify(roomMsg.lockedObjects[1]);
@@ -214,15 +215,39 @@ wsServer.on("connection", (socket: ConnectedClients) => {
 
         break;
       }
-      case "Permissions":{
-        const permArray = JSON.parse(msg.msg);
-        await mongoController.setCanEdit(permArray[0], permArray[1]);
-        const searchArray = Array.from(activeConnections);
-        const destSocket = searchArray.filter(obj => {
-          return obj.id == permArray[0];
+      case "toggleEdit":{
+        roomMsg.edit = !roomMsg.edit;
+        await roomMsg.users.forEach(async (sockets: ConnectedClients) =>{
+          if(socket.id !== sockets.id){
+            await mongoController.setCanEdit(sockets.userID, roomMsg.edit);
+            sockets.send(JSON.stringify(msg));
+          }
+        });  
+        break;
+      }
+      case "Editing":{
+        const parsedMsg = JSON.parse(msg.msg);
+        await mongoController.setCanEdit(parsedMsg[0], parsedMsg[1]);
+        activeConnections.forEach( (sockets: ConnectedClients) =>{
+          console.log("Got to the loop");
+          if(sockets.userID === parsedMsg[0]){
+            sockets.send(JSON.stringify(msg));
+          }
+        });  
+        break;
+      }
+      case "Kicked":{
+        const parsedMsg = JSON.parse(msg.msg);
+        console.log("got to kicking user");
+        console.log(parsedMsg);
+        mongoController.removeUser(parsedMsg);
+      activeConnections.forEach( (sockets: ConnectedClients) =>{
+          console.log("Got to the loop");
+          if(sockets.userID === parsedMsg){
+            msg.msgType = "EndRoom";
+            sockets.send(JSON.stringify(msg));
+          }
         });
-        destSocket[0].send(msg);
-
         break;
       }
       default: {

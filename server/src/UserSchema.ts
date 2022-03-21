@@ -106,6 +106,22 @@ export const setCanEdit = async (userId: string, value: boolean) =>{
         // process.exit();
     });
 };
+export const getAllUsers = async (room : string) =>{
+    let userList: any[] = [];
+    console.log("Entered user by room search");
+    await mongoose.connect(mongoUrl).then(async () => {
+        await User.find({roomID: room}).exec().then(async (users : any) => {
+            console.log(users);
+            userList = users;
+        });
+    }
+    ).catch(err => {
+        console.log(`MongoDB connection error. Please make sure MongoDB is running. ${err}`);
+        // process.exit();
+    });
+    return userList;
+};
+
 
 
     
