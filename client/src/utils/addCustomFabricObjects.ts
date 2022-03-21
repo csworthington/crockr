@@ -10,6 +10,7 @@ export enum ShapesWithID {
   pencilBrush = 'pencilBrushWithID',
   image = 'imageWithID',
   text = 'textWithID',
+  equation = 'equationWithID'
 }
 
 function createObjectWithId(): void{
@@ -183,11 +184,11 @@ function createImageWithID(): void {
 function createITextWithID(): void {
   fabric.ITextWithID = fabric.util.createClass(fabric.IText, {
     type: ShapesWithID.text,
-    initialize(options: any) {
-      this.callSuper('initialize', options);
+    initialize(text: string, options?: fabric.ITextWithIDOptions) {
+      this.callSuper('initialize', text, options);
       // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
       // generate one at random.
-      this.set('id', options.id || getUUID());
+      this.set('id', options?.id || getUUID());
     },
     toObject() {
       return fabric.util.object.extend(this.callSuper('toObject'), {
@@ -269,6 +270,50 @@ function createPencilBrushWithID(): void {
   });
 }
 
+function createEquationWithID(): void {
+  fabric.EquationWithID = fabric.util.createClass(fabric.ImageWithID, {
+    type: ShapesWithID.equation,
+    initialize(
+      element: string | HTMLImageElement | HTMLVideoElement,
+      options?: fabric.IEquationWithIDOptions,
+    ) {
+      this.callSuper('initialize', element, (options || {}));
+      // Set ID after calling superclass. If ID parameter is not given in IObjectOptions,
+      // generate one at random.
+      this.set('id', options?.id || getUUID());
+      this.set('latex', options?.latex);
+    },
+    toObject() {
+      return fabric.util.object.extend(this.callSuper('toObject'), {
+        id: this.get('id'),
+        latex: this.get('latex'),
+      });
+    },
+    toString() {
+      return `${this.callSuper('toString')} (id: ${this.id}) (latex: ${this.latex})`;
+    },
+  });
+
+  fabric.EquationWithID.fromURL = function (
+    url: string,
+    callback?: (equation: fabric.EquationWithID) => void,
+    eqnOptions?: fabric.IEquationWithIDOptions,
+  ): void {
+    fabric.util.loadImage(
+      url,
+      (eqn) => callback && callback(new fabric.EquationWithID(eqn, eqnOptions)),
+      null,
+      eqnOptions && eqnOptions.crossOrigin,
+    );
+  };
+
+  fabric.EquationWithID.fromObject = function (object: any, callback: any) {
+    console.dir(object);
+    // eslint-disable-next-line no-underscore-dangle
+    return <fabric.EquationWithID>fabric.Object._fromObject('EquationWithID', object, callback, '_element');
+  };
+}
+
 /**
  * Add all of the custom fabric objects to the global fabric object
  */
@@ -280,4 +325,5 @@ export default function addCustomFabricObjects(): void {
   createObjectWithId();
   createImageWithID();
   createITextWithID();
+  createEquationWithID();
 }

@@ -11,6 +11,7 @@ import { MONGODB_URI, SESSION_SECRET } from "./util/secrets";
 
 import * as uuidController from "./controllers/uuid";
 import * as canvasController from "./controllers/canvas/canvas";
+<<<<<<< HEAD
 import session from "express-session";
 
 // Create the Express server
@@ -21,12 +22,37 @@ mongoose.Promise = bluebird;
 
 mongoose.connect(mongoUrl).then(
     () => { /** ready to use. The `mongoose.connect()` promise resolves to undefined. */ },
+=======
+import * as roomsController from "./controllers/rooms/rooms";
+import * as webSocketController from "./websockets";
+import { MONGODB_URI, SESSION_SECRET } from "./util/secrets";
+import mongoose, { mongo } from "mongoose";
+import bluebird from "bluebird";
+
+// Create the Express server
+const app = express();
+const mongoUrl = MONGODB_URI;
+mongoose.Promise = bluebird;
+mongoose.connect(mongoUrl).then(
+    () => { 
+        const testSchema = new mongoose.Schema({name: "string"});
+        const Twist = mongoose.model("twist", testSchema);   
+        console.log( `Connected to the following mongo url${mongoUrl}`);
+        Twist.create({ name: "small" }, function (err, twist) {
+            // saved!
+          });
+        /** ready to use. The `mongoose.connect()` promise resolves to undefined. */ 
+    },
+>>>>>>> origin/add-equations-to-canvas
 ).catch(err => {
     console.log(`MongoDB connection error. Please make sure MongoDB is running. ${err}`);
     // process.exit();
 });
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> origin/add-equations-to-canvas
 // Set up configuration for Express
 app.set("port", process.env.PORT || 3000);
 app.use(compression());
@@ -71,5 +97,10 @@ app.get("/api/canvas/getline", canvasController.getLine);
 app.get("/api/canvas/getrect", canvasController.getRect);
 app.get("/api/canvas/getcircle", canvasController.getCircle);
 app.get("/api/canvas/getpen", canvasController.getPen);
+app.get("/api/rooms/getrooms", roomsController.getRooms);
+app.get("/api/rooms/trypass", roomsController.tryPass);
+app.get("/api/rooms/createroom", roomsController.createRoom);
+app.get("/api/rooms/handleCookie", roomsController.handleCookie);
+app.get("/api/rooms/getuuid", roomsController.getUUID);
 
 export default app;

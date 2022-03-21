@@ -1,24 +1,13 @@
 import { Object, BaseBrush } from "fabric/fabric-impl";
 
-export enum ShapesWithID {
-  object = 'objectWithID',
-  line = 'lineWithID',
-  circle = 'circleWithID',
-  rect = 'rectWithID',
-  path = 'pathWithID',
-  pencilBrush = 'pencilBrushWithID',
-  image = 'imageWithID',
-  text = 'textWithID',
-}
-
 declare global {
   namespace fabric {
     export interface IObjectWithIDOptions extends IObjectOptions {
       id?: string;
     }
 
-    export interface ObjectWithID extends IObservable<Object>, IObjectWithIDOptions, IObjectAnimation<Object> {}
-    export class ObjectWithID extends Object{}
+    export interface ObjectWithID extends IObservable<Object>, IObjectWithIDOptions, IObjectAnimation<Object> { }
+    export class ObjectWithID extends Object { }
 
     // Rectangle With ID Types
     export interface IRectWithIDOptions extends IRectOptions, IObjectWithIDOptions { }
@@ -121,40 +110,58 @@ declare global {
       static fromObject(object: any, callback?: Function): ITextWithID;
       selectAll(): ITextWithID;
       selectLine(selectionStart: number): ITextWithID;
-    /**
-     * Enters editing state
-     * @return {fabric.IText} thisArg
-     * @chainable
-     */
+      /**
+       * Enters editing state
+       * @return {fabric.IText} thisArg
+       * @chainable
+       */
       enterEditing(e?: MouseEvent): ITextWithID;
       exitEditing(): ITextWithID;
     }
 
 
-    // Image with ID
-    export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions { }
-    export interface ImageWithID extends Object, IImageWithIDOptions { }
-    // Image with ID
+    // Image with ID Types
     export interface IImageWithIDOptions extends IImageOptions, IObjectWithIDOptions {
       src?: string
     }
     export interface ImageWithID extends Image, IImageWithIDOptions { }
     export class ImageWithID extends Image {
 
-    constructor(element: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
+      constructor(element: string | HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions);
 
-    setElement(element: HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions): ImageWithID;
+      setElement(element: HTMLImageElement | HTMLVideoElement, options?: IImageWithIDOptions): ImageWithID;
 
-    setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): ImageWithID;
+      setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): ImageWithID;
 
-    applyFilters(filters?: IBaseFilter[]): ImageWithID;
+      applyFilters(filters?: IBaseFilter[]): ImageWithID;
 
-    static fromURL(url: string, callback?: (image: fabric.ImageWithID) => void, imgOptions?: IImageWithIDOptions): void;
+      static fromURL(url: string, callback?: (image: fabric.ImageWithID) => void, imgOptions?: IImageWithIDOptions): void;
 
-    static fromElement(element: SVGElement, callback: Function, options?: IImageWithIDOptions): ImageWithID;
+      static fromElement(element: SVGElement, callback: Function, options?: IImageWithIDOptions): ImageWithID;
 
-    static fromObject(object: any, callback: any): ImageWithID;
-  }
+      static fromObject(object: any, callback: any): ImageWithID;
+    }
+
+
+    // Equation with ID Types
+    export interface IEquationWithIDOptions extends IImageWithIDOptions {
+      latex: string
+    }
+    export interface EquationWithID extends ImageWithID, IEquationWithIDOptions { }
+
+    export class EquationWithID extends ImageWithID {
+      constructor(element: string | HTMLImageElement | HTMLVideoElement, options?: IEquationWithIDOptions);
+
+      setElement(element: HTMLImageElement | HTMLVideoElement, options?: IEquationWithIDOptions): EquationWithID;
+
+      setSrc(src: string, callback?: Function, options?: IImageWithIDOptions): EquationWithID;
+
+      applyFilters(filters?: IBaseFilter[]): EquationWithID;
+
+      static fromURL(url: string, callback?: (eqn: fabric.EquationWithID) => void, eqnOptions?: IEquationWithIDOptions): void;
+
+      static fromObject(object: any, callback: any): EquationWithID;
+    }
 
 
     // PencilBrush with ID Types

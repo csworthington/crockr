@@ -1,0 +1,71 @@
+@startuml Client Components
+
+class App {}
+
+class RouterView <<Plugin>> {}
+
+class Canvas <<Page>> {}
+
+class RoomCreator <<Page>> {}
+
+class RoomSelector <<Page>> {}
+
+class CanvasWrapper {}
+
+class WebSocketStatusIndicator {}
+
+class ColourPicker {}
+
+class EquationEditor {}
+
+class VuexStore <<Plugin>> {}
+
+class GlobalWebSocketPlugin <<Plugin>> {}
+
+class Axios <<Plugin>> {}
+
+class CookieService <<Plugin>> {}
+
+class WebSocketMessageHandler <<Service>> {}
+
+
+VuexStore -[hidden]> GlobalWebSocketPlugin
+GlobalWebSocketPlugin -[hidden]> RouterView
+RouterView -[hidden]> Axios
+Axios -[hidden]> CookieService
+
+App <-- RouterView
+
+App <-- VuexStore
+
+App <-- Axios
+
+App <-- CookieService
+
+App <-- GlobalWebSocketPlugin
+
+RouterView <-- Canvas
+
+RouterView <-- RoomSelector
+
+RouterView <-- RoomCreator
+
+Canvas <-- CanvasWrapper
+
+CanvasWrapper <-- WebSocketStatusIndicator
+
+CanvasWrapper <-- ColourPicker
+
+CanvasWrapper <-- EquationEditor
+
+CanvasWrapper <-- WebSocketMessageHandler
+
+VuexStore <.. CanvasWrapper
+
+VuexStore <.. ColourPicker
+
+GlobalWebSocketPlugin <.. WebSocketStatusIndicator
+
+GlobalWebSocketPlugin <.. WebSocketMessageHandler
+
+@enduml
