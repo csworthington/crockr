@@ -1,6 +1,8 @@
 import { fabric } from 'fabric';
+import { store } from '@/store/index';
 import { ShapesWithID } from '@/utils/addCustomFabricObjects';
 import { UpdateMessage } from './typings.d';
+import router from '@/router';
 
 /**
  * Handle an incoming object addition message
@@ -8,6 +10,7 @@ import { UpdateMessage } from './typings.d';
  * @param {Array<string>} objectToAdd String array, where parsedMessage[0] is the object UUID,
  * and parsedMessage[1] is the serialized object
  */
+
 function handleAddition(
   canvas: fabric.Canvas,
   objectToAdd: Array<string>,
@@ -288,6 +291,7 @@ function handleLoading(
 export default function receiveMessage(
   canvas: fabric.Canvas,
   message: MessageEvent,
+  document: any,
 ): void {
   const messageData : UpdateMessage = JSON.parse(message.data);
 
@@ -322,8 +326,44 @@ export default function receiveMessage(
       break;
     }
     case 'Loading': {
-      const serializedObjects: Array<string> = JSON.parse(messageData.msg);
+      const data = JSON.parse(messageData.msg);
+      const serializedObjects: Array<string> = data[0];
+      store.commit('userID/updateCanEdit', data[1]);
       handleLoading(canvas, serializedObjects);
+      break;
+    }
+    case 'TA': {
+      store.commit('userID/updateTa', true);
+      const endRoomBtn = document.createElement('button');
+      endRoomBtn.innerHTML = 'End Room';
+      endRoomBtn.id = 'endRoomBtn';
+      const toggleEdit = document.createElement('button');
+      toggleEdit.innerHTML = 'Toggle Edit';
+      toggleEdit.id = 'edit';
+      const userEdit = document.createElement('button');
+      userEdit.innerHTML = 'User permissions';
+      userEdit.id = 'usereditt';
+      document.getElementById('canvasButtons').appendChild(userEdit);
+      document.getElementById('canvasButtons').appendChild(endRoomBtn);
+      document.getElementById('canvasButtons').appendChild(toggleEdit);
+      break;
+    }
+    case 'EndRoom': {
+      store.commit('userID/updateRoomID', '-1');
+      // eslint-disable-next-line no-param-reassign
+      router.push('/roomSelector');
+      break;
+    }
+    case 'toggleEdit': {
+      console.log('room edit toggled');
+      store.commit('userID/updateRoomEdit', !store.state.userID.roomEdit);
+      // eslint-disable-next-line no-param-reassign
+      break;
+    }
+    case 'Editing': {
+      store.commit('userID/updateCanEdit', !store.state.userID.canEdit);
+      console.log('Flipped the edit with edit msg');
+      // eslint-disable-next-line no-param-reassign
       break;
     }
     default: {

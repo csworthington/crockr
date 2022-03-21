@@ -1,11 +1,11 @@
 import * as ws from "ws";
 import { v4 as uuidv4 } from "uuid";
 import { ConnectedClients, UpdateMessage, Room } from "synchronization";
-
+import * as mongoController from "./UserSchema";
 const activeConnections = new  Set<ConnectedClients>();
 const rooms: (Room)[] = [];
-const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
-const secondaryRoom = <Room>{name: "Comp2804", canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+const mainRoom = <Room>{name: "Sysc4005", canvas:[[],[]], users: new Set([]), edit: true, lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+const secondaryRoom = <Room>{name: "Comp2804", canvas:[[],[]], users: new Set([]), edit: true, lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
 rooms.push(mainRoom);
 rooms.push(secondaryRoom);
 let  x = 1;
@@ -28,22 +28,22 @@ wsServer.on("connection", (socket: ConnectedClients) => {
 
   // add new socket to the socket set
   activeConnections.add(socket);
-  const roomUpdate : UpdateMessage = {msgType: "roomUpdate", roomID:"",  msg: JSON.stringify(roomData)};
+  const roomUpdate : UpdateMessage = {msgType: "roomUpdate", userID:"",  msg: JSON.stringify(roomData)};
   socket.send(JSON.stringify(roomUpdate));
 
   // Handle incoming messages
-  socket.on("message", (message: Buffer) => {
+  socket.on("message", async (message: Buffer) => {
     // Create a message showing who sent what information
 
     const msg = JSON.parse(message.toString());
     console.log("test msg:");
     console.log(msg);
-    console.log("ID array:");
     const filter = rooms.filter(obj => {
       return obj.id === msg.roomID;
     }
     );
     const roomMsg = filter[0];
+    console.log(`Found Room: ${roomMsg}`);
     switch (msg.msgType) {
       case "Selection": {
         // TODO: Test if received ID exists in room board
@@ -86,12 +86,15 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       }
       case "Addition":{
         const  parsedMsg : string = JSON.parse(msg.msg);
+        console.log(roomMsg);
         roomMsg.canvas[0].push(parsedMsg[0]);
         roomMsg.canvas[1].push(parsedMsg[1]);
         console.log(roomMsg.canvas);
         roomMsg.users.forEach((sockets: ConnectedClients) =>{
+          console.log("test cycle");
           if(socket.id !== sockets.id){
             sockets.send(JSON.stringify(msg));
+            console.log("sent addition");
           }
         });
         break;
@@ -148,17 +151,29 @@ wsServer.on("connection", (socket: ConnectedClients) => {
       }
       // Type: "Loading" Contents: [empty]
       case "Loading":{
-        console.log("got here");
-        console.log(roomMsg);
+
+        console.log("got to loading");
+        socket.roomID = msg.roomID;
+        socket.userID = msg.userID;
+        // console.log(roomMsg);
         if(roomMsg != undefined){
-          msg.msg = JSON.stringify(roomMsg.canvas[1]);
+          const data = [roomMsg.canvas[1], roomMsg.edit];
+          msg.msg = JSON.stringify(data);
           socket.send(JSON.stringify(msg));
           msg.msgType = "Selection";
           msg.msg = JSON.stringify(roomMsg.lockedObjects[1]);
           socket.send(JSON.stringify(msg));
           roomMsg.users.add(socket);
+          console.log("got to send ta msg");
+          if(msg.userID == roomMsg.taID){
+           await mongoController.setTA(msg.userID, true);
+           const TAMsg :UpdateMessage = {msgType: "TA", userID: msg.userID, msg:""};
+           socket.send(JSON.stringify(TAMsg));
+
+          }
+          console.log("Finished send Ta msg");
         }
-        break;
+       break;
       }
       // Type: "localLoad" Contents: [Object IDs] [Serialized Objects]
       case "localLoad":{
@@ -172,8 +187,67 @@ wsServer.on("connection", (socket: ConnectedClients) => {
             sockets.send(JSON.stringify(msg));
           }
         });
-         break;
+        break;
 
+      }
+      case "Leaving":{
+        if(roomMsg != undefined){
+          const leftRoom = rooms.filter(obj => {
+            return obj.id == roomMsg.id;
+          });
+          leftRoom[0].users.delete(socket);
+          mongoController.removeUser(socket.userID);
+        }
+        break;
+
+      }
+      case "EndRoom":{
+        roomData[0].splice(rooms.indexOf(roomMsg), 1);
+        roomData[1].splice(rooms.indexOf(roomMsg), 1);
+        await roomMsg.users.forEach(async (sockets: ConnectedClients) =>{
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+            await mongoController.removeUser(socket.userID);
+          }
+        });  
+        
+        rooms.splice(rooms.indexOf(roomMsg),1);
+
+        break;
+      }
+      case "toggleEdit":{
+        roomMsg.edit = !roomMsg.edit;
+        await roomMsg.users.forEach(async (sockets: ConnectedClients) =>{
+          if(socket.id !== sockets.id){
+            sockets.send(JSON.stringify(msg));
+          }
+        });  
+        break;
+      }
+      case "Editing":{
+        const parsedMsg = JSON.parse(msg.msg);
+        await mongoController.setCanEdit(parsedMsg[0], parsedMsg[1]);
+        activeConnections.forEach( (sockets: ConnectedClients) =>{
+          console.log("Got to the loop");
+          if(sockets.userID === parsedMsg[0]){
+            sockets.send(JSON.stringify(msg));
+          }
+        });  
+        break;
+      }
+      case "Kicked":{
+        const parsedMsg = JSON.parse(msg.msg);
+        console.log("got to kicking user");
+        console.log(parsedMsg);
+        mongoController.removeUser(parsedMsg);
+      activeConnections.forEach( (sockets: ConnectedClients) =>{
+          console.log("Got to the loop");
+          if(sockets.userID === parsedMsg){
+            msg.msgType = "EndRoom";
+            sockets.send(JSON.stringify(msg));
+          }
+        });
+        break;
       }
       default: {
         console.log("Recieved Unknown update");
@@ -183,15 +257,22 @@ wsServer.on("connection", (socket: ConnectedClients) => {
 
 
   });
-  socket.on("close", () =>{
+  socket.on("close", async () =>{
       console.log(socket.name  + " disconnected");
+      const sentRoomID = await mongoController.getRoomID(socket.userID);
       activeConnections.forEach(function(sockets){
         if(socket.id === sockets.id){
           activeConnections.delete(sockets);
         }
-        else{
-          //sockets.send(socket.name  + " disconnected");
-        }
+       
+       const leftRoom = rooms.filter(obj => {
+         return obj.id == sentRoomID;
+       });
+       if(leftRoom[0] != null){
+        leftRoom[0].users.delete(socket);
+        
+        console.log(`users left ${leftRoom[0].users}leftRoom[0].users`);
+       }
       });
 
   });
@@ -201,15 +282,18 @@ export const getRooms = () => {
   return roomData;
 };
 export  const tryPass = (roomCode:string, roomID:string) => {
-  console.log("got here");
+  console.log("got to try pass");
   let check = false;
   rooms.forEach((element: Room ) => {
-    if(element.id == roomID && element.pass == roomCode){
+    console.log(` ${element.id} = ${roomID} + ${roomID}`);
+    if(element.id === roomID && element.pass === roomCode){
       check = true;
       return;
     }
   });
+  console.log(`result ${check} + ${roomCode} + ${roomID}`);
   return check;
+  
 };
 export  const roomIDExists = (cookieID:string) => {
   const filter = rooms.filter(obj => {
@@ -226,8 +310,11 @@ export  const roomIDExists = (cookieID:string) => {
     return true;
   }
 };
-export  const createRoom = (roomName:string) => {
-  const newRoom = <Room>{name: roomName, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass"  };
+export  const createRoom = async (roomName:string, userID: string) => {
+  const newRoom = <Room>{name: roomName, canvas:[[],[]], users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass", taID: userID};
+  await mongoController.addUser(<string>userID, newRoom.id);
+  await mongoController.setTA(userID, true);
+  console.log("after set Ta");
   rooms.push(newRoom);
   roomData[0].push(newRoom.name);
   roomData[1].push(newRoom.id);
