@@ -60,11 +60,6 @@
        </button></span>
        <span><button @click="handleToolChange('PAN')"> Pan </button></span>
     <span>
-      <button @click="openFile()">
-        <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-      </button>
-    </span>
-    <span>
       <button type="button"
               class="btn btn-primary"
               @click="handleEquationButton">
@@ -206,13 +201,12 @@ export default defineComponent({
 
     function addText() {
       isObjectBeingAdded = true;
-      const oText = new fabric.ITextWithID('Text');/* , {
+      const oText = new fabric.ITextWithID('Text', {
         left: 100,
         top: 100,
         fill: store.state.colourPalette.primaryToolColour,
         editable: true,
       });
-
       canvasData.add(oText);
       oText.bringToFront();
       canvasData.setActiveObject(oText);
@@ -229,19 +223,15 @@ export default defineComponent({
         image.scaleToWidth(200);
         canvasData.add(image);
         canvasData.setActiveObject(image);
-
         // Set image src
         image.set('src', image.getSrc());
-
         // Send image to server
         outgoingMessageHandler.sendObjectAdded(canvasData);
         isObjectBeingAdded = false;
-
         // Once image has been added, reenable sending of selection messages
         enableSelectionMessageSending = true;
       });
     }
-
     // adds image to the canvas
     function openFile() {
       let movingMsg: UpdateMessage;
@@ -252,13 +242,10 @@ export default defineComponent({
         const file: File = (target.files as FileList)[0];
         const reader = new FileReader();
         reader.readAsDataURL(file);
-
         // Before loading image, disable the sending of selection messages until image loads
         enableSelectionMessageSending = false;
-
         reader.onload = () => {
           const imgObj = new Image();
-
           imgObj.src = reader.result as string;
           imgObj.onload = () => {
             addImageToCanvasFromURL(imgObj.src);
@@ -272,14 +259,11 @@ export default defineComponent({
           //     image.scaleToWidth(200);
           //     canvasData.add(image);
           //     canvasData.setActiveObject(image);
-
           //     // Set image src
           //     image.set('src', image.getSrc());
-
           //     // Send image to server
           //     outgoingMessageHandler.sendObjectAdded(canvasData);
           //     isObjectBeingAdded = false;
-
           //     // Once image has been added, reenable sending of selection messages
           //     enableSelectionMessageSending = true;
           //   });
