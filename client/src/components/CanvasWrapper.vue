@@ -168,18 +168,14 @@ export default defineComponent({
     });
 
     const getObjectByID = (canvas: fabric.Canvas, id: string): fabric.ObjectWithID | null => {
-      canvas.getObjects().forEach((
-        obj: fabric.ObjectWithID,
-        index: number,
-      // eslint-disable-next-line consistent-return
-      ): fabric.ObjectWithID | undefined => {
-        if (obj.get('id') === id) {
-          return obj;
-        }
-        if (index === canvas.getObjects().length - 1) {
-          return undefined;
-        }
-      });
+      const filteredObjArray = canvas.getObjects().filter((obj: fabric.ObjectWithID) => obj.get('id') === id);
+
+      if (filteredObjArray.length === 1) {
+        return filteredObjArray[0];
+      } if (filteredObjArray.length === 0) {
+        return null;
+      }
+      console.error(`Multiple objects found with ID = ${id}, objects = ${filteredObjArray}`);
       return null;
     };
 
@@ -579,16 +575,35 @@ export default defineComponent({
       });
     };
 
+    const editEquationOnCanvas = (
+      oldEquation: fabric.EquationWithID,
+      newEquation: EquationEditorUpdate,
+    ) => {
+      // Change latex and src data url
+      oldEquation.set('latex', newEquation.texEquation);
+      oldEquation.setSrc(newEquation.dataURL);
+
+      // New Equation
+      fabric.EquationWithID.fromURL(newEquation.dataURL, (eqnImg) => {
+        canvasData.renderAll();
+      }, oldEquation.toObject());
+    };
+
     const getEquationUpdate = (equation: EquationEditorUpdate) => {
-      console.log('in eqn update');
-      debugger;
       // Find if id already exists on canvas
-      const equationObj = getObjectByID(canvasData, equation.id);
-      if (equationObj) {
+      const filteredObj = getObjectByID(canvasData, equation.id);
+
+      if (filteredObj && filteredObj.isType(ShapesWithID.equation)) {
         console.log('equation with this id already exists');
-        equationObj.set('latex');
+        const eqnObj = filteredObj as fabric.EquationWithID;
+
+        editEquationOnCanvas(eqnObj, equation);
+
+        // Send outgoing update message
+        outgoingMessageHandler.sendObjectModified(canvasData);
+      } else {
+        addEquationToCanvas(equation);
       }
-      addEquationToCanvas(equation);
     };
 
     const handleEquationSelection = () => {
@@ -673,6 +688,11 @@ export default defineComponent({
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         outgoingMessageHandler.sendClearBoardMessage(canvasData);
       }
+
+      // Reset Equation Modal Values
+      equationButtonText.value = 'New Equation';
+      equationLatex.value = '';
+      equationID.value = '';
     };
 
     /**
