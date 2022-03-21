@@ -29,6 +29,17 @@ export default {
         console.log(`store room :${store.state.userID.roomID}`);
         console.log(`store userID :${store.state.userID.ID}`);
       });
+      await axios.get('./api/rooms/getCanEdit', {
+        params: {
+          userID: store.state.userID.ID,
+        },
+      }).then((value) => {
+        console.log(`Retrieved Value : ${value.data}`);
+        store.commit('userID/updateCanEdit', value.data);
+        console.log(`value :${value.data}`);
+        console.log(`store room :${store.state.userID.roomID}`);
+        console.log(`store userID :${store.state.userID.ID}`);
+      });
     }
   },
 };

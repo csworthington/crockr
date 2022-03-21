@@ -58,5 +58,6 @@ app.get("/api/rooms/handleCookie", roomsController.handleCookie);
 app.get("/api/rooms/getuuid", roomsController.getUUID);
 app.get("/api/rooms/getroomID", roomsController.getRoomID);
 app.get("/api/rooms/userperm", roomsController.getUserPerm);
+app.get("/api/rooms/getCanEdit", roomsController.getCanEdit);
 
 export default app;
