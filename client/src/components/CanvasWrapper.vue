@@ -64,7 +64,7 @@
                   :equationID="equationID"
                   @update:equation="getEquationUpdate"
   ></EquationEditor>
-  <UserConfig :modalID="userconfig"
+  <UserConfig modalID="userconfig"
   ></UserConfig>
 </template>
 
