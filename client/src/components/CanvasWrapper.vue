@@ -26,16 +26,21 @@
         </option>
       </select>
     </span>
+    <div class="dropdown">
+      <button class="dropbtn">Tools</button>
+        <div class="dropdown-content">
+          <button @click="handleToolChange('PEN')">Pen tool toggle</button>
+          <button @click="handleToolChange('RECTANGLE')"> Rectangle </button>
+          <button @click="handleToolChange('CIRCLE')"> Circle </button>
+          <button @click="handleToolChange('SELECT')"> select </button>
+          <button @click="handleToolChange('PAN')"> Pan </button>
+        </div>
     </div>
-   <div>
-     <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="sendCanvasToServer">Send Canvas</button></span>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
-    <span><button @click="getLineFromServer">Get Line</button></span>
-    <span><button @click="getPenFromServer">Get Pen</button></span>
-    <span><button @click="getRectFromServer">Get Rect</button></span>
-    <span><button @click="getCircleFromServer">Get circle</button></span>
-    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
+  </div>
+  <div>
+      <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+      <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+      <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
   </div>
   <div>
     <span><button @click="addText()">Add Custom Text</button></span>
@@ -1079,5 +1084,54 @@ export default defineComponent({
 <style>
 .canvas-border {
   border: 1px solid black;
+}
+body {
+  background: rgb(169, 204, 212);
+}
+#nav{
+  background: rgb(202, 209, 134);
+}
+#main-canvas{
+  background: white;
+}
+.dropbtn {
+  background-color: #4CAF50;
+  color: white;
+  padding: 16px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f9f9f9;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  z-index: 1;
+}
+
+.dropdown-content button {
+  color: black;
+  padding: 12px 16px;
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-content button:hover {background-color: #f1f1f1}
+
+.dropdown:hover .dropdown-content {
+  bottom: 100%;
+  display: block;
+}
+
+.dropdown:hover .dropbtn {
+  background-color: #3e8e41;
 }
 </style>
