@@ -346,7 +346,8 @@ export default function receiveMessage(
       break;
     }
     case 'toggleEdit': {
-      store.commit('userID/updateCanEdit', !store.state.userID.canEdit);
+      console.log('room edit toggled');
+      store.commit('userID/updateRoomEdit', !store.state.userID.roomEdit);
       // eslint-disable-next-line no-param-reassign
       break;
     }

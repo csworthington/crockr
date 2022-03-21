@@ -531,7 +531,8 @@ export default defineComponent({
       mouseEventsOff();
       mouseEventsOn();
       canvasData.isDrawingMode = false;
-      if (store.state.userID.canEdit === true) {
+      // eslint-disable-next-line max-len
+      if ((store.state.userID.canEdit === true && store.state.userID.roomEdit === true) || (store.state.userID.Ta === true)) {
         console.log(store.state.userID.canEdit);
         switch (clickedTool) {
           case ToolType.Pen: {
@@ -813,7 +814,7 @@ export default defineComponent({
       // TODO: Import needs to be changed? Don't like calling default
       handleIncomingMessage.default(canvasData, message, document);
       // eslint-disable-next-line max-len
-      if (store.state.userID.canEdit === false && tool.value !== ToolType.None && !store.state.userID.Ta) {
+      if ((store.state.userID.canEdit === false && tool.value !== ToolType.None && !store.state.userID.Ta) || (store.state.userID.roomEdit === false && tool.value !== ToolType.None && !store.state.userID.Ta)) {
         handleToolChange(ToolType.None);
       }
       if (document.getElementById('endRoomBtn') !== null) {

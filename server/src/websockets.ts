@@ -219,7 +219,6 @@ wsServer.on("connection", (socket: ConnectedClients) => {
         roomMsg.edit = !roomMsg.edit;
         await roomMsg.users.forEach(async (sockets: ConnectedClients) =>{
           if(socket.id !== sockets.id){
-            await mongoController.setCanEdit(sockets.userID, roomMsg.edit);
             sockets.send(JSON.stringify(msg));
           }
         });  

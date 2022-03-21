@@ -50,6 +50,7 @@ export function sendObjectModified(
 }
 
 export function sendObjectAdded(canvas: fabric.Canvas): void {
+  console.log(store.state.userID.roomID);
   const addedObject: fabric.ObjectWithID = canvas.getObjects()[canvas.getObjects().length - 1];
   const addedId = addedObject.get('id');
   const addMsg : UpdateMessage = {
@@ -79,6 +80,8 @@ export function endRoom(): void {
   updateServer(endMsg);
 }
 export function toggleEdit(): void {
+  store.commit('userID/updateRoomEdit', store.state.userID.roomEdit!);
+  console.log('sent toggle');
   const toggleEditMsg : UpdateMessage = {
     msgType: 'toggleEdit',
     userID: store.state.userID.ID,
