@@ -91,6 +91,11 @@
                   @click="handleToolChange('LINE')">
             Line
           </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('PAN')">
+            Pan
+          </button>
         </div>
       </div>
 
@@ -138,7 +143,6 @@
 
     <!-- Room Tools -->
 
-    </div>
   </div>
   <div>
       <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
