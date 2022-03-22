@@ -119,17 +119,89 @@
            id="room-tools-panel"
            role="tabpanel"
            aria-labelledby="room-tools-tab">
-        <span><button @click="saveBoard"> Save </button></span>
-        <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
-        <input @click="loadBoard"
+
+        <!-- <div class="list-group">
+          <button type="button"
+                  class="list-group-item list-group-item-action"
+                  onclick="document.getElementById('file-input').click();">
+            Load
+          </button>
+          <input @click="loadBoard"
                 id="file-input"
                 type="file"
                 name="name"
                 style="display:none;" />
-        <span><button @click="clearBoard"> Clear Canvas</button></span>
-        <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-        <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
-        <span><button @click="leaveRoom">Leave</button></span>
+          <button type="button"
+                  class="list-group-item list-group-item-action"
+                  @click="clearBoard">
+            Clear Canvas
+          </button>
+          <button type="button"
+                  class="list-group-item list-group-item-action"
+                  @click="printCanvasToConsole">
+            Print Canvas
+          </button>
+          <button type="button"
+                  class="list-group-item list-group-item-action"
+                  @click="exportCanvasToSVG">
+            Export to SVG
+          </button>
+          <button type="button"
+                  class="list-group-item list-group-item-action"
+                  @click="leaveRoom">
+            Leave Room
+          </button>
+        </div> -->
+
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="saveBoard">
+            Save
+          </button>
+        </span>
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  onclick="document.getElementById('file-input').click();">
+            Load
+          </button>
+          <input @click="loadBoard"
+                 id="file-input"
+                 type="file"
+                 name="name"
+                 style="display:none;" />
+        </span>
+
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="clearBoard">
+            Clear Canvas
+          </button>
+        </span>
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="printCanvasToConsole">
+            Print Canvas
+          </button>
+        </span>
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="exportCanvasToSVG">
+            Export To SVG
+          </button>
+        </span>
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="leaveRoom">
+            Leave
+          </button>
+        </span>
+
       </div>
 
     </div>
