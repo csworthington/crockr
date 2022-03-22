@@ -91,6 +91,11 @@
                   @click="handleToolChange('LINE')">
             Line
           </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('PAN')">
+            Pan
+          </button>
         </div>
       </div>
 
@@ -138,9 +143,13 @@
 
     <!-- Room Tools -->
 
-    </div>
+  </div>
   <div>
-
+      <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+      <span><button @click="sendCanvasToServer">Send Canvas</button></span>
+      <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
+  </div>
+  <div>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -196,6 +205,7 @@ enum ToolType {
   Line = 'LINE',
   Circle = 'CIRCLE',
   Pen = 'PEN',
+  Pan = 'PAN',
 }
 
 export default defineComponent({
@@ -281,7 +291,6 @@ export default defineComponent({
         fill: store.state.colourPalette.primaryToolColour,
         editable: true,
       });
-
       canvasData.add(oText);
       oText.bringToFront();
       canvasData.setActiveObject(oText);
@@ -298,19 +307,15 @@ export default defineComponent({
         image.scaleToWidth(200);
         canvasData.add(image);
         canvasData.setActiveObject(image);
-
         // Set image src
         image.set('src', image.getSrc());
-
         // Send image to server
         outgoingMessageHandler.sendObjectAdded(canvasData);
         isObjectBeingAdded = false;
-
         // Once image has been added, reenable sending of selection messages
         enableSelectionMessageSending = true;
       });
     }
-
     // adds image to the canvas
     function openFile() {
       let movingMsg: UpdateMessage;
@@ -321,13 +326,10 @@ export default defineComponent({
         const file: File = (target.files as FileList)[0];
         const reader = new FileReader();
         reader.readAsDataURL(file);
-
         // Before loading image, disable the sending of selection messages until image loads
         enableSelectionMessageSending = false;
-
         reader.onload = () => {
           const imgObj = new Image();
-
           imgObj.src = reader.result as string;
           imgObj.onload = () => {
             addImageToCanvasFromURL(imgObj.src);
@@ -341,14 +343,11 @@ export default defineComponent({
           //     image.scaleToWidth(200);
           //     canvasData.add(image);
           //     canvasData.setActiveObject(image);
-
           //     // Set image src
           //     image.set('src', image.getSrc());
-
           //     // Send image to server
           //     outgoingMessageHandler.sendObjectAdded(canvasData);
           //     isObjectBeingAdded = false;
-
           //     // Once image has been added, reenable sending of selection messages
           //     enableSelectionMessageSending = true;
           //   });
@@ -477,6 +476,18 @@ export default defineComponent({
     }
 
     /**
+     * Pans the canvas relative to the original points upon mouse click down
+     * and the current position of the mouse
+     */
+    function PanMove(x : number, y : number) {
+      const deltaX = x - origX;
+      const deltaY = y - origY;
+      const delta = new fabric.Point(deltaX, deltaY);
+      // const delta = new fabric.Point(x, y);
+      canvasData.relativePan(delta);
+    }
+
+    /**
      * Primary event handler for fabric.js canvas mouse:down event
      * @param {fabric.IEvent<MouseEvent>} evt: Event fired by canvas
      */
@@ -522,6 +533,8 @@ export default defineComponent({
         // line tool handler, makes line follow mouse
       } else if (tool.value === ToolType.Line) {
         lineMove(pointer.x, pointer.y);
+      } else if (tool.value === ToolType.Pan) {
+        PanMove(pointer.x, pointer.y);
       }
     }
 
@@ -692,6 +705,8 @@ export default defineComponent({
     };
 
     const getEquationUpdate = (equation: EquationEditorUpdate) => {
+      console.log('in eqn update');
+      debugger;
       // Find if id already exists on canvas
       const filteredObj = getObjectByID(canvasData, equation.id);
 
@@ -1066,5 +1081,14 @@ export default defineComponent({
 <style>
 .canvas-border {
   border: 1px solid black;
+}
+body {
+  background: rgb(169, 204, 212);
+}
+#nav{
+  background: rgb(202, 209, 134);
+}
+#main-canvas{
+  background: white;
 }
 </style>
