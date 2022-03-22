@@ -35,10 +35,16 @@ export const getUUID = (req: Request, res: Response) => {
   return {req,res};
 };
 export const getRoomID = async (req: Request, res: Response) => {
-  console.log("got to create room");
   res.json(await mongoController.getRoomID(<string>req.query.userID));
   return {req,res};
-};export const getUserPerm = async (req: Request, res: Response) => {
+  
+};
+export const getCanEdit = async (req: Request, res: Response) => {
+  res.json(await mongoController.getCanEdit(<string>req.query.userID));
+  return {req,res};
+  
+};
+export const getUserPerm = async (req: Request, res: Response) => {
   res.json(await mongoController.getAllUsers(<string>req.query.roomID));
   return {req,res};
 };

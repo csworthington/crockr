@@ -138,6 +138,15 @@ function handleModified(
         if (canvasObject.type === ShapesWithID.text) {
           const text: fabric.ITextWithID = <fabric.ITextWithID>canvasObject;
           text.set('text', (scaledCanvasObject as fabric.ITextWithID).get('text'));
+        } else if (canvasObject.type === ShapesWithID.equation) {
+          const oldEqn = canvasObject as fabric.EquationWithID;
+          const incomingEqn = scaledCanvasObject as fabric.EquationWithID;
+          oldEqn.set('latex', incomingEqn.get('latex'));
+          oldEqn.setSrc(incomingEqn.get('src') as string);
+
+          fabric.EquationWithID.fromURL(incomingEqn.get('src') as string, (eqnImg) => {
+            canvas.renderAll();
+          }, incomingEqn.toObject());
         }
         canvasObject.setCoords();
       }
@@ -319,7 +328,7 @@ export default function receiveMessage(
     case 'Loading': {
       const data = JSON.parse(messageData.msg);
       const serializedObjects: Array<string> = data[0];
-      store.commit('userID/updateCanEdit', data[1]);
+      store.commit('userID/updateRoomEdit', data[1]);
       handleLoading(canvas, serializedObjects);
       break;
     }

@@ -6,28 +6,10 @@
     <canvas id="main-canvas"></canvas>
   </div>
   <div id ="canvasButtons">
+    <!-- Drawing Modifiers -->
     <span>
       <ColourPicker />
     </span>
-    <span><button @click="handleToolChange('PEN')">Pen tool toggle</button></span>
-    <span><button @click="handleToolChange('RECTANGLE')"> Rectangle </button></span>
-    <span><button @click="handleToolChange('CIRCLE')"> Circle </button></span>
-    <span><button @click="handleToolChange('SELECT')"> select </button></span>
-    <span><button @click="clearBoard"> Clear </button></span>
-    <span><button @click="saveBoard"> Save </button></span>
-    <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
-    <span>
-    <input @click="loadBoard" id="file-input" type="file" name="name" style="display:none;"/>
-    </span>
-    <span><button @click="handleToolChange('LINE')"> Line Tool </button></span>
-    <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-    <span><button @click="getDogFromServer">Get Dog🐶</button></span>
-    <span><button @click="getLineFromServer">Get Line</button></span>
-    <span><button @click="getPenFromServer">Get Pen</button></span>
-    <span><button @click="getRectFromServer">Get Rect</button></span>
-    <span><button @click="getCircleFromServer">Get circle</button></span>
-    <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
-      <span><button @click="leaveRoom">Leave</button></span>
     <span>
       <select name="thick" v-model="lineThickness">
         <option v-for="option in thicknessOptions"
@@ -37,15 +19,125 @@
         </option>
       </select>
     </span>
-    <div class="dropdown">
-      <button class="dropbtn">Tools</button>
-        <div class="dropdown-content">
-          <button @click="handleToolChange('PEN')">Pen tool toggle</button>
-          <button @click="handleToolChange('RECTANGLE')"> Rectangle </button>
-          <button @click="handleToolChange('CIRCLE')"> Circle </button>
-          <button @click="handleToolChange('SELECT')"> select </button>
-          <button @click="handleToolChange('PAN')"> Pan </button>
+
+    <ul class="nav nav-tabs" >
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="drawing-tools-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#drawing-tools-panel"
+                type="button"
+                role="tab"
+                aria-controls="drawing-tools-panel"
+                aria-selected="true">
+            Drawing Tools
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="advanced-tools-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#advanced-tools-panel"
+                type="button"
+                role="tab"
+                aria-controls="advanced-tools-panel"
+                aria-selected="false">
+            Advanced Tools
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="room-tools-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#room-tools-panel"
+                type="button"
+                role="tab"
+                aria-controls="room-tools-panel"
+                aria-selected="false">
+            Room Tools
+        </button>
+      </li>
+    </ul>
+
+    <div class="tab-content">
+      <!-- Drawing Tools -->
+      <div class="tab-pane fade show active"
+           id="drawing-tools-panel"
+           role="tabpanel"
+           aria-labelledby="drawing-tools-tab">
+        <div class="btn-group">
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('SELECT')">
+            Select
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('PEN')">
+            Pen
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('RECTANGLE')">
+            Rectangle
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('CIRCLE')">
+            Circle
+          </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  @click="handleToolChange('LINE')">
+            Line
+          </button>
         </div>
+      </div>
+
+      <!-- Advanced Shapes -->
+      <div class="tab-pane fade"
+           id="advanced-tools-panel"
+           role="tabpanel"
+           aria-labelledby="advanced-tools-tab">
+        <span><button @click="addText()">Text</button></span>
+        <span>
+          <button @click="openFile()">
+            <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+          </button>
+        </span>
+        <span>
+          <button type="button"
+                  class="btn btn-primary"
+                  @click="handleEquationButton">
+            {{ equationButtonText }}
+          </button>
+        </span>
+      </div>
+
+      <!-- Room Tools -->
+      <div class="tab-pane fade"
+           id="room-tools-panel"
+           role="tabpanel"
+           aria-labelledby="room-tools-tab">
+        <span><button @click="saveBoard"> Save </button></span>
+        <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
+        <input @click="loadBoard"
+                id="file-input"
+                type="file"
+                name="name"
+                style="display:none;" />
+        <span><button @click="clearBoard"> Clear Canvas</button></span>
+        <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
+        <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
+        <span><button @click="leaveRoom">Leave</button></span>
+      </div>
+
+    </div>
+
+    <!-- Advanced Shapes -->
+
+    <!-- Room Tools -->
+
     </div>
   </div>
   <div>
@@ -54,19 +146,6 @@
       <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
   </div>
   <div>
-    <span><button @click="addText()">Add Custom Text</button></span>
-<!---<input type="file" onchange="openFile();" id="imageFile" accept="image/png, image/jpeg" > --->
-    <span><button @click="openFile()">
-      <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-       </button></span>
-       <span><button @click="handleToolChange('PAN')"> Pan </button></span>
-    <span>
-      <button type="button"
-              class="btn btn-primary"
-              @click="handleEquationButton">
-      {{ equationButtonText }}
-    </button>
-    </span>
   </div>
   <div>
     <span>current tool = {{ tool }}</span>
@@ -79,8 +158,7 @@
                   :equationID="equationID"
                   @update:equation="getEquationUpdate"
   ></EquationEditor>
-  <UserConfig :modalID="userconfig"
-  ></UserConfig>
+  <UserConfig modalID="userconfig" />
 </template>
 
 <script lang="ts">
@@ -190,18 +268,14 @@ export default defineComponent({
     });
 
     const getObjectByID = (canvas: fabric.Canvas, id: string): fabric.ObjectWithID | null => {
-      canvas.getObjects().forEach((
-        obj: fabric.ObjectWithID,
-        index: number,
-      // eslint-disable-next-line consistent-return
-      ): fabric.ObjectWithID | undefined => {
-        if (obj.get('id') === id) {
-          return obj;
-        }
-        if (index === canvas.getObjects().length - 1) {
-          return undefined;
-        }
-      });
+      const filteredObjArray = canvas.getObjects().filter((obj: fabric.ObjectWithID) => obj.get('id') === id);
+
+      if (filteredObjArray.length === 1) {
+        return filteredObjArray[0];
+      } if (filteredObjArray.length === 0) {
+        return null;
+      }
+      console.error(`Multiple objects found with ID = ${id}, objects = ${filteredObjArray}`);
       return null;
     };
 
@@ -551,6 +625,8 @@ export default defineComponent({
       mouseEventsOn();
       canvasData.isDrawingMode = false;
       // eslint-disable-next-line max-len
+      console.log(`permissions are room:${store.state.userID.roomEdit} and user: ${store.state.userID.canEdit}`);
+      // eslint-disable-next-line max-len
       if ((store.state.userID.canEdit === true && store.state.userID.roomEdit === true) || (store.state.userID.Ta === true)) {
         console.log(store.state.userID.canEdit);
         switch (clickedTool) {
@@ -610,16 +686,37 @@ export default defineComponent({
       });
     };
 
+    const editEquationOnCanvas = (
+      oldEquation: fabric.EquationWithID,
+      newEquation: EquationEditorUpdate,
+    ) => {
+      // Change latex and src data url
+      oldEquation.set('latex', newEquation.texEquation);
+      oldEquation.setSrc(newEquation.dataURL);
+
+      // New Equation
+      fabric.EquationWithID.fromURL(newEquation.dataURL, (eqnImg) => {
+        canvasData.renderAll();
+      }, oldEquation.toObject());
+    };
+
     const getEquationUpdate = (equation: EquationEditorUpdate) => {
       console.log('in eqn update');
       debugger;
       // Find if id already exists on canvas
-      const equationObj = getObjectByID(canvasData, equation.id);
-      if (equationObj) {
+      const filteredObj = getObjectByID(canvasData, equation.id);
+
+      if (filteredObj && filteredObj.isType(ShapesWithID.equation)) {
         console.log('equation with this id already exists');
-        equationObj.set('latex');
+        const eqnObj = filteredObj as fabric.EquationWithID;
+
+        editEquationOnCanvas(eqnObj, equation);
+
+        // Send outgoing update message
+        outgoingMessageHandler.sendObjectModified(canvasData);
+      } else {
+        addEquationToCanvas(equation);
       }
-      addEquationToCanvas(equation);
     };
 
     const handleEquationSelection = () => {
@@ -721,6 +818,11 @@ export default defineComponent({
       if (window.confirm('Are you sure you want to clear the canvas?')) {
         outgoingMessageHandler.sendClearBoardMessage(canvasData);
       }
+
+      // Reset Equation Modal Values
+      equationButtonText.value = 'New Equation';
+      equationLatex.value = '';
+      equationID.value = '';
     };
 
     /**
@@ -984,45 +1086,5 @@ body {
 }
 #main-canvas{
   background: white;
-}
-.dropbtn {
-  background-color: #4CAF50;
-  color: white;
-  padding: 16px;
-  font-size: 16px;
-  border: none;
-  cursor: pointer;
-}
-
-.dropdown {
-  position: relative;
-  display: inline-block;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  background-color: #f9f9f9;
-  min-width: 160px;
-  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  z-index: 1;
-}
-
-.dropdown-content button {
-  color: black;
-  padding: 12px 16px;
-  text-decoration: none;
-  display: block;
-}
-
-.dropdown-content button:hover {background-color: #f1f1f1}
-
-.dropdown:hover .dropdown-content {
-  bottom: 100%;
-  display: block;
-}
-
-.dropdown:hover .dropbtn {
-  background-color: #3e8e41;
 }
 </style>
