@@ -1,5 +1,5 @@
 <template>
-  <div class="container">
+  <div class="container-fluid">
     <div id="nav">
       <router-link to="/">Home</router-link> |
       <router-link to="/canvas">Canvas</router-link> |

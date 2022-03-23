@@ -5,7 +5,7 @@
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
   </div>
-  <div id ="canvasButtons">
+  <div id ="canvasButtons" class="container">
     <!-- Drawing Modifiers -->
     <span>
       <ColourPicker />

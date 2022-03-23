@@ -16,7 +16,7 @@ export const getRooms = (req: Request, res: Response) => {
 export const tryPass = async (req: Request, res: Response) => {
   const check = roomModel.tryPass(<string>req.query.pass, <string>req.query.roomID);
   if (check){
-    await mongoController.addUser(<string> req.query.userID,<string>req.query.roomID);
+    await mongoController.addUser(<string> req.query.userID,<string>req.query.roomID,<string> req.query.userName);
   }
   res.json(check);
   return {req,res};

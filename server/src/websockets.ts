@@ -312,7 +312,7 @@ export  const roomIDExists = (cookieID:string) => {
 };
 export  const createRoom = async (roomName:string, userID: string) => {
   const newRoom = <Room>{name: roomName, canvas:[[],[]], edit: false, users: new Set([]), lockedObjects: [[],[]], id: <string>uuidv4(), pass: "tempPass", taID: userID};
-  await mongoController.addUser(<string>userID, newRoom.id);
+  await mongoController.addUser(<string>userID, newRoom.id,"Johndoe" );
   await mongoController.setTA(userID, true);
   console.log("after set Ta");
   rooms.push(newRoom);

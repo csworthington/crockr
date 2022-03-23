@@ -3,6 +3,8 @@
     <h1>This is the room Selection page</h1>
     <label for="fname">Please enter room code and select room:</label><br>
     <input type="text" id="passCode" name="passCode" value=""><br>
+    <label >Please enter a user name</label><br>
+    <input type="text" id="username" name="username" value=""><br>
   </div>
   <div class="buttons" id = "buttons">
   </div>
@@ -42,11 +44,13 @@ export default defineComponent({
     function tryPass(choosenRoom: string) {
       console.log('Hellllo');
       const roomCode = <HTMLInputElement> document.getElementById('passCode');
+      const name = <HTMLInputElement> document.getElementById('username');
       axios.get('./api/rooms/tryPass', {
         params: {
           userID: store.state.userID.ID,
           pass: roomCode.value,
           roomID: choosenRoom,
+          userName: name.value,
         },
       }).then((value) => {
         if (value.data) {
