@@ -5,20 +5,22 @@
   <div id="canvas-wrapper-div" class="canvas-border">
     <canvas id="main-canvas"></canvas>
   </div>
-  <div id ="canvasButtons">
+  <div id="canvasButtons">
     <!-- Drawing Modifiers -->
-    <span>
-      <ColourPicker />
-    </span>
-    <span>
-      <select name="thick" v-model="lineThickness">
-        <option v-for="option in thicknessOptions"
-                :key="option.value"
-                :value="option.value">
-          {{ option.text }}
-        </option>
-      </select>
-    </span>
+    <div class="d-inline-flex p-2">
+      <div class="p-2">
+        <ColourPicker />
+      </div>
+      <div class="p-2">
+        <select name="thick" v-model="lineThickness">
+          <option v-for="option in thicknessOptions"
+                  :key="option.value"
+                  :value="option.value">
+            {{ option.text }}
+          </option>
+        </select>
+      </div>
+    </div>
 
     <ul class="nav nav-tabs" >
       <li class="nav-item" role="presentation">
@@ -65,6 +67,7 @@
            id="drawing-tools-panel"
            role="tabpanel"
            aria-labelledby="drawing-tools-tab">
+        <div class="d-inline-flex p-2">
         <div class="btn-group">
           <button type="button"
                   class="btn btn-outline-primary"
@@ -98,6 +101,7 @@
             Delete
           </button>
         </div>
+        </div>
       </div>
 
       <!-- Advanced Shapes -->
@@ -105,30 +109,34 @@
            id="advanced-tools-panel"
            role="tabpanel"
            aria-labelledby="advanced-tools-tab">
+        <div class="d-inline-flex p-2">
+          <div class="row g-3">
+            <div class="col-auto">
+              <button type="button"
+                      class="btn btn-secondary"
+                      @click="addText()">
+                Text
+              </button>
+            </div>
 
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="addText()">
-            Text
-          </button>
-        </span>
+            <div class="col-auto">
+              <button type="button"
+                      class="btn btn-secondary"
+                      @click="handleEquationButton">
+                {{ equationButtonText }}
+              </button>
+            </div>
 
-        <span>
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="handleEquationButton">
-            {{ equationButtonText }}
-          </button>
-        </span>
-
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="openFile()">
-            <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-          </button>
-        </span>
+            <div class="col-auto">
+              <input class="form-control"
+                      type="file"
+                      onchange="openFile()"
+                      id="imageFile"
+                      accept="image/png, image/jpeg"
+                      @change="openFile()">
+            </div>
+          </div>
+        </div>
 
       </div>
 
@@ -137,63 +145,59 @@
            id="room-tools-panel"
            role="tabpanel"
            aria-labelledby="room-tools-tab">
+        <div class="d-inline-flex p-2">
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="saveBoard">
+                Save
+            </button>
+          </span>
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    onclick="document.getElementById('file-input').click();">
+              Load
+            </button>
+            <input @click="loadBoard"
+                  id="file-input"
+                  type="file"
+                  name="name"
+                  style="display:none;" />
+          </span>
 
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="saveBoard">
-              Save
-          </button>
-        </span>
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  onclick="document.getElementById('file-input').click();">
-            Load
-          </button>
-          <input @click="loadBoard"
-                 id="file-input"
-                 type="file"
-                 name="name"
-                 style="display:none;" />
-        </span>
-
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="clearBoard">
-            Clear Canvas
-          </button>
-        </span>
-        <span class="m-1">
-          <button @click="printCanvasToConsole"
-                  type="button"
-                  class="btn btn-secondary">
-            Print Canvas
-          </button>
-        </span>
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="exportCanvasToSVG">
-            Export To SVG
-          </button>
-        </span>
-        <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="leaveRoom">
-            Leave
-          </button>
-        </span>
-
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="clearBoard">
+              Clear Canvas
+            </button>
+          </span>
+          <span class="m-1">
+            <button @click="printCanvasToConsole"
+                    type="button"
+                    class="btn btn-secondary">
+              Print Canvas
+            </button>
+          </span>
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="exportCanvasToSVG">
+              Export To SVG
+            </button>
+          </span>
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="leaveRoom">
+              Leave
+            </button>
+          </span>
+        </div>
       </div>
 
     </div>
-
-    <!-- Advanced Shapes -->
-
-    <!-- Room Tools -->
 
     </div>
   <div>
