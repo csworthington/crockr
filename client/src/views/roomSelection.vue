@@ -53,9 +53,10 @@ export default defineComponent({
           userName: name.value,
         },
       }).then((value) => {
-        if (value.data) {
-          console.log('yay');
+        if (value.data[0]) {
+          console.log(value.data[1]);
           store.commit('userID/updateRoomID', choosenRoom);
+          store.commit('userID/updateRoomName', value.data[1]);
           console.log(store.state.userID.ID);
           router.push('/canvas');
         }

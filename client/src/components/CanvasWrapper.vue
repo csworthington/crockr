@@ -241,7 +241,23 @@ export default defineComponent({
     const selectedCheck: (string)[] = [];
     const socket = useGlobalWebSocket();
 
-    const roomName = store.state.roomID.ID;
+    // eslint-disable-next-line prefer-destructuring
+    const roomName = ref('unchanged');
+
+    onMounted(() => {
+      axios.get('./api/rooms/getRoomName', {
+        params: {
+          roomID: store.state.userID.roomID,
+        },
+      }).then((value) => {
+        roomName.value = value.data;
+      });
+    });
+
+    watch(() => store.state.userID.roomName, (newName: string) => {
+      alert('new value');
+      roomName.value = newName;
+    });
 
     let enableSelectionMessageSending = true;
 

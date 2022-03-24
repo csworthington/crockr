@@ -40,6 +40,17 @@ export default {
         console.log(`store room :${store.state.userID.roomID}`);
         console.log(`store userID :${store.state.userID.ID}`);
       });
+      await axios.get('./api/rooms/getRoomName', {
+        params: {
+          roomID: store.state.userID.roomID,
+        },
+      }).then((value) => {
+        console.log(`Retrieved Value : ${value.data}`);
+        store.commit('userID/updateRoomName', value.data);
+        console.log(`value :${value.data}`);
+        console.log(`store room :${store.state.userID.roomID}`);
+        console.log(`store userID :${store.state.userID.ID}`);
+      });
     }
   },
 };

@@ -320,4 +320,19 @@ export  const createRoom = async (roomName:string, userID: string) => {
   roomData[1].push(newRoom.id);
   return newRoom.id;
 };
+export  const getRoomName =  ( roomID: string) => {
+  console.log("got to get Room Name");
+  if(roomIDExists(roomID) == true){
+    const filter = rooms.filter(obj => {
+      return obj.id === roomID;
+    }
+    );
+    const roomMsg = filter[0];
+    console.log(`returning :${roomMsg.name}`);
+    return roomMsg.name;
+  }
+  else{
+    return "unset";
+  }
+};
 export default wsServer;

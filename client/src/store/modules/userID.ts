@@ -5,6 +5,7 @@ export interface userState {
     canEdit:boolean;
     roomEdit:boolean;
     Ta:boolean;
+    roomName: string,
   }
 const state: userState = {
   ID: '-1',
@@ -12,6 +13,7 @@ const state: userState = {
   canEdit: true,
   roomEdit: true,
   Ta: false,
+  roomName: 'Unset',
 };
 const mutations = {
   updateID(currentUserState : userState, newUserID : string): void {
@@ -28,6 +30,9 @@ const mutations = {
   },
   updateRoomEdit(currentUserState : userState, newUserID : boolean): void {
     state.roomEdit = newUserID;
+  },
+  updateRoomName(currentUserState : userState, newUserID : string): void {
+    state.roomName = newUserID;
   },
 };
 export const userID = {
