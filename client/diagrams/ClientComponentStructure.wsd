@@ -28,6 +28,12 @@ class CookieService <<Plugin>> {}
 
 class WebSocketMessageHandler <<Service>> {}
 
+interface WebSocket #pink {}
+
+class HTMLCanvas #pink {}
+
+class FabricJSCanvas #pink {}
+
 
 VuexStore -[hidden]> GlobalWebSocketPlugin
 GlobalWebSocketPlugin -[hidden]> RouterView
@@ -44,6 +50,8 @@ App <-- CookieService
 
 App <-- GlobalWebSocketPlugin
 
+GlobalWebSocketPlugin <-- WebSocket
+
 RouterView <-- Canvas
 
 RouterView <-- RoomSelector
@@ -59,6 +67,10 @@ CanvasWrapper <-- ColourPicker
 CanvasWrapper <-- EquationEditor
 
 CanvasWrapper <-- WebSocketMessageHandler
+
+CanvasWrapper <-- FabricJSCanvas
+
+FabricJSCanvas <-- HTMLCanvas
 
 VuexStore <.. CanvasWrapper
 
