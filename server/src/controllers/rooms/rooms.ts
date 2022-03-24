@@ -16,9 +16,11 @@ export const getRooms = (req: Request, res: Response) => {
 export const tryPass = async (req: Request, res: Response) => {
   const check = roomModel.tryPass(<string>req.query.pass, <string>req.query.roomID);
   if (check){
-    await mongoController.addUser(<string> req.query.userID,<string>req.query.roomID);
+    await mongoController.addUser(<string> req.query.userID,<string>req.query.roomID,<string> req.query.userName);
   }
-  res.json(check);
+  const  data = [check, await roomModel.getRoomName(<string>req.query.roomID)];
+  console.log(`room Data ${data[1]}`);
+  res.json(data);
   return {req,res};
 };
 export const handleCookie = (req: Request, res: Response) => {
@@ -46,6 +48,10 @@ export const getCanEdit = async (req: Request, res: Response) => {
 };
 export const getUserPerm = async (req: Request, res: Response) => {
   res.json(await mongoController.getAllUsers(<string>req.query.roomID));
+  return {req,res};
+};
+export const getRoomName = async (req: Request, res: Response) => {
+  res.json(await roomModel.getRoomName(<string>req.query.roomID));
   return {req,res};
 };
 

@@ -14,7 +14,7 @@ export const resetDatabase = () =>{
         // process.exit();
     });
 };
-export const addUser = (userId : string, roomId :string) => {
+export const addUser = (userId : string, roomId :string, name: string) => {
     console.log("made it to add user");
     mongoose.connect(mongoUrl).then(
         () => {  
@@ -24,7 +24,7 @@ export const addUser = (userId : string, roomId :string) => {
                 }
                 else{
                 if(res == null){
-                    User.create({ userID: userId, roomID: roomId, name: "JohnDoe", canEdit: true, TA: false }, function (err, twist) {
+                    User.create({ userID: userId, roomID: roomId, name: name, canEdit: true, TA: false }, function (err, twist) {
                         // saved!
                     });
                 }
