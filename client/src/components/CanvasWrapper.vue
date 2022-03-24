@@ -91,6 +91,12 @@
                   @click="handleToolChange('LINE')">
             Line
           </button>
+          <button type="button"
+                  class="btn btn-outline-primary"
+                  :disabled="deleteButtonDisabled"
+                  @click="deleteSelected()">
+            Delete
+          </button>
         </div>
       </div>
 
@@ -99,19 +105,31 @@
            id="advanced-tools-panel"
            role="tabpanel"
            aria-labelledby="advanced-tools-tab">
-        <span><button @click="addText()">Text</button></span>
-        <span>
-          <button @click="openFile()">
-            <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="addText()">
+            Text
           </button>
         </span>
+
         <span>
           <button type="button"
-                  class="btn btn-primary"
+                  class="btn btn-secondary"
                   @click="handleEquationButton">
             {{ equationButtonText }}
           </button>
         </span>
+
+        <span class="m-1">
+          <button type="button"
+                  class="btn btn-secondary"
+                  @click="openFile()">
+            <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
+          </button>
+        </span>
+
       </div>
 
       <!-- Room Tools -->
@@ -120,44 +138,11 @@
            role="tabpanel"
            aria-labelledby="room-tools-tab">
 
-        <!-- <div class="list-group">
-          <button type="button"
-                  class="list-group-item list-group-item-action"
-                  onclick="document.getElementById('file-input').click();">
-            Load
-          </button>
-          <input @click="loadBoard"
-                id="file-input"
-                type="file"
-                name="name"
-                style="display:none;" />
-          <button type="button"
-                  class="list-group-item list-group-item-action"
-                  @click="clearBoard">
-            Clear Canvas
-          </button>
-          <button type="button"
-                  class="list-group-item list-group-item-action"
-                  @click="printCanvasToConsole">
-            Print Canvas
-          </button>
-          <button type="button"
-                  class="list-group-item list-group-item-action"
-                  @click="exportCanvasToSVG">
-            Export to SVG
-          </button>
-          <button type="button"
-                  class="list-group-item list-group-item-action"
-                  @click="leaveRoom">
-            Leave Room
-          </button>
-        </div> -->
-
         <span class="m-1">
           <button type="button"
                   class="btn btn-secondary"
                   @click="saveBoard">
-            Save
+              Save
           </button>
         </span>
         <span class="m-1">
@@ -181,9 +166,9 @@
           </button>
         </span>
         <span class="m-1">
-          <button type="button"
-                  class="btn btn-secondary"
-                  @click="printCanvasToConsole">
+          <button @click="printCanvasToConsole"
+                  type="button"
+                  class="btn btn-secondary">
             Print Canvas
           </button>
         </span>
@@ -304,6 +289,8 @@ export default defineComponent({
     const socket = useGlobalWebSocket();
 
     const roomName = store.state.roomID.ID;
+
+    const deleteButtonDisabled = ref(true);
 
     let enableSelectionMessageSending = true;
 
@@ -811,12 +798,11 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
-      const elem = document.getElementById('deleteBtn');
-      if (elem !== null) {
-        elem.remove();
-      }
+      // Disable delete button
+      deleteButtonDisabled.value = true;
       outgoingMessageHandler.sendObjectDeleted(canvasData);
     };
+
     const endRoom = () => {
       document.getElementById('endRoomBtn')!.remove();
       outgoingMessageHandler.endRoom();
@@ -824,6 +810,7 @@ export default defineComponent({
       document.cookie = 'RoomID =';
       router.push('/roomSelector');
     };
+
     const userPermissions = () => {
       updateUserList();
       const usermodalDiv = document.getElementById('userconfig');
@@ -831,6 +818,7 @@ export default defineComponent({
         Modal.getOrCreateInstance(usermodalDiv).show();
       }
     };
+
     const editPermissions = () => {
       outgoingMessageHandler.toggleEdit();
     };
@@ -919,12 +907,8 @@ export default defineComponent({
           outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
         }
 
-        // Create a delete button on object selection
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = 'delete selected element';
-        deleteBtn.id = 'deleteBtn';
-        deleteBtn.onclick = deleteSelected;
-        document.body.appendChild(deleteBtn);
+        // Enable delete button
+        deleteButtonDisabled.value = false;
 
         // Check if equation is selected
         handleEquationSelection();
@@ -950,11 +934,8 @@ export default defineComponent({
           );
         }
 
-        // Remove delete button when object is deselected
-        const elem = document.getElementById('deleteBtn');
-        if (elem != null) {
-          elem.remove();
-        }
+        // Disable delete button when object is deselected
+        deleteButtonDisabled.value = true;
 
         // Check if equation is selected
         handleEquationSelection();
@@ -1129,6 +1110,8 @@ export default defineComponent({
       equationLatex,
       equationID,
       handleEquationButton,
+      deleteButtonDisabled,
+      deleteSelected,
     };
   },
 });
