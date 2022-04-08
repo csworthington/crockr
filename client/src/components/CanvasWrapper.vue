@@ -135,7 +135,7 @@
             <div class="col-auto">
               <input class="form-control"
                       type="file"
-                      onchange="openFile()"
+
                       id="imageFile"
                       accept="image/png, image/jpeg"
                       @change="openFile()">
@@ -395,6 +395,7 @@ export default defineComponent({
       let movingMsg: UpdateMessage;
       isObjectBeingAdded = true;
       const img = document.getElementById('imageFile');
+      console.log(img);
       img!.onchange = function handle(e) {
         const target = e.target as HTMLInputElement;
         const file: File = (target.files as FileList)[0];
