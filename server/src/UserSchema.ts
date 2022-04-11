@@ -74,7 +74,7 @@ export const getCanEdit = async (userId : string) => {
         await User.findOne({userID: userId}).exec().then(async (user : any) => {
             console.log(`roomID: ${user.canEdit}`);
             console.log(foundCanEdit);
-            foundCanEdit = user.roomID;
+            foundCanEdit = user.canEdit;
             console.log(foundCanEdit);
 
         });

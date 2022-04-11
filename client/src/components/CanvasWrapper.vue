@@ -178,6 +178,7 @@ import {
   WritableComputedRef,
   onBeforeMount,
   onBeforeUnmount,
+  onUnmounted,
 } from 'vue';
 import { useStore } from 'vuex';
 import { fabric } from 'fabric';
@@ -970,8 +971,10 @@ export default defineComponent({
     };
 
     // Event Handler for every type of message recieved
-    socket.addEventListener('message', (message) => {
+    function handleIncomingWebSocketMessage(message : MessageEvent) {
       // TODO: Import needs to be changed? Don't like calling default
+      console.dir(message);
+      console.log('right before the dir');
       handleIncomingMessage.default(canvasData, message, document);
       // eslint-disable-next-line max-len
       if ((store.state.userID.canEdit === false && tool.value !== ToolType.None && !store.state.userID.Ta) || (store.state.userID.roomEdit === false && tool.value !== ToolType.None && !store.state.userID.Ta)) {
@@ -985,7 +988,9 @@ export default defineComponent({
         document.getElementById('edit')!.onclick = editPermissions;
       }
       canvasData.renderAll();
-    });
+    }
+    onMounted(() => socket.addEventListener('message', handleIncomingWebSocketMessage));
+    onUnmounted(() => socket.removeEventListener('message', handleIncomingWebSocketMessage));
 
     // Hook resize callback into creation and destruction of this element
     onBeforeMount(() => window.addEventListener('resize', resizeCanvas));
@@ -1050,6 +1055,7 @@ export default defineComponent({
     const leaveRoom = () => {
       outgoingMessageHandler.leaveRoom();
       store.commit('userID/updateRoomID', '-1');
+      store.commit('userID/canEdit', 'true');
       router.push('/roomSelector');
     };
 
