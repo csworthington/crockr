@@ -34,6 +34,8 @@ class HTMLCanvas #pink {}
 
 class FabricJSCanvas #pink {}
 
+class PermissionsPanel {}
+
 
 VuexStore -[hidden]> GlobalWebSocketPlugin
 GlobalWebSocketPlugin -[hidden]> RouterView
@@ -70,11 +72,15 @@ CanvasWrapper <-- WebSocketMessageHandler
 
 CanvasWrapper <-- FabricJSCanvas
 
+CanvasWrapper <-- PermissionsPanel
+
 FabricJSCanvas <-- HTMLCanvas
 
 VuexStore <.. CanvasWrapper
 
 VuexStore <.. ColourPicker
+
+VuexStore <.. PermissionsPanel
 
 GlobalWebSocketPlugin <.. WebSocketStatusIndicator
 
