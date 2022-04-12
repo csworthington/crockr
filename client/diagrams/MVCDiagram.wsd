@@ -1,0 +1,26 @@
+@startuml MVC with MVVM
+
+component Model
+
+component Controller
+
+component View {
+  component WebComponent {
+    component "View" as WC_View
+    component "ViewModel" as WC_ViewModel
+    component "Model" as WC_Model
+  }
+}
+
+Controller -u-> Model: Manipulates
+View -u-> Model: Displays
+Controller -r-> View: Renders
+View -l-> Controller: Sends Requests
+
+WC_View -l-> WC_ViewModel
+WC_ViewModel -l-> WC_Model
+WC_Model -r-> WC_ViewModel
+WC_ViewModel -r-> WC_View
+
+
+@enduml

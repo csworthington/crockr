@@ -1,0 +1,40 @@
+@startuml Server Architecture Diagram
+
+rectangle "Presentation Layer" as PresentationLayer {
+  component "Vue Client" as VueClient
+}
+
+rectangle "Business Layer" as BusinessLayer {
+  component "Room Creation Controller" as RoomCreationController
+  component "Room Synchronization Controller" as RoomSynchronizationController
+  interface "HTTP" as http
+  interface "WebSocket" as websocket
+}
+
+
+
+rectangle "Persistance Layer" as PersistanceLayer {
+  component "Mongoose" as Mongoose
+}
+
+rectangle "Database Layer" as DatabaseLayer {
+  component "Mongo DB" as MongoDB
+  interface "TCP" as tcp
+}
+
+VueClient --> http
+VueClient --> websocket
+http <-l- RoomCreationController
+websocket <-r- RoomSynchronizationController
+RoomCreationController --> Mongoose
+Mongoose --> tcp
+tcp <-l- MongoDB
+
+RoomCreationController -[hidden]l- RoomSynchronizationController
+PresentationLayer -[hidden]d-> BusinessLayer
+BusinessLayer -[hidden]d-> PersistanceLayer
+PersistanceLayer -[hidden]d-> DatabaseLayer
+
+
+
+@enduml

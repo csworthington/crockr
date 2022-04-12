@@ -14,7 +14,6 @@
         <div class="modal-body">
           <textarea id="tex-equation" v-model.trim="texEquation" @input="renderEquationToHTML"/>
           <div id="katex-output" ></div>
-          <p>ID = {{ equationID }}, tex = {{ texEquation }} </p>
         </div>
         <div class="modal-footer">
           <button type="button"

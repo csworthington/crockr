@@ -28,6 +28,14 @@ class CookieService <<Plugin>> {}
 
 class WebSocketMessageHandler <<Service>> {}
 
+interface WebSocket #pink {}
+
+class HTMLCanvas #pink {}
+
+class FabricJSCanvas #pink {}
+
+class PermissionsPanel {}
+
 
 VuexStore -[hidden]> GlobalWebSocketPlugin
 GlobalWebSocketPlugin -[hidden]> RouterView
@@ -43,6 +51,8 @@ App <-- Axios
 App <-- CookieService
 
 App <-- GlobalWebSocketPlugin
+
+GlobalWebSocketPlugin <-- WebSocket
 
 RouterView <-- Canvas
 
@@ -60,9 +70,17 @@ CanvasWrapper <-- EquationEditor
 
 CanvasWrapper <-- WebSocketMessageHandler
 
+CanvasWrapper <-- FabricJSCanvas
+
+CanvasWrapper <-- PermissionsPanel
+
+FabricJSCanvas <-- HTMLCanvas
+
 VuexStore <.. CanvasWrapper
 
 VuexStore <.. ColourPicker
+
+VuexStore <.. PermissionsPanel
 
 GlobalWebSocketPlugin <.. WebSocketStatusIndicator
 

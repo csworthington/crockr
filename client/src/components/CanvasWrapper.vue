@@ -7,18 +7,20 @@
   </div>
   <div id ="canvasButtons" class="container">
     <!-- Drawing Modifiers -->
-    <span>
-      <ColourPicker />
-    </span>
-    <span>
-      <select name="thick" v-model="lineThickness">
-        <option v-for="option in thicknessOptions"
-                :key="option.value"
-                :value="option.value">
-          {{ option.text }}
-        </option>
-      </select>
-    </span>
+    <div class="d-inline-flex p-2">
+      <div class="p-2">
+        <ColourPicker />
+      </div>
+      <div class="p-2">
+        <select name="thick" v-model="lineThickness">
+          <option v-for="option in thicknessOptions"
+                  :key="option.value"
+                  :value="option.value">
+            {{ option.text }}
+          </option>
+        </select>
+      </div>
+    </div>
 
     <ul class="nav nav-tabs" >
       <li class="nav-item" role="presentation">
@@ -65,6 +67,7 @@
            id="drawing-tools-panel"
            role="tabpanel"
            aria-labelledby="drawing-tools-tab">
+        <div class="d-inline-flex p-2">
         <div class="btn-group">
           <button type="button"
                   class="btn btn-outline-primary"
@@ -93,6 +96,13 @@
           </button>
           <button type="button"
                   class="btn btn-outline-primary"
+                  :disabled="deleteButtonDisabled"
+                  @click="deleteSelected()">
+            Delete
+          </button>
+        </div>
+          <button type="button"
+                  class="btn btn-outline-primary"
                   @click="handleToolChange('PAN')">
             Pan
           </button>
@@ -104,19 +114,35 @@
            id="advanced-tools-panel"
            role="tabpanel"
            aria-labelledby="advanced-tools-tab">
-        <span><button @click="addText()">Text</button></span>
-        <span>
-          <button @click="openFile()">
-            <input type="file" onchange="openFile()" id="imageFile" accept="image/png, image/jpeg">
-          </button>
-        </span>
-        <span>
-          <button type="button"
-                  class="btn btn-primary"
-                  @click="handleEquationButton">
-            {{ equationButtonText }}
-          </button>
-        </span>
+        <div class="d-inline-flex p-2">
+          <div class="row g-3">
+            <div class="col-auto">
+              <button type="button"
+                      class="btn btn-secondary"
+                      @click="addText()">
+                Text
+              </button>
+            </div>
+
+            <div class="col-auto">
+              <button type="button"
+                      class="btn btn-secondary"
+                      @click="handleEquationButton">
+                {{ equationButtonText }}
+              </button>
+            </div>
+
+            <div class="col-auto">
+              <input class="form-control"
+                      type="file"
+
+                      id="imageFile"
+                      accept="image/png, image/jpeg"
+                      @change="openFile()">
+            </div>
+          </div>
+        </div>
+
       </div>
 
       <!-- Room Tools -->
@@ -124,31 +150,61 @@
            id="room-tools-panel"
            role="tabpanel"
            aria-labelledby="room-tools-tab">
-        <span><button @click="saveBoard"> Save </button></span>
-        <span><button onclick="document.getElementById('file-input').click();">Load</button></span>
-        <input @click="loadBoard"
-                id="file-input"
-                type="file"
-                name="name"
-                style="display:none;" />
-        <span><button @click="clearBoard"> Clear Canvas</button></span>
-        <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-        <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
-        <span><button @click="leaveRoom">Leave</button></span>
+        <div class="d-inline-flex p-2">
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="saveBoard">
+                Save
+            </button>
+          </span>
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    onclick="document.getElementById('file-input').click();">
+              Load
+            </button>
+            <input @click="loadBoard"
+                  id="file-input"
+                  type="file"
+                  name="name"
+                  style="display:none;" />
+          </span>
+
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="clearBoard">
+              Clear Canvas
+            </button>
+          </span>
+          <span class="m-1">
+            <button @click="printCanvasToConsole"
+                    type="button"
+                    class="btn btn-secondary">
+              Print Canvas
+            </button>
+          </span>
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="exportCanvasToSVG">
+              Export To SVG
+            </button>
+          </span>
+          <span class="m-1">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @click="leaveRoom">
+              Leave
+            </button>
+          </span>
+        </div>
       </div>
 
     </div>
 
-    <!-- Advanced Shapes -->
-
-    <!-- Room Tools -->
-
-  </div>
-  <div>
-      <span><button @click="printCanvasToConsole"> Print Canvas </button></span>
-      <span><button @click="sendCanvasToServer">Send Canvas</button></span>
-      <span><button @click="exportCanvasToSVG">ExportCanvasToSVG</button></span>
-  </div>
+    </div>
   <div>
   </div>
   <div>
@@ -260,6 +316,8 @@ export default defineComponent({
       roomName.value = newName;
     });
 
+    const deleteButtonDisabled = ref(true);
+
     let enableSelectionMessageSending = true;
 
     // determines how thick line tool and pen tool are
@@ -338,6 +396,7 @@ export default defineComponent({
       let movingMsg: UpdateMessage;
       isObjectBeingAdded = true;
       const img = document.getElementById('imageFile');
+      console.log(img);
       img!.onchange = function handle(e) {
         const target = e.target as HTMLInputElement;
         const file: File = (target.files as FileList)[0];
@@ -771,12 +830,11 @@ export default defineComponent({
      * Delete a specific object when the user presses the delete button
      */
     const deleteSelected = () => {
-      const elem = document.getElementById('deleteBtn');
-      if (elem !== null) {
-        elem.remove();
-      }
+      // Disable delete button
+      deleteButtonDisabled.value = true;
       outgoingMessageHandler.sendObjectDeleted(canvasData);
     };
+
     const endRoom = () => {
       document.getElementById('endRoomBtn')!.remove();
       outgoingMessageHandler.endRoom();
@@ -784,6 +842,7 @@ export default defineComponent({
       document.cookie = 'RoomID =';
       router.push('/roomSelector');
     };
+
     const userPermissions = () => {
       updateUserList();
       const usermodalDiv = document.getElementById('userconfig');
@@ -791,6 +850,7 @@ export default defineComponent({
         Modal.getOrCreateInstance(usermodalDiv).show();
       }
     };
+
     const editPermissions = () => {
       outgoingMessageHandler.toggleEdit();
     };
@@ -879,12 +939,8 @@ export default defineComponent({
           outgoingMessageHandler.sendObjectSelected(canvasData, selectedCheck);
         }
 
-        // Create a delete button on object selection
-        const deleteBtn = document.createElement('button');
-        deleteBtn.innerHTML = 'delete selected element';
-        deleteBtn.id = 'deleteBtn';
-        deleteBtn.onclick = deleteSelected;
-        document.body.appendChild(deleteBtn);
+        // Enable delete button
+        deleteButtonDisabled.value = false;
 
         // Check if equation is selected
         handleEquationSelection();
@@ -910,11 +966,8 @@ export default defineComponent({
           );
         }
 
-        // Remove delete button when object is deselected
-        const elem = document.getElementById('deleteBtn');
-        if (elem != null) {
-          elem.remove();
-        }
+        // Disable delete button when object is deselected
+        deleteButtonDisabled.value = true;
 
         // Check if equation is selected
         handleEquationSelection();
@@ -1094,6 +1147,8 @@ export default defineComponent({
       equationLatex,
       equationID,
       handleEquationButton,
+      deleteButtonDisabled,
+      deleteSelected,
     };
   },
 });

@@ -1,0 +1,53 @@
+@startuml Wikipedia Article Components
+
+package "Article <<Component>>" as Article <<Rectangle>> {
+  class "View" as ArticleView {
+    + HTMLTemplate
+  }
+  class "ViewModel" as ArticleViewModel {
+    ----
+    renderView()
+  }
+  class "Model" as ArticleModel {
+    - SectionData[]
+  }
+  interface "Props" as ArticleProps {}
+}
+
+package "Section <<Component>>" as Section <<Rectangle>> {
+  class "View" as SectionView {
+    + HTMLTemplate
+  }
+  class "ViewModel" as SectionViewModel {
+    ----
+    + collapseSection()
+    + expandSection()
+    + renderView()
+  }
+  class "Model" as SectionModel {
+    - isCollapsed
+  }
+  interface "Props" as SectionProps {
+    + sectionText
+  }
+}
+
+ArticleProps <.down. ArticleView: uses
+ArticleProps <.down. ArticleViewModel: uses
+ArticleProps <.down. ArticleModel: uses
+ArticleView -right-> ArticleViewModel: Data Binding
+ArticleViewModel -right-> ArticleModel: Data Binding
+ArticleModel -left-> ArticleViewModel: Notifications
+ArticleViewModel -left-> ArticleView: Notifications
+
+SectionProps <.down. SectionView: uses
+SectionProps <.down. SectionViewModel: uses
+SectionProps <.down. SectionModel: uses
+SectionView -right-> SectionViewModel: Data Binding
+SectionViewModel -right-> SectionModel: Data Binding
+SectionModel -left-> SectionViewModel: Notifications
+SectionViewModel -left-> SectionView: Notifications
+
+Article "1" *-u- "*" Section
+
+@enduml

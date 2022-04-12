@@ -35,10 +35,10 @@ class EquationWithID {
   fromURL(url: string, callback: Function, eqnOptions: IEquationWithIDOptions): void
 }
 
-Object <-- Rect
-Rect <-- RectWithID
-Object <-- Image
-Image <-right- ImageWithID
-Image <-- EquationWithID
+Object <|-- Rect
+Rect <|-- RectWithID
+Object <|-- Image
+Image <|-right- ImageWithID
+Image <|-- EquationWithID
 
 @enduml
